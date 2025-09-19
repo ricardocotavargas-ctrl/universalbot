@@ -1,18 +1,12 @@
+// frontend/admin-panel/src/components/auth/RequireAuth.js
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLocation, Navigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
-const RequireAuth = ({ children, requiredRole = null }) => {
-  const { isAuthenticated, user, loading, checkAuth } = useAuth();
+const RequireAuth = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
-
-  // Verificar autenticación al montar el componente
-  React.useEffect(() => {
-    if (!isAuthenticated && !loading) {
-      checkAuth();
-    }
-  }, [isAuthenticated, loading, checkAuth]);
 
   if (loading) {
     return (
@@ -32,24 +26,7 @@ const RequireAuth = ({ children, requiredRole = null }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirigir al login pero guardar la ubicación a la que querían ir
     return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // Verificar roles si se requiere un rol específico
-  if (requiredRole && user?.role !== requiredRole) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="50vh"
-      >
-        <Typography variant="h6" color="error">
-          No tienes permisos para acceder a esta página.
-        </Typography>
-      </Box>
-    );
   }
 
   return children;
