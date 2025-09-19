@@ -1,14 +1,14 @@
-// frontend/admin-panel/src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://universalbot-dsko.onrender.com/api';
+// ✅ URL CORRECTA de tu backend en Render
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://universalbot-backend.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 30000, // 30 segundos para el plan gratis de Render
 });
 
 // Interceptor para requests
@@ -23,43 +23,19 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor para responses - MENOS AGRESIVO
+// Interceptor para responses
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Verificar si el token es válido
-        const verifyResponse = await api.get('/auth/verify');
-        
-        if (verifyResponse.data.valid) {
-          return api(originalRequest);
-        }
-      } catch (verifyError) {
-        console.error('Token verification failed:', verifyError);
-        
-        // Solo redirigir si no estamos en login
-        if (window.location.pathname !== '/login') {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
-          window.dispatchEvent(new Event('authChange'));
-        }
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
     }
-
     return Promise.reject(error);
   }
 );
-
-// Event listener para cambios de autenticación
-window.addEventListener('authChange', () => {
-  if (window.location.pathname !== '/login') {
-    window.location.href = '/login';
-  }
-});
 
 export default api;
