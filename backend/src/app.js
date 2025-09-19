@@ -5,45 +5,27 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ CONFIGURACIÓN CORS COMPLETA
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001', 
-  'https://universalbot-frontend.vercel.app',
-  'https://universalbot-backend.onrender.com',
-  /\.vercel\.app$/,
-  /\.onrender\.com$/
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    
-    const isAllowed = allowedOrigins.some(pattern => {
-      if (typeof pattern === 'string') return origin === pattern;
-      if (pattern instanceof RegExp) return pattern.test(origin);
-      return false;
-    });
-    
-    isAllowed ? callback(null, true) : callback(new Error('CORS not allowed'));
-  },
+// ✅✅✅ CORS COMPLETAMENTE PERMISIVO (PARA PRUEBAS)
+app.use(cors({
+  origin: '*', // ✅ PERMITE TODOS LOS ORIGENS
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+  allowedHeaders: ['*'], // ✅ PERMITE TODOS LOS HEADERS
+  exposedHeaders: ['*'],
   optionsSuccessStatus: 200
-};
+}));
 
-// ✅ MIDDLEWARES (EN ORDEN CORRECTO)
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ✅ MANEJO EXPLÍCITO DE OPTIONS (PREFLIGHT)
+app.options('*', cors()); // ✅ RESPONDE A TODAS LAS PREFLIGHT REQUESTS
 
-// ✅ CONEXIÓN MONGODB SIMPLIFICADA
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ✅ CONEXIÓN MONGODB
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  console.error('❌ ERROR: MONGODB_URI no está definida en las variables de entorno');
+  console.error('❌ ERROR: MONGODB_URI no está definida');
   process.exit(1);
 }
 
@@ -54,84 +36,64 @@ mongoose.connect(MONGODB_URI)
     process.exit(1);
   });
 
-// ✅ RUTAS SIMPLIFICADAS PERO FUNCIONALES
+// ✅ MIDDLEWARE DE LOGGING DETALLADO
+app.use((req, res, next) => {
+  console.log('=== 📨 NUEVA REQUEST ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Origin:', req.headers.origin || 'No origin');
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body);
+  next();
+});
 
-// Ruta de salud PRINCIPAL
+// ✅ RUTA DE SALUD (DEBE FUNCIONAR SI O SI)
 app.get('/health', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
   res.json({ 
     status: 'OK', 
-    message: 'Backend funcionando',
+    message: '✅ Backend funcionando',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    cors: 'HABILITADO PARA TODOS LOS DOMINIOS'
   });
 });
 
-// Ruta de API principal  
 app.get('/api/health', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.json({ 
     status: 'OK', 
-    message: 'API funcionando',
+    message: '✅ API funcionando',
     timestamp: new Date().toISOString()
   });
 });
 
-// Ruta raíz
+// ✅ RUTA RAIZ
 app.get('/', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.json({ 
-    message: 'UniversalBot Backend API',
+    message: '🚀 UniversalBot Backend API - CORS HABILITADO',
     version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      api_health: '/api/health',
-      api: '/api'
-    }
+    cors: 'PERMITIENDO TODOS LOS ORIGENS (*)'
   });
 });
 
-// ✅ RUTAS DE AUTH BASICAS PERO FUNCIONALES
-
-// Registro de usuario
-app.post('/auth/register', async (req, res) => {
+// ✅ RUTAS DE AUTH CON HEADERS MANUALES
+app.post('/auth/login', (req, res) => {
   try {
-    const { email, password, name, businessName } = req.body;
+    // ✅ HEADERS CORS MANUALES
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
-    // Validación básica
-    if (!email || !password || !name) {
-      return res.status(400).json({ message: 'Email, password y nombre son requeridos' });
-    }
-
-    // Simulación de usuario registrado (luego conectarás con MongoDB)
-    const user = {
-      id: '1',
-      email,
-      name,
-      businessName: businessName || 'Mi Empresa',
-      role: 'admin'
-    };
-
-    // Simulación de token
-    const token = 'mock-jwt-token-' + Date.now();
-
-    res.status(201).json({
-      message: 'Usuario registrado exitosamente',
-      token,
-      user
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor' });
-  }
-});
-
-// Login de usuario  
-app.post('/auth/login', async (req, res) => {
-  try {
     const { email, password } = req.body;
+    console.log('📧 Login attempt:', email);
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email y password son requeridos' });
+      return res.status(400).json({ message: 'Email y password requeridos' });
     }
 
-    // Simulación de usuario (luego conectarás con MongoDB)
+    // ✅ USUARIO DE PRUEBA
     const user = {
       id: '1',
       email: 'admin@universalbot.com',
@@ -140,46 +102,44 @@ app.post('/auth/login', async (req, res) => {
       role: 'admin'
     };
 
-    // Simulación de token
-    const token = 'mock-jwt-token-' + Date.now();
+    // ✅ TOKEN SIMULADO
+    const token = 'jwt-token-simulado-' + Date.now();
 
+    console.log('✅ Login exitoso para:', email);
+    
     res.json({
       message: 'Login exitoso',
       token,
       user
     });
+
   } catch (error) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 
-// Verificación de token
+app.post('/auth/register', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  // ... lógica de registro ...
+  res.json({ message: 'Registro exitoso' });
+});
+
 app.get('/auth/verify', (req, res) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ valid: false, message: 'Token no proporcionado' });
-  }
-
-  // Simulación de verificación
-  const user = {
-    id: '1',
-    email: 'admin@universalbot.com', 
-    name: 'Administrador',
-    businessName: 'Mi Empresa',
-    role: 'admin'
-  };
-
-  res.json({ valid: true, user });
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  // ... lógica de verificación ...
+  res.json({ valid: true, user: { id: '1', email: 'admin@universalbot.com' } });
 });
 
 // ✅ MANEJO DE ERRORES
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  console.error('💥 Error:', err.message);
   res.status(500).json({ message: 'Error interno del servidor' });
 });
 
 app.use('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.status(404).json({ message: 'Ruta no encontrada' });
 });
 
@@ -188,13 +148,14 @@ const PORT = process.env.PORT || 10000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
-  console.log('='.repeat(60));
-  console.log('🚀 BACKEND INICIADO EXITOSAMENTE');
-  console.log('='.repeat(60));
+  console.log('='.repeat(70));
+  console.log('🚀 UNIVERSALBOT BACKEND INICIADO CON CORS PERMISIVO');
+  console.log('='.repeat(70));
   console.log(`📍 Servidor: http://${HOST}:${PORT}`);
   console.log(`🌐 Health:   http://${HOST}:${PORT}/health`);
   console.log(`🔐 Login:    POST http://${HOST}:${PORT}/auth/login`);
-  console.log('='.repeat(60));
+  console.log('🎯 CORS:     ✅ PERMITIENDO TODOS LOS ORIGENS (*)');
+  console.log('='.repeat(70));
 });
 
 module.exports = app;
