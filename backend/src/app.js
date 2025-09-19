@@ -1,41 +1,36 @@
+// backend/src/app.js - CONFIGURACIÓN CORS COMPLETA
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-// Importar rutas
-const authRoutes = require('./routes/auth');
-
 const app = express();
 
-// ✅ CONFIGURACIÓN CORS COMPLETA Y PERMISIVA
-const corsOptions = {
+// ✅ CONFIGURACIÓN CORS PERMISIVA PARA PRODUCCIÓN
+app.use(cors({
   origin: function (origin, callback) {
-    // Lista de dominios permitidos (TODOS los de Vercel + Render + localhost)
+    // Lista de dominios permitidos (TODOS los posibles)
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
-      'http://localhost:5000',
       'https://universalbot-frontend.vercel.app',
+      'https://universalbot-c2j2rhx9u-ricardos-projects-bad6fbb4.vercel.app',
       'https://universalbot-backend.onrender.com',
       'https://universalbot-dsko.onrender.com',
       /\.vercel\.app$/,    // ✅ Todos los subdominios de Vercel
       /\.onrender\.com$/,  // ✅ Todos los subdominios de Render
-      /\.localhost$/,      // ✅ Localhost con cualquier puerto
     ];
     
     // ✅ Permitir requests sin origin (Postman, curl, etc.)
-    if (!origin) {
-      return callback(null, true);
-    }
+    if (!origin) return callback(null, true);
     
     // ✅ Verificar si el origen está permitido
-    const isAllowed = allowedOrigins.some(pattern => {
-      if (typeof pattern === 'string') {
-        return origin === pattern;
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
       }
-      if (pattern instanceof RegExp) {
-        return pattern.test(origin);
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
       }
       return false;
     });
@@ -44,29 +39,36 @@ const corsOptions = {
       callback(null, true);
     } else {
       console.log('🚫 CORS bloqueado para origen:', origin);
-      callback(new Error('No permitido por política CORS'));
+      callback(new Error('No permitido por CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
-    'X-Requested-With', 
+    'X-Requested-With',
     'Accept',
     'Origin',
     'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
+    'Access-Control-Request-Headers',
+    'X-API-Key'
   ],
   exposedHeaders: [
+    'Content-Range',
+    'X-Content-Range',
     'Content-Type',
     'Authorization',
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Credentials'
   ],
   optionsSuccessStatus: 200,
-  maxAge: 86400 // 24 horas
-};
+  maxAge: 600, // 10 minutos
+  preflightContinue: false
+}));
+
+// ✅ MANEJAR EXPLÍCITAMENTE LAS OPTIONS REQUESTS
+app.options('*', cors()); // Habilitar pre-flight para todas las rutas
 
 // ✅ MIDDLEWARES
 app.use(cors(corsOptions));
