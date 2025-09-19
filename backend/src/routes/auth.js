@@ -32,7 +32,7 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
     res.status(201).json({
@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
     res.json({
@@ -98,7 +98,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// VERIFICAR TOKEN (para el frontend)
+// VERIFICAR TOKEN
 router.get('/verify', async (req, res) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
