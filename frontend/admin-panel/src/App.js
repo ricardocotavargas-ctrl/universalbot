@@ -6,8 +6,8 @@ import RequireAuth from './components/auth/RequireAuth';
 import Layout from './components/layout/Layout';
 
 // Páginas
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/dashboard/Dashboard';
 import InventoryProducts from './pages/inventory/InventoryProducts';
 import Sales from './pages/sales/Sales';
