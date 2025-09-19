@@ -1,51 +1,52 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Alert, Box, Typography, Button } from '@mui/material';
-import { AdminPanelSettings, Lock } from '@mui/icons-material';
+import { useLocation, Navigate } from 'react-router-dom';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
-const RequireAuth = ({ children, permission, businessId }) => {
-  const { user, hasPermission, canViewBusiness } = useAuth();
+const RequireAuth = ({ children, requiredRole = null }) => {
+  const { isAuthenticated, user, loading, checkAuth } = useAuth();
+  const location = useLocation();
 
-  if (!user) {
+  // Verificar autenticación al montar el componente
+  React.useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      checkAuth();
+    }
+  }, [isAuthenticated, loading, checkAuth]);
+
+  if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Lock sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
-        <Typography variant="h6" color="error" gutterBottom>
-          Acceso no autorizado
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Debes iniciar sesión para acceder a esta sección.
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="60vh"
+      >
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Verificando autenticación...
         </Typography>
       </Box>
     );
   }
 
-  if (permission && !hasPermission(permission)) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <AdminPanelSettings sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
-        <Typography variant="h6" color="warning.main" gutterBottom>
-          Permisos insuficientes
-        </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-          No tienes permisos para acceder a esta sección.
-        </Typography>
-        <Typography variant="caption" display="block" color="textSecondary">
-          Rol actual: {user.role}
-        </Typography>
-      </Box>
-    );
+  if (!isAuthenticated) {
+    // Redirigir al login pero guardar la ubicación a la que querían ir
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (businessId && !canViewBusiness(businessId)) {
+  // Verificar roles si se requiere un rol específico
+  if (requiredRole && user?.role !== requiredRole) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Lock sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
-        <Typography variant="h6" color="error" gutterBottom>
-          Acceso restringido
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          No tienes acceso a esta empresa.
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="50vh"
+      >
+        <Typography variant="h6" color="error">
+          No tienes permisos para acceder a esta página.
         </Typography>
       </Box>
     );
