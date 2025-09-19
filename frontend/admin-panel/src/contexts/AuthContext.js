@@ -15,94 +15,73 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // ✅ AÑADIDO
 
   useEffect(() => {
     checkAuth();
-    
-    // Verificar autenticación cada 5 minutos
-    const interval = setInterval(() => {
-      if (isAuthenticated) {
-        checkAuth();
-      }
-    }, 300000);
-    
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, []);
 
   const checkAuth = async () => {
     try {
       const token = authService.getToken();
-      if (!token) {
-        setLoading(false);
-        setIsAuthenticated(false);
-        return;
-      }
-
-      const authData = await authService.verifyToken();
-      if (authData && authData.valid) {
-        setUser(authData.user);
-        setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(authData.user));
+      if (token) {
+        const authData = await authService.verifyToken();
+        if (authData.valid) {
+          setUser(authData.user);
+          setIsAuthenticated(true); // ✅ AÑADIDO
+        } else {
+          authService.logout();
+          setIsAuthenticated(false); // ✅ AÑADIDO
+        }
       } else {
-        handleLogout();
+        setIsAuthenticated(false); // ✅ AÑADIDO
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error);
-      handleLogout();
+      authService.logout();
+      setIsAuthenticated(false); // ✅ AÑADIDO
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    authService.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
   const login = async (email, password) => {
     try {
-      setLoading(true);
       const data = await authService.login(email, password);
       setUser(data.user);
-      setIsAuthenticated(true);
+      setIsAuthenticated(true); // ✅ AÑADIDO
       return { success: true };
     } catch (error) {
-      handleLogout();
+      setIsAuthenticated(false); // ✅ AÑADIDO
       return { success: false, message: error.message };
-    } finally {
-      setLoading(false);
     }
   };
 
   const register = async (userData) => {
     try {
-      setLoading(true);
       const data = await authService.register(userData);
       setUser(data.user);
-      setIsAuthenticated(true);
+      setIsAuthenticated(true); // ✅ AÑADIDO
       return { success: true };
     } catch (error) {
-      handleLogout();
+      setIsAuthenticated(false); // ✅ AÑADIDO
       return { success: false, message: error.message };
-    } finally {
-      setLoading(false);
     }
   };
 
   const logout = () => {
-    handleLogout();
+    authService.logout();
+    setUser(null);
+    setIsAuthenticated(false); // ✅ AÑADIDO
   };
 
   const value = {
     user,
-    isAuthenticated,
+    isAuthenticated, // ✅ AÑADIDO
     login,
     register,
     logout,
-    loading,
-    checkAuth
+    loading
   };
 
   return (
