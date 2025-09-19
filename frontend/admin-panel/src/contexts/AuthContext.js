@@ -1,3 +1,4 @@
+// frontend/admin-panel/src/contexts/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 
@@ -19,12 +20,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     checkAuth();
     
-    // Verificar autenticación periódicamente
+    // Verificar autenticación cada 5 minutos
     const interval = setInterval(() => {
       if (isAuthenticated) {
         checkAuth();
       }
-    }, 300000); // 5 minutos
+    }, 300000);
     
     return () => clearInterval(interval);
   }, [isAuthenticated]);
@@ -42,8 +43,6 @@ export const AuthProvider = ({ children }) => {
       if (authData && authData.valid) {
         setUser(authData.user);
         setIsAuthenticated(true);
-        
-        // Actualizar localStorage con datos frescos
         localStorage.setItem('user', JSON.stringify(authData.user));
       } else {
         handleLogout();
