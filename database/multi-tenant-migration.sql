@@ -1,0 +1,39 @@
+-- TABLA DE CLIENTES (USUARIOS FINALES)
+CREATE TABLE clients (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(50),
+    company_name VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- TABLA DE EMPRESAS (NEGOCIOS DE LOS CLIENTES)
+CREATE TABLE businesses (
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    industry VARCHAR(100),
+    description TEXT,
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    website VARCHAR(255),
+    address TEXT,
+    status VARCHAR(20) DEFAULT 'active',
+    config JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RELACIÓN USUARIO-EMPRESA (SI UN USUARIO ADMINISTRA VARIAS EMPRESAS)
+CREATE TABLE user_businesses (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'owner',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, business_id)
+);

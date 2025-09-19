@@ -1,0 +1,524 @@
+// frontend/admin-panel/src/pages/financial/ExpenseManagement.js
+import React, { useState, useEffect } from 'react';
+import {
+  Container, Typography, Box, Paper, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Chip,
+  IconButton, Button, TextField, InputAdornment, Dialog,
+  DialogTitle, DialogContent, DialogActions, Grid,
+  MenuItem, FormControl, InputLabel, Select, Card,
+  CardContent, Avatar, Alert, Tooltip, LinearProgress // ✅ CORREGIDO: Añadir LinearProgress
+} from '@mui/material';
+import {
+  Search, Add, Edit, Delete, Visibility, AttachMoney,
+  CalendarToday, Category, Receipt, TrendingUp,
+  FilterList, Download, Upload, Warning
+} from '@mui/icons-material';
+import UBCard from '../../components/ui/UBCard';
+
+const ExpenseManagement = () => {
+  const [expenses, setExpenses] = useState([]);
+  const [filteredExpenses, setFilteredExpenses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+
+  // Categorías de gastos
+  const categories = [
+    'Nómina', 'Alquiler', 'Servicios', 'Suministros',
+    'Marketing', 'Mantenimiento', 'Transporte', 'Impuestos',
+    'Seguros', 'Consultoría', 'Software', 'Otros'
+  ];
+
+  // Estados de gastos
+  const statuses = [
+    'pendiente', 'aprobado', 'pagado', 'rechazado'
+  ];
+
+  // Datos de ejemplo mejorados
+  const mockExpenses = [
+    {
+      id: 1,
+      reference: 'EXP-001',
+      description: 'Pago de nómina enero 2024',
+      category: 'Nómina',
+      amount: 12500.00,
+      vendor: 'Recursos Humanos',
+      paymentMethod: 'transfer',
+      status: 'pagado',
+      expenseDate: '2024-01-31',
+      dueDate: '2024-01-31',
+      currency: 'USD',
+      attachments: [],
+      notes: 'Pago completo de nómina del mes',
+      createdAt: '2024-01-30',
+      approvedBy: 'Admin User',
+      approvedAt: '2024-01-30'
+    },
+    {
+      id: 2,
+      reference: 'EXP-002',
+      description: 'Alquiler oficina central',
+      category: 'Alquiler',
+      amount: 3500.00,
+      vendor: 'Inmobiliaria Central SA',
+      paymentMethod: 'check',
+      status: 'pendiente',
+      expenseDate: '2024-02-05',
+      dueDate: '2024-02-10',
+      currency: 'USD',
+      attachments: [],
+      notes: 'Alquiler mes de febrero',
+      createdAt: '2024-02-01',
+      approvedBy: '',
+      approvedAt: ''
+    },
+    {
+      id: 3,
+      reference: 'EXP-003',
+      description: 'Servicios de internet y teléfono',
+      category: 'Servicios',
+      amount: 450.50,
+      vendor: 'CANTV',
+      paymentMethod: 'debit_card',
+      status: 'aprobado',
+      expenseDate: '2024-02-15',
+      dueDate: '2024-02-20',
+      currency: 'USD',
+      attachments: [],
+      notes: 'Factura #12345',
+      createdAt: '2024-02-10',
+      approvedBy: 'Finance Manager',
+      approvedAt: '2024-02-12'
+    },
+    {
+      id: 4,
+      reference: 'EXP-004',
+      description: 'Compra de material de oficina',
+      category: 'Suministros',
+      amount: 1200.75,
+      vendor: 'Office Depot',
+      paymentMethod: 'credit_card',
+      status: 'rechazado',
+      expenseDate: '2024-02-08',
+      dueDate: '2024-02-08',
+      currency: 'USD',
+      attachments: [],
+      notes: 'Rechazado por exceder el presupuesto',
+      createdAt: '2024-02-05',
+      approvedBy: 'Finance Director',
+      approvedAt: '2024-02-07'
+    }
+  ];
+
+  useEffect(() => {
+    setExpenses(mockExpenses);
+    setFilteredExpenses(mockExpenses);
+  }, []);
+
+  useEffect(() => {
+    filterExpenses();
+  }, [searchTerm, categoryFilter, statusFilter, expenses]);
+
+  const filterExpenses = () => {
+    let filtered = expenses;
+
+    // Filtro por búsqueda
+    if (searchTerm) {
+      filtered = filtered.filter(expense =>
+        expense.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expense.notes.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro por categoría
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(expense => expense.category === categoryFilter);
+    }
+
+    // Filtro por estado
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(expense => expense.status === statusFilter);
+    }
+
+    setFilteredExpenses(filtered);
+  };
+
+  const handleAddExpense = () => {
+    setSelectedExpense(null);
+    setEditMode(false);
+    setDialogOpen(true);
+  };
+
+  const handleEditExpense = (expense) => {
+    setSelectedExpense(expense);
+    setEditMode(true);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteExpense = (expenseId) => {
+    if (window.confirm('¿Está seguro de que desea eliminar este gasto?')) {
+      setExpenses(prev => prev.filter(e => e.id !== expenseId));
+    }
+  };
+
+  const handleSaveExpense = (expenseData) => {
+    if (editMode) {
+      setExpenses(prev => prev.map(e => e.id === expenseData.id ? expenseData : e));
+    } else {
+      const newExpense = {
+        ...expenseData,
+        id: Math.max(...expenses.map(e => e.id), 0) + 1,
+        createdAt: new Date().toISOString(),
+        reference: `EXP-${String(Math.max(...expenses.map(e => e.id), 0) + 1).padStart(3, '0')}`
+      };
+      setExpenses(prev => [...prev, newExpense]);
+    }
+    setDialogOpen(false);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pagado': return 'success';
+      case 'aprobado': return 'info';
+      case 'pendiente': return 'warning';
+      case 'rechazado': return 'error';
+      default: return 'default';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pagado': return 'Pagado';
+      case 'aprobado': return 'Aprobado';
+      case 'pendiente': return 'Pendiente';
+      case 'rechazado': return 'Rechazado';
+      default: return status;
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-VE', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-VE');
+  };
+
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const pendingExpenses = expenses
+    .filter(e => e.status === 'pendiente')
+    .reduce((sum, e) => sum + e.amount, 0);
+  const approvedExpenses = expenses
+    .filter(e => e.status === 'aprobado')
+    .reduce((sum, e) => sum + e.amount, 0);
+  const paidExpenses = expenses
+    .filter(e => e.status === 'pagado')
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  return (
+    <Container maxWidth="xl">
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          Gestión de Gastos
+        </Typography>
+        <Typography color="text.secondary">
+          Control y administración de todos los gastos de la empresa
+        </Typography>
+      </Box>
+
+      {/* Estadísticas */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary">Total Gastos</Typography>
+                  <Typography variant="h4">{formatCurrency(totalExpenses)}</Typography>
+                </Box>
+                <AttachMoney color="primary" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary">Pendientes</Typography>
+                  <Typography variant="h4" color="warning.main">
+                    {formatCurrency(pendingExpenses)}
+                  </Typography>
+                </Box>
+                <Warning color="warning" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary">Aprobados</Typography>
+                  <Typography variant="h4" color="info.main">
+                    {formatCurrency(approvedExpenses)}
+                  </Typography>
+                </Box>
+                <TrendingUp color="info" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary">Pagados</Typography>
+                  <Typography variant="h4" color="success.main">
+                    {formatCurrency(paidExpenses)}
+                  </Typography>
+                </Box>
+                <Receipt color="success" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Barra de Herramientas */}
+      <UBCard>
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+          <TextField
+            placeholder="Buscar gastos por referencia, descripción o proveedor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 300, flexGrow: 1 }}
+          />
+
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Categoría</InputLabel>
+            <Select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              label="Categoría"
+            >
+              <MenuItem value="all">Todas las categorías</MenuItem>
+              {categories.map(category => (
+                <MenuItem key={category} value={category}>{category}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              label="Estado"
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              {statuses.map(status => (
+                <MenuItem key={status} value={status}>{getStatusText(status)}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleAddExpense}
+          >
+            Nuevo Gasto
+          </Button>
+
+          <Tooltip title="Importar gastos">
+            <IconButton>
+              <Upload />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Exportar reporte">
+            <IconButton>
+              <Download />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        {/* Tabla de Gastos */}
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Referencia</TableCell>
+                <TableCell>Descripción</TableCell>
+                <TableCell>Categoría</TableCell>
+                <TableCell>Proveedor</TableCell>
+                <TableCell>Monto</TableCell>
+                <TableCell>Fechas</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredExpenses.map((expense) => (
+                <TableRow key={expense.id} hover>
+                  <TableCell>
+                    <Typography fontWeight="medium">{expense.reference}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2">{expense.description}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {expense.notes}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip label={expense.category} size="small" variant="outlined" />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{expense.vendor}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight="bold">
+                      {formatCurrency(expense.amount)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {expense.currency}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2">
+                        Gasto: {formatDate(expense.expenseDate)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Vence: {formatDate(expense.dueDate)}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={getStatusText(expense.status)}
+                      color={getStatusColor(expense.status)}
+                      size="small"
+                    />
+                    {expense.approvedBy && (
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        Por: {expense.approvedBy}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Editar gasto">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditExpense(expense)}
+                          color="primary"
+                        >
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Ver detalles">
+                        <IconButton size="small" color="info">
+                          <Visibility />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar gasto">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          color="error"
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {filteredExpenses.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Receipt sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography color="text.secondary">
+              No se encontraron gastos
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddExpense}
+              sx={{ mt: 2 }}
+            >
+              Registrar Primer Gasto
+            </Button>
+          </Box>
+        )}
+      </UBCard>
+
+      {/* Distribución por Categoría */}
+      <UBCard title="Distribución de Gastos por Categoría" sx={{ mt: 3 }}>
+        <Grid container spacing={2}>
+          {categories.map((category) => {
+            const categoryTotal = expenses
+              .filter(e => e.category === category)
+              .reduce((sum, e) => sum + e.amount, 0);
+            const percentage = totalExpenses > 0 ? (categoryTotal / totalExpenses) * 100 : 0;
+
+            return (
+              <Grid item xs={12} key={category}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Box sx={{ width: 120 }}>
+                    <Typography variant="body2" fontWeight="medium">
+                      {category}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={percentage}
+                      sx={{ height: 8, borderRadius: 4 }}
+                    />
+                  </Box>
+                  <Box sx={{ width: 100, textAlign: 'right' }}>
+                    <Typography variant="body2">
+                      {formatCurrency(categoryTotal)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ({percentage.toFixed(1)}%)
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </UBCard>
+    </Container>
+  );
+};
+
+export default ExpenseManagement;

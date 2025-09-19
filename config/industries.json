@@ -1,0 +1,32 @@
+{
+  "industries": {
+    "ecommerce": {
+      "name": "🏪 E-commerce",
+      "description": "Tiendas online y venta de productos",
+      "intents": ["product_inquiry", "order_status", "return_request", "shipping_info", "payment_issue"],
+      "required_fields": ["product_catalog", "shipping_options", "return_policy"],
+      "modules": ["product", "order", "inventory", "returns"]
+    },
+    "healthcare": {
+      "name": "🏥 Sector Salud",
+      "description": "Clínicas, hospitales y servicios médicos",
+      "intents": ["appointment", "prescription", "emergency", "test_results", "billing"],
+      "required_fields": ["services", "doctors", "appointment_slots", "emergency_protocol"],
+      "modules": ["appointment", "prescription", "emergency", "billing"]
+    },
+    "education": {
+      "name": "🎓 Educación",
+      "description": "Escuelas, universidades y cursos",
+      "intents": ["course_info", "enrollment", "schedule", "grades", "certificates"],
+      "required_fields": ["courses", "schedules", "teachers", "pricing"],
+      "modules": ["courses", "enrollment", "schedule", "certificates"]
+    }
+  },
+  "common_intents": {
+    "greeting": ["hola", "buenos días", "hello", "hi"],
+    "thanks": ["gracias", "thank you", "thanks"],
+    "goodbye": ["adiós", "chao", "bye", "goodbye"],
+    "help": ["ayuda", "help", "soporte"],
+    "human_agent": ["humano", "persona", "agente", "operator"]
+  }
+}

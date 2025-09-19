@@ -1,0 +1,68 @@
+{
+  "ecommerce": {
+    "features": [
+      "product_catalog",
+      "order_tracking",
+      "returns_management",
+      "inventory_sync",
+      "payment_processing"
+    ],
+    "default_settings": {
+      "whatsapp_enabled": true,
+      "auto_responses": true,
+      "business_hours": {
+        "enabled": false,
+        "timezone": "America/Caracas",
+        "hours": {}
+      },
+      "notifications": {
+        "new_order": true,
+        "low_stock": true,
+        "customer_message": true
+      }
+    },
+    "webhooks": [
+      "order_created",
+      "order_updated",
+      "product_updated",
+      "customer_created"
+    ]
+  },
+  "healthcare": {
+    "features": [
+      "appointment_scheduling",
+      "patient_records",
+      "prescription_management",
+      "doctor_availability",
+      "emergency_protocol"
+    ],
+    "default_settings": {
+      "whatsapp_enabled": true,
+      "auto_responses": true,
+      "business_hours": {
+        "enabled": true,
+        "timezone": "America/Caracas",
+        "hours": {
+          "monday": {"start": "08:00", "end": "17:00"},
+          "tuesday": {"start": "08:00", "end": "17:00"},
+          "wednesday": {"start": "08:00", "end": "17:00"},
+          "thursday": {"start": "08:00", "end": "17:00"},
+          "friday": {"start": "08:00", "end": "17:00"},
+          "saturday": {"start": "09:00", "end": "12:00"},
+          "sunday": {"start": "00:00", "end": "00:00"}
+        }
+      },
+      "notifications": {
+        "appointment_reminder": true,
+        "new_appointment": true,
+        "emergency_alert": true
+      }
+    },
+    "webhooks": [
+      "appointment_created",
+      "appointment_updated",
+      "patient_created",
+      "prescription_ready"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "templates": {
+    "ecommerce": {
+      "greeting": "¡Hola! 👋 Soy tu asistente de {business_name}. ¿En qué puedo ayudarte hoy?",
+      "product_inquiry": "¡Claro! Tenemos varios productos disponibles. ¿Buscas algo específico?",
+      "order_status": "Para consultar tu pedido, necesito tu número de orden.",
+      "return_request": "Entiendo que quieres hacer una devolución. ¿Podrías proporcionarme tu número de orden?",
+      "fallback": "Lo siento, no entendí completamente. ¿Podrías reformularlo?"
+    },
+    "healthcare": {
+      "greeting": "¡Hola! 👋 Soy tu asistente de {business_name}. ¿Necesitas agendar una cita?",
+      "appointment": "Claro, puedo ayudarte a agendar una cita. ¿Prefieres mañana o tarde?",
+      "prescription": "Para consultar tu receta, necesito tu número de identificación.",
+      "fallback": "Lo siento, no entendí completamente. ¿Podrías reformularlo?"
+    },
+    "generic": {
+      "fallback": "Lo siento, no entendí tu mensaje. ¿Podrías reformularlo?"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "whatsapp": {
+    "enabled": false,
+    "businessAccountId": "",
+    "phoneNumberId": "",
+    "accessToken": "",
+    "webhookVerifyToken": "universal-bot-verify",
+    "templates": {
+      "welcome": "welcome_message",
+      "order_confirmation": "order_confirmation",
+      "appointment_reminder": "appointment_reminder"
+    },
+    "settings": {
+      "maxRetries": 3,
+      "timeout": 5000,
+      "queueEnabled": true,
+      "maxQueueSize": 1000
+    }
+  },
+  "facebook": {
+    "enabled": false,
+    "pageId": "",
+    "accessToken": "",
+    "appSecret": "",
+    "webhookVerifyToken": "universal-bot-verify",
+    "features": {
+      "messaging": true,
+      "comments": true,
+      "posts": false
+    }
+  },
+  "instagram": {
+    "enabled": false,
+    "businessAccountId": "",
+    "accessToken": "",
+    "webhookVerifyToken": "universal-bot-verify"
+  },
+  "email": {
+    "enabled": false,
+    "provider": "smtp",
+    "smtp": {
+      "host": "",
+      "port": 587,
+      "secure": false,
+      "auth": {
+        "user": "",
+        "pass": ""
+      }
+    },
+    "fromAddress": "bot@tuempresa.com",
+    "fromName": "Sistema de Bot Universal"
+  },
+  "general": {
+    "businessHours": {
+      "enabled": true,
+      "timezone": "America/Caracas",
+      "hours": {
+        "monday": { "start": "08:00", "end": "18:00" },
+        "tuesday": { "start": "08:00", "end": "18:00" },
+        "wednesday": { "start": "08:00", "end": "18:00" },
+        "thursday": { "start": "08:00", "end": "18:00" },
+        "friday": { "start": "08:00", "end": "18:00" },
+        "saturday": { "start": "09:00", "end": "14:00" },
+        "sunday": { "start": "00:00", "end": "00:00" }
+      },
+      "afterHoursMessage": "Gracias por tu mensaje. Nuestro horario de atención es de lunes a viernes de 8:00 AM a 6:00 PM. Te responderemos tan pronto como volvamos."
+    },
+    "autoResponses": {
+      "enabled": true,
+      "delay": 5,
+      "maxMessagesPerMinute": 20
+    },
+    "ai": {
+      "enabled": true,
+      "model": "gpt-3.5-turbo",
+      "maxTokens": 150,
+      "temperature": 0.7,
+      "fallbackToHuman": true
+    }
+  }
+}
