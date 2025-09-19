@@ -1,19 +1,16 @@
 import axios from 'axios';
 
-// ✅ URL DE RAILWAY - REEMPLAZA CON LA TUYA
-const API_BASE_URL = 'https://universalbot-production.up.railway.app';
+// ✅ USAR LA URL CORRECTA QUE RENDER TE PROPORCIONA
+const API_BASE_URL = 'https://universalbot-dsko.onrender.com';
+
+console.log('🔗 Conectando a API:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
   }
-  return config;
 });
 
 export default api;
