@@ -5,7 +5,7 @@ import { useLocation, Navigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 const RequireAuth = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth(); // ✅ Usa isAuthenticated
   const location = useLocation();
 
   if (loading) {
