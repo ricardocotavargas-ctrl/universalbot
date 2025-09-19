@@ -8,17 +8,40 @@ const authRoutes = require('./routes/auth');
 
 const app = express();
 
-// Middlewares
-app.use(cors({
-  origin: [
-    'http://localhost:3001',
-    'https://universalbot-frontend.vercel.app',
-    'https://universalbot-backend.onrender.com'
-  ],
+// Configuración COMPLETA de CORS
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Lista de dominios permitidos
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://universalbot-frontend.vercel.app',
+      'https://universalbot-g2s1y6fj4-ricardos-projects-bad6fbb4.vercel.app',
+      'https://universalbot-backend.onrender.com'
+    ];
+    
+    // Permitir requests sin origin (como Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS bloqueado para origen:', origin);
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
-}));
+};
+
+// Middlewares
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Manejar preflight requests
+app.options('*', cors(corsOptions));
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/universalbot')
@@ -65,6 +88,14 @@ app.get('/', (req, res) => {
 // Manejo de errores
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  if (err.message === 'No permitido por CORS') {
+    return res.status(403).json({ 
+      message: 'Acceso no permitido',
+      error: 'CORS policy violation'
+    });
+  }
+  
   res.status(500).json({ 
     message: 'Error interno del servidor',
     error: process.env.NODE_ENV === 'production' ? {} : err.message 
@@ -84,6 +115,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
   console.log(`📊 Entorno: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Health: http://localhost:${PORT}/api/health`);
+  console.log(`🎯 CORS habilitado para: ${corsOptions.origin.toString()}`);
 });
 
 module.exports = app;
