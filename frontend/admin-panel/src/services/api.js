@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// ✅ URL DIRECTA SIN VARIABLES DE ENTORNO
-const API_BASE_URL = 'https://universalbot-backend.onrender.com';
+// ✅ URL DE RAILWAY - REEMPLAZA CON LA TUYA
+const API_BASE_URL = 'https://universalbot-production.up.railway.app';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
