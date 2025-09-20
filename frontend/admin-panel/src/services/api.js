@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-// ✅ URL CORRECTA DEL BACKEND
+// ✅ URL CORRECTA DEL BACKEND EN RENDER
 const API_BASE_URL = 'https://universalbot-dsko.onrender.com';
 
 console.log('🔗 Conectando a API:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 20000, // Aumentar timeout a 20 segundos
   headers: {
     'Content-Type': 'application/json',
   }
@@ -23,14 +23,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para responses - MEJOR MANEJO DE ERRORES
+// Interceptor para responses con mejor debugging
 api.interceptors.response.use(
   (response) => {
     console.log('📥 Response:', response.status, response.config.url);
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', {
+    console.error('❌ Error de API:', {
       url: error.config?.url,
       status: error.response?.status,
       message: error.response?.data?.error || error.message,
