@@ -1,6 +1,6 @@
 // frontend/admin-panel/src/utils/roles.js
 export const ROLES = {
-  SUPERADMIN: 'administrador',
+  SUPERADMIN: 'Administrador',
   CLIENT: 'client',
   DEMO: 'demo'
 };
