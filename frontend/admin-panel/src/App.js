@@ -116,475 +116,495 @@ import { PERMISSIONS } from './utils/roles';
 import './App.css';
 import theme from './styles/theme';
 
+// Componente para rutas públicas (sin layout)
+const PublicRoutes = () => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </Suspense>
+);
+
+// Componente para rutas privadas (con layout)
+const PrivateRoutes = () => (
+  <Layout>
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        {/* Dashboard */}
+        <Route path="/dashboard" element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        } />
+        
+        {/* Empresas */}
+        <Route path="/companies" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_OWN_BUSINESSES}>
+              <Companies />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/companies/:id" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_OWN_BUSINESSES}>
+              <CompanyDetail />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== VENTAS ==================== */}
+        <Route path="/sales" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <Sales />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/sales/new" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
+              <NewSale />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/sales/tables" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
+              <TablesManagement />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/sales/channels" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
+              <SalesChannels />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/sales/by-seller" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <SalesBySeller />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/sales/by-product" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <SalesByProduct />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== INVENTARIO ==================== */}
+        <Route path="/inventory/products" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <InventoryProducts />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/inventory/recipes" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <RecipesCombos />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/inventory/movements" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <InventoryMovements />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/inventory/adjustments" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <Adjustments />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/inventory/transfers" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <Transfers />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/inventory/alerts" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <StockAlerts />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== CUENTAS ==================== */}
+        <Route path="/accounts/banks" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <Banks />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/accounts/reconciliation" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <Reconciliation />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/accounts/payables" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <Payables />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/accounts/receivables" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <Receivables />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/accounts/history" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <AccountsHistory />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== FINANZAS ==================== */}
+        <Route path="/financial/balance-sheet" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <BalanceSheet />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/profit-loss" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <ProfitLoss />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/cash-flow" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <CashFlow />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/fixed-variable-costs" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <FixedVariableCosts />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/expense-management" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <FixedVariableExpenses />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/budgeting" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <Budgeting />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/taxes" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <TaxManagement />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/financial/reports" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <FinancialReports />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== MARKETING ==================== */}
+        <Route path="/marketing/clients" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
+              <Clients />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/marketing/segmentation" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
+              <ClientSegmentation />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/marketing/purchase-history" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
+              <PurchaseHistory />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/marketing/campaigns" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
+              <Campaigns />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/marketing/email" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
+              <EmailMarketing />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/marketing/roi-analysis" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
+              <ROIAnalysis />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== CANALES ==================== */}
+        <Route path="/channels" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
+              <Channels />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/channels/whatsapp" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
+              <WhatsAppIntegration />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/channels/facebook" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
+              <FacebookIntegration />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/channels/instagram" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
+              <InstagramIntegration />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/channels/messaging" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
+              <MessagingIntegration />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== ANALÍTICA ==================== */}
+        <Route path="/analytics/dashboard" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
+              <AnalyticsDashboard />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/analytics/sales" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
+              <SalesAnalytics />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/analytics/inventory" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
+              <InventoryAnalytics />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/analytics/customers" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
+              <CustomerAnalytics />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/analytics/realtime" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
+              <RealTimeAnalytics />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== ADMINISTRACIÓN ==================== */}
+        <Route path="/admin/businesses" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.VIEW_ALL_BUSINESSES}>
+              <AdminBusinesses />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/admin/plans" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <AdminPlans />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/admin/billing" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <AdminBilling />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/admin/users" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <Users />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/admin/roles" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <AdminRoles />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/admin/audit-log" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <AdminAuditLog />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/admin/system-settings" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <SystemSettings />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        {/* ==================== OTRAS RUTAS ==================== */}
+        <Route path="/services" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
+              <Services />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+        
+        <Route path="/interactions" element={
+          <RequireAuth>
+            <Interactions />
+          </RequireAuth>
+        } />
+        
+        <Route path="/ai-flows" element={
+          <RequireAuth>
+            <AIFlows />
+          </RequireAuth>
+        } />
+        
+        <Route path="/settings" element={
+          <RequireAuth>
+            <Settings />
+          </RequireAuth>
+        } />
+        
+        <Route path="/plan-management" element={
+          <RequireAuth>
+            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+              <PlanManagement />
+            </RoleRoute>
+          </RequireAuth>
+        } />
+
+        {/* Ruta por defecto */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Suspense>
+  </Layout>
+);
+
 const AppContent = () => {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <Router>
-      <Layout>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Rutas Públicas */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            {/* Dashboard */}
-            <Route path="/dashboard" element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            } />
-            
-            {/* Empresas */}
-            <Route path="/companies" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_OWN_BUSINESSES}>
-                  <Companies />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/companies/:id" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_OWN_BUSINESSES}>
-                  <CompanyDetail />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== VENTAS ==================== */}
-            <Route path="/sales" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <Sales />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/sales/new" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
-                  <NewSale />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/sales/tables" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
-                  <TablesManagement />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/sales/channels" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
-                  <SalesChannels />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/sales/by-seller" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <SalesBySeller />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/sales/by-product" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <SalesByProduct />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== INVENTARIO ==================== */}
-            <Route path="/inventory/products" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <InventoryProducts />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/inventory/recipes" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <RecipesCombos />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/inventory/movements" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <InventoryMovements />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/inventory/adjustments" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <Adjustments />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/inventory/transfers" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <Transfers />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/inventory/alerts" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <StockAlerts />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== CUENTAS ==================== */}
-            <Route path="/accounts/banks" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <Banks />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/accounts/reconciliation" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <Reconciliation />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/accounts/payables" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <Payables />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/accounts/receivables" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <Receivables />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/accounts/history" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <AccountsHistory />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== FINANZAS ==================== */}
-            <Route path="/financial/balance-sheet" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <BalanceSheet />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/profit-loss" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <ProfitLoss />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/cash-flow" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <CashFlow />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/fixed-variable-costs" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <FixedVariableCosts />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/expense-management" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <FixedVariableExpenses />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/budgeting" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <Budgeting />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/taxes" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <TaxManagement />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/financial/reports" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                  <FinancialReports />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== MARKETING ==================== */}
-            <Route path="/marketing/clients" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
-                  <Clients />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/marketing/segmentation" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
-                  <ClientSegmentation />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/marketing/purchase-history" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
-                  <PurchaseHistory />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/marketing/campaigns" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
-                  <Campaigns />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/marketing/email" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
-                  <EmailMarketing />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/marketing/roi-analysis" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_MARKETING}>
-                  <ROIAnalysis />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== CANALES ==================== */}
-            <Route path="/channels" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
-                  <Channels />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/channels/whatsapp" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
-                  <WhatsAppIntegration />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/channels/facebook" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
-                  <FacebookIntegration />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/channels/instagram" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
-                  <InstagramIntegration />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/channels/messaging" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_CHANNELS}>
-                  <MessagingIntegration />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== ANALÍTICA ==================== */}
-            <Route path="/analytics/dashboard" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
-                  <AnalyticsDashboard />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/analytics/sales" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
-                  <SalesAnalytics />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/analytics/inventory" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
-                  <InventoryAnalytics />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/analytics/customers" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
-                  <CustomerAnalytics />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/analytics/realtime" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_STATISTICS}>
-                  <RealTimeAnalytics />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== ADMINISTRACIÓN ==================== */}
-            <Route path="/admin/businesses" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.VIEW_ALL_BUSINESSES}>
-                  <AdminBusinesses />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/admin/plans" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <AdminPlans />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/admin/billing" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <AdminBilling />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/admin/users" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <Users />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/admin/roles" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <AdminRoles />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/admin/audit-log" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <AdminAuditLog />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/admin/system-settings" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <SystemSettings />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            {/* ==================== OTRAS RUTAS ==================== */}
-            <Route path="/services" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-                  <Services />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-            
-            <Route path="/interactions" element={
-              <RequireAuth>
-                <Interactions />
-              </RequireAuth>
-            } />
-            
-            <Route path="/ai-flows" element={
-              <RequireAuth>
-                <AIFlows />
-              </RequireAuth>
-            } />
-            
-            <Route path="/settings" element={
-              <RequireAuth>
-                <Settings />
-              </RequireAuth>
-            } />
-            
-            <Route path="/plan-management" element={
-              <RequireAuth>
-                <RoleRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                  <PlanManagement />
-                </RoleRoute>
-              </RequireAuth>
-            } />
-
-            {/* Ruta por defecto */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
-      </Layout>
+      <Routes>
+        {/* Rutas públicas - sin autenticación */}
+        {!isAuthenticated ? (
+          <Route path="/*" element={<PublicRoutes />} />
+        ) : (
+          /* Rutas privadas - con autenticación */
+          <Route path="/*" element={<PrivateRoutes />} />
+        )}
+      </Routes>
     </Router>
   );
 };
