@@ -3,7 +3,7 @@ import {
   Box, Typography, Button, Grid, Container, Card, CardContent,
   Stack, useTheme, useMediaQuery, AppBar, Toolbar, Chip,
   List, ListItem, ListItemIcon, Tabs, Tab, Paper,
-  IconButton
+  IconButton, Divider
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,7 +28,17 @@ import {
   ArrowForward,
   Star,
   Menu as MenuIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  People,
+  Speed,
+  IntegrationInstructions,
+  Psychology,
+  AttachMoney,
+  Assessment,
+  Receipt,
+  PieChart,
+  Timeline,
+  PeopleAlt
 } from '@mui/icons-material';
 
 const HomePage = () => {
@@ -81,12 +91,11 @@ const HomePage = () => {
       borderRadius: '24px',
       p: { xs: 2, md: 3 },
       color: '#1f2937',
-      minHeight: { xs: '300px', md: '400px' },
+      minHeight: { xs: '320px', md: '420px' },
       position: 'relative',
       overflow: 'hidden',
       border: '1px solid #f1f5f9',
       boxShadow: '0 32px 64px -12px rgba(0, 0, 0, 0.08)',
-      transform: 'translateZ(0)'
     }}>
       {/* Elementos decorativos modernos */}
       <Box sx={{
@@ -160,9 +169,9 @@ const HomePage = () => {
               borderRadius: '16px',
               border: '1px solid #f1f5f9',
               boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.3s ease',
               '&:hover': { 
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-2px)',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
               }
             }}>
@@ -203,7 +212,7 @@ const HomePage = () => {
             background: 'white', 
             p: { xs: 1.5, md: 2 }, 
             borderRadius: '16px',
-            height: { xs: '120px', md: '160px' },
+            height: { xs: '140px', md: '180px' },
             border: '1px solid #f1f5f9',
             boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
           }}>
@@ -248,7 +257,7 @@ const HomePage = () => {
             background: 'white', 
             p: { xs: 1.5, md: 2 }, 
             borderRadius: '16px',
-            height: { xs: '120px', md: '160px' },
+            height: { xs: '140px', md: '180px' },
             border: '1px solid #f1f5f9',
             boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
           }}>
@@ -299,25 +308,282 @@ const HomePage = () => {
     </Box>
   );
 
-  // Componentes de preview mejorados (similar estructura para los otros)
+  // Componente de Vista de Ventas
   const SalesPreview = () => (
     <Box sx={{ 
       background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
       borderRadius: '24px',
       border: '1px solid #f1f5f9',
-      minHeight: { xs: '300px', md: '400px' },
+      minHeight: { xs: '320px', md: '420px' },
       position: 'relative',
       overflow: 'hidden',
       boxShadow: '0 32px 64px -12px rgba(0, 0, 0, 0.08)'
     }}>
-      {/* Contenido similar mejorado */}
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+        color: 'white',
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" fontWeight={700}>Ventas Inteligentes</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <ShoppingCart sx={{ fontSize: 20 }} />
+          <Insights sx={{ fontSize: 20 }} />
+        </Box>
+      </Box>
+
+      {/* Contenido */}
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={8}>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TrendingUp sx={{ fontSize: 18, color: '#059669' }} />
+                Tendencias de Ventas IA
+              </Typography>
+              <Stack spacing={1}>
+                {[
+                  { producto: 'Producto Premium', crecimiento: '+45%', tendencia: '📈' },
+                  { producto: 'Servicio Básico', crecimiento: '+23%', tendencia: '📈' },
+                  { producto: 'Solución Empresa', crecimiento: '+67%', tendencia: '🚀' }
+                ].map((venta, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 1.5,
+                    background: index % 2 === 0 ? '#f8fafc' : 'transparent',
+                    borderRadius: '8px'
+                  }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{venta.producto}</Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                        {venta.tendencia} Crecimiento
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight={600} color="#059669">
+                      {venta.crecimiento}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', mb: 2, background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>Eficiencia IA</Typography>
+              <Typography variant="h5" color="#059669">+{animatedStats.efficiency}%</Typography>
+              <Typography variant="caption" sx={{ color: '#6b7280' }}>Optimización ventas</Typography>
+            </Paper>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>Clientes IA</Typography>
+              <Typography variant="h5" color="#2563eb">+{Math.floor(animatedStats.growth / 10)}</Typography>
+              <Typography variant="caption" sx={{ color: '#6b7280' }}>Recomendados este mes</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+
+  // Componente de Vista de Inventario
+  const InventoryPreview = () => (
+    <Box sx={{ 
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
+      borderRadius: '24px',
+      border: '1px solid #f1f5f9',
+      minHeight: { xs: '320px', md: '420px' },
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 32px 64px -12px rgba(0, 0, 0, 0.08)'
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+        color: 'white',
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" fontWeight={700}>Inventario Inteligente</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Inventory2 sx={{ fontSize: 20 }} />
+          <AutoGraph sx={{ fontSize: 20 }} />
+        </Box>
+      </Box>
+
+      {/* Contenido */}
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Alertas Proactivas IA</Typography>
+              <Stack spacing={1}>
+                {[
+                  { producto: 'Producto Estrella', stock: 'Óptimo', estado: '✅' },
+                  { producto: 'Nuevo Lanzamiento', stock: 'En aumento', estado: '📦' },
+                  { producto: 'Básico Esencial', stock: 'Estable', estado: '⚡' }
+                ].map((item, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 1.5,
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '8px'
+                  }}>
+                    <Typography variant="body2" fontWeight={600}>{item.producto}</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="caption" sx={{ color: '#059669' }}>{item.stock}</Typography>
+                      <span>{item.estado}</span>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Eficiencia IA</Typography>
+              <Stack spacing={1}>
+                {[
+                  { tipo: 'Automatización', porcentaje: '95%', icon: '🤖' },
+                  { tipo: 'Precisión', porcentaje: '99.8%', icon: '🎯' },
+                  { tipo: 'Ahorro Tiempo', porcentaje: '87%', icon: '⏱️' }
+                ].map((mov, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 1.5,
+                    background: index % 2 === 0 ? '#f8fafc' : 'transparent',
+                    borderRadius: '6px'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{mov.icon}</span>
+                      <Typography variant="body2" fontWeight={600}>{mov.tipo}</Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight={600} color="#2563eb">{mov.porcentaje}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+
+  // Componente de Vista de Reportes
+  const ReportsPreview = () => (
+    <Box sx={{ 
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
+      borderRadius: '24px',
+      border: '1px solid #f1f5f9',
+      minHeight: { xs: '320px', md: '420px' },
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 32px 64px -12px rgba(0, 0, 0, 0.08)'
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+        color: 'white',
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" fontWeight={700}>Analítica Predictiva IA</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <BarChart sx={{ fontSize: 20 }} />
+          <Insights sx={{ fontSize: 20 }} />
+        </Box>
+      </Box>
+
+      {/* Contenido */}
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3} sx={{ height: '100%' }}>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', height: '100%', background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Predicciones IA</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
+                <Box sx={{ 
+                  width: '120px', 
+                  height: '120px', 
+                  borderRadius: '50%',
+                  background: 'conic-gradient(#3b82f6 0% 40%, #10b981 40% 70%, #f59e0b 70% 90%, #8b5cf6 90% 100%)',
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '4px solid white',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }} />
+                <Stack spacing={1}>
+                  {[
+                    { categoria: 'Crecimiento Alto', color: '#3b82f6', porcentaje: '40%' },
+                    { categoria: 'Estabilidad', color: '#10b981', porcentaje: '30%' },
+                    { categoria: 'Optimización', color: '#f59e0b', porcentaje: '20%' },
+                    { categoria: 'Nuevas Oportunidades', color: '#8b5cf6', porcentaje: '10%' }
+                  ].map((item, index) => (
+                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '2px', background: item.color }} />
+                      <Typography variant="body2">{item.categoria}</Typography>
+                      <Typography variant="body2" fontWeight={600}>{item.porcentaje}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', height: '100%', background: 'white', borderRadius: '12px' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Reportes IA</Typography>
+              <Stack spacing={2}>
+                {[
+                  { nombre: 'Análisis Predictivo', icon: '🔮', desc: 'Tendencias futuras' },
+                  { nombre: 'Optimización IA', icon: '⚡', desc: 'Mejoras automáticas' },
+                  { nombre: 'Clientes Ideales', icon: '🎯', desc: 'Segmentación inteligente' },
+                  { nombre: 'Eficiencia Maxima', icon: '🚀', desc: 'Automatización total' }
+                ].map((reporte, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 2,
+                    p: 1.5,
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    background: 'white',
+                    '&:hover': { background: '#f8fafc', transform: 'translateX(4px)' },
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <Box sx={{ fontSize: '24px' }}>{reporte.icon}</Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{reporte.nombre}</Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>{reporte.desc}</Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
     </Box>
   );
 
   const demoScreens = [
     { title: "Dashboard IA", component: <DashboardPreview /> },
     { title: "Ventas Inteligentes", component: <SalesPreview /> },
-    // ... otros componentes similares
+    { title: "Inventario IA", component: <InventoryPreview /> },
+    { title: "Analítica Predictiva", component: <ReportsPreview /> }
   ];
 
   const platformModules = [
@@ -325,10 +591,117 @@ const HomePage = () => {
       icon: <PointOfSale sx={{ fontSize: 40, color: '#2563eb' }} />,
       title: 'Ventas Inteligentes',
       features: ['IA predictiva de ventas', 'Automatización de procesos', 'Clientes recomendados por IA', 'Optimización en tiempo real'],
-      description: 'Sistema de ventas impulsado por inteligencia artificial'
+      description: 'Sistema de ventas impulsado por inteligencia artificial que anticipa tendencias'
     },
-    // ... otros módulos
+    {
+      icon: <Inventory sx={{ fontSize: 40, color: '#059669' }} />,
+      title: 'Inventario IA',
+      features: ['Gestión predictiva de stock', 'Alertas automáticas IA', 'Optimización automática', 'Análisis de tendencias'],
+      description: 'Control inteligente de inventario que previene faltantes y excesos'
+    },
+    {
+      icon: <AccountBalance sx={{ fontSize: 40, color: '#dc2626' }} />,
+      title: 'Finanzas Autónomas',
+      features: ['IA contable automática', 'Detección de anomalías', 'Optimización fiscal IA', 'Reportes inteligentes'],
+      description: 'Sistema financiero que se auto-optimiza y detecta oportunidades'
+    },
+    {
+      icon: <Campaign sx={{ fontSize: 40, color: '#7c3aed' }} />,
+      title: 'Marketing IA',
+      features: ['Segmentación inteligente', 'Campañas automáticas', 'Análisis de ROI en tiempo real', 'Optimización continua'],
+      description: 'Marketing que aprende y se adapta automáticamente a tu audiencia'
+    }
   ];
+
+  const benefits = [
+    {
+      icon: '🚀',
+      title: 'Implementación Rápida',
+      description: 'Comienza en menos de 5 minutos sin configuración compleja'
+    },
+    {
+      icon: '💰',
+      title: 'ROI Garantizado',
+      description: 'Aumenta tus ganancias desde el primer mes o te devolvemos tu dinero'
+    },
+    {
+      icon: '🛡️',
+      title: 'Seguridad Empresarial',
+      description: 'Tus datos protegidos con encriptación bancaria nivel enterprise'
+    },
+    {
+      icon: '📈',
+      title: 'Escalabilidad Ilimitada',
+      description: 'Crece sin límites, desde startup hasta corporación multinacional'
+    }
+  ];
+
+  // Estadísticas con Animación
+  const AnimatedStatsSection = () => (
+    <Container sx={{ py: 8 }}>
+      <Grid container spacing={4} alignItems="center">
+        <Grid item xs={12} md={6}>
+          <Typography variant="h3" fontWeight={800} sx={{ mb: 2, fontSize: { xs: '2rem', md: '2.5rem' } }}>
+            Resultados que <Box component="span" color="#2563eb">Impulsan</Box> tu Negocio
+          </Typography>
+          <Typography variant="h6" color="#64748b" sx={{ mb: 3, lineHeight: 1.6 }}>
+            La inteligencia artificial transformando operaciones empresariales en tiempo real. 
+            Más de {companyCount.toLocaleString()} empresas ya experimentaron el cambio.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            endIcon={<RocketLaunch />}
+            sx={{
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              fontWeight: 700,
+              px: 4,
+              py: 1.5,
+              borderRadius: '12px',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)'
+              },
+              transition: 'all 0.3s ease'
+            }}
+          >
+            Ver Casos de Éxito
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Grid container spacing={3}>
+            {[
+              { value: `${animatedStats.efficiency}%`, label: 'Aumento en Eficiencia', icon: <TrendingUp sx={{ color: '#2563eb' }} /> },
+              { value: `${animatedStats.growth}%`, label: 'Crecimiento en Ventas', icon: <Analytics sx={{ color: '#059669' }} /> },
+              { value: `${companyCount.toLocaleString()}+`, label: 'Empresas Transformadas', icon: <Business sx={{ color: '#dc2626' }} /> },
+              { value: `${animatedStats.automation}%`, label: 'Procesos Automatizados', icon: <AutoGraph sx={{ color: '#7c3aed' }} /> }
+            ].map((stat, index) => (
+              <Grid item xs={6} key={index}>
+                <Paper sx={{ 
+                  p: 3, 
+                  textAlign: 'center',
+                  background: 'white',
+                  borderRadius: '16px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                  border: '1px solid #e2e8f0',
+                  '&:hover': { transform: 'translateY(-4px)' },
+                  transition: 'transform 0.2s ease'
+                }}>
+                  <Box sx={{ color: '#2563eb', mb: 1 }}>{stat.icon}</Box>
+                  <Typography variant="h4" fontWeight={800} color="#1e293b" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body2" color="#64748b" sx={{ mt: 1 }}>
+                    {stat.label}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Grid>
+      </Grid>
+    </Container>
+  );
 
   return (
     <Box sx={{ 
@@ -553,6 +926,47 @@ const HomePage = () => {
         </Container>
       </Box>
 
+      {/* Sección de Estadísticas Animadas */}
+      <AnimatedStatsSection />
+
+      {/* Sección de Beneficios */}
+      <Container sx={{ py: 8 }}>
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+            ¿Por Qué Elegir <Box component="span" color="#2563eb">UniversalBot AI</Box>?
+          </Typography>
+          <Typography variant="h6" sx={{ color: '#6b7280', maxWidth: '600px', mx: 'auto' }}>
+            No somos otro software de gestión. Somos tu partner en inteligencia artificial empresarial
+          </Typography>
+        </Box>
+
+        <Grid container spacing={4}>
+          {benefits.map((benefit, index) => (
+            <Grid item xs={12} md={6} key={index}>
+              <Card sx={{ 
+                border: '1px solid #e2e8f0', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                borderRadius: '16px',
+                '&:hover': { transform: 'translateY(-4px)' },
+                transition: 'transform 0.2s ease'
+              }}>
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Box sx={{ fontSize: '3rem', mb: 2 }}>
+                    {benefit.icon}
+                  </Box>
+                  <Typography variant="h5" fontWeight={700} color="#1f2937" gutterBottom>
+                    {benefit.title}
+                  </Typography>
+                  <Typography variant="body1" color="#6b7280">
+                    {benefit.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
       {/* Sección de Demo Interactivo con Swipe */}
       <Box sx={{ background: '#ffffff', py: { xs: 6, md: 10 } }}>
         <Container>
@@ -638,8 +1052,180 @@ const HomePage = () => {
         </Container>
       </Box>
 
-      {/* Resto de secciones similares mejoradas... */}
+      {/* Módulos de la Plataforma */}
+      <Container sx={{ py: 8 }}>
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+            Módulos Impulsados por IA
+          </Typography>
+          <Typography variant="h6" sx={{ color: '#6b7280', maxWidth: '600px', mx: 'auto' }}>
+            Soluciones inteligentes que transforman cada área de tu empresa
+          </Typography>
+        </Box>
 
+        <Grid container spacing={4}>
+          {platformModules.map((module, index) => (
+            <Grid item xs={12} md={6} key={index}>
+              <Card sx={{ 
+                border: '1px solid #e2e8f0', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                borderRadius: '16px',
+                '&:hover': { transform: 'translateY(-4px)' },
+                transition: 'transform 0.2s ease'
+              }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3 }}>
+                    <Box sx={{ 
+                      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                      borderRadius: '12px',
+                      p: 2,
+                      minWidth: '70px'
+                    }}>
+                      {module.icon}
+                    </Box>
+                    <Box>
+                      <Typography variant="h5" fontWeight={700} color="#1f2937" gutterBottom>
+                        {module.title}
+                      </Typography>
+                      <Typography variant="body1" color="#6b7280" sx={{ mb: 2 }}>
+                        {module.description}
+                      </Typography>
+                      <List dense>
+                        {module.features.map((feature, idx) => (
+                          <ListItem key={idx} sx={{ px: 0 }}>
+                            <ListItemIcon sx={{ minWidth: '30px' }}>
+                              <CheckCircle sx={{ color: '#10b981', fontSize: 18 }} />
+                            </ListItemIcon>
+                            <Typography variant="body2">{feature}</Typography>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* CTA Final Mejorado */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', 
+        color: 'white', 
+        py: 12,
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <Container sx={{ textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <Typography variant="h2" sx={{ 
+            fontSize: { xs: '2rem', md: '3rem' }, 
+            fontWeight: 800, 
+            mb: 2 
+          }}>
+            ¿Listo para la{' '}
+            <Box component="span" sx={{
+              background: 'linear-gradient(135deg, #22d3ee 0%, #a5b4fc 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
+              Revolución IA?
+            </Box>
+          </Typography>
+          <Typography variant="h5" sx={{ 
+            opacity: 0.9, 
+            mb: 4, 
+            maxWidth: '600px', 
+            mx: 'auto',
+            fontSize: { xs: '1.1rem', md: '1.25rem' }
+          }}>
+            Únete a las {companyCount.toLocaleString()}+ empresas que ya transformaron 
+            sus operaciones con inteligencia artificial
+          </Typography>
+          
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="center" sx={{ mb: 4 }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/register')}
+              startIcon={<RocketLaunch />}
+              sx={{
+                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                color: '#2563eb',
+                fontWeight: 800,
+                px: 6,
+                py: 1.5,
+                minWidth: { xs: '100%', sm: '280px' },
+                borderRadius: '12px',
+                fontSize: '1.1rem',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 20px 40px rgba(255,255,255,0.2)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Comenzar con IA
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => navigate('/login')}
+              sx={{
+                borderColor: 'rgba(255,255,255,0.5)',
+                color: 'white',
+                fontWeight: 600,
+                px: 6,
+                py: 1.5,
+                minWidth: { xs: '100%', sm: '280px' },
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                '&:hover': {
+                  borderColor: 'white',
+                  background: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              Acceso Empresas
+            </Button>
+          </Stack>
+
+          {/* Garantía */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <Security sx={{ color: '#22c55e' }} />
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              Garantía de satisfacción 30 días • Soporte 24/7 • Seguridad enterprise
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Footer Mejorado */}
+      <Box sx={{ background: '#0f172a', color: 'white', py: 6 }}>
+        <Container>
+          <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 3 }}>
+              <Box sx={{
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                borderRadius: '12px',
+                p: 1
+              }}>
+                <SmartToy sx={{ fontSize: 32 }} />
+              </Box>
+              <Typography variant="h5" fontWeight={800}>
+                UniversalBot<span style={{ color: '#60a5fa' }}>AI</span>
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ opacity: 0.7, mb: 2 }}>
+              La plataforma de gestión empresarial impulsada por inteligencia artificial
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.5 }}>
+              © 2025 UniversalBot AI Platform. Transformando empresas con tecnología inteligente.
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
     </Box>
   );
 };
