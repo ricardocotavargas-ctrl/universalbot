@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Container, Typography, Box, Button, Grid, 
-  Card, CardContent, Chip, Avatar, Stack, Fade,
-  useTheme, useMediaQuery, alpha
+  Typography, Box, Button, Grid, 
+  Card, CardContent, Chip, Avatar, Stack,
+  useTheme, useMediaQuery
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,15 +24,20 @@ const HomePage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [loaded, setLoaded] = useState(false);
 
-  // Redirigir si está autenticado
+  // Redirigir si está autenticado - IMPORTANTE: Esto debe ejecutarse
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
+      return;
     }
     setTimeout(() => setLoaded(true), 100);
   }, [isAuthenticated, navigate]);
 
-  // Características principales
+  // Si está autenticado, no renderizar nada (ya que redirige)
+  if (isAuthenticated) {
+    return null;
+  }
+
   const features = [
     {
       icon: <Psychology sx={{ fontSize: 32, color: '#2563eb' }} />,
@@ -56,7 +61,6 @@ const HomePage = () => {
     }
   ];
 
-  // Beneficios
   const benefits = [
     'Implementación en 24 horas',
     'Soporte técnico 24/7',
@@ -66,7 +70,6 @@ const HomePage = () => {
     'Actualizaciones gratuitas'
   ];
 
-  // Testimonios
   const testimonials = [
     {
       name: 'María González',
@@ -90,124 +93,123 @@ const HomePage = () => {
 
   return (
     <Box sx={{ 
+      width: '100vw',
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-      overflow: 'hidden'
+      overflowX: 'hidden',
+      margin: 0,
+      padding: 0
     }}>
-      {/* Hero Section */}
+      {/* Hero Section - Sin márgenes */}
       <Box sx={{
+        width: '100vw',
         background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
         color: 'white',
         pt: { xs: 8, md: 12 },
         pb: { xs: 12, md: 16 },
-        position: 'relative'
+        px: { xs: 2, sm: 3, md: 4 }
       }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto' }}>
-            <Chip 
-              label="🚀 PLATAFORMA EMPRESARIAL" 
-              sx={{ 
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                mb: 3,
-                fontSize: '0.9rem',
-                fontWeight: 600
-              }}
-            />
-            
-            <Typography variant="h1" sx={{
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              fontWeight: 700,
+        <Box sx={{ 
+          maxWidth: '1200px', 
+          mx: 'auto',
+          textAlign: 'center' 
+        }}>
+          <Chip 
+            label="🚀 PLATAFORMA EMPRESARIAL" 
+            sx={{ 
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
               mb: 3,
-              lineHeight: 1.1
-            }}>
-              Automatización Inteligente para Empresas
-            </Typography>
+              fontSize: '0.9rem',
+              fontWeight: 600
+            }}
+          />
+          
+          <Typography variant="h1" sx={{
+            fontSize: { xs: '2.5rem', md: '3.5rem' },
+            fontWeight: 700,
+            mb: 3,
+            lineHeight: 1.1
+          }}>
+            Automatización Inteligente para Empresas
+          </Typography>
 
-            <Typography variant="h5" sx={{
-              opacity: 0.9,
-              mb: 4,
-              lineHeight: 1.6,
-              fontWeight: 400
-            }}>
-              La plataforma todo-en-uno que combina IA, analytics y automatización 
-              para transformar tu negocio digitalmente
-            </Typography>
+          <Typography variant="h5" sx={{
+            opacity: 0.9,
+            mb: 4,
+            lineHeight: 1.6,
+            fontWeight: 400
+          }}>
+            La plataforma todo-en-uno que combina IA, analytics y automatización 
+            para transformar tu negocio digitalmente
+          </Typography>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mb: 6 }}>
-              <Button 
-                variant="contained" 
-                size="large"
-                onClick={() => navigate('/register')}
-                startIcon={<RocketLaunch />}
-                sx={{
-                  background: 'white',
-                  color: '#2563eb',
-                  fontSize: '1.1rem',
-                  px: 4,
-                  py: 1.5,
-                  fontWeight: 600,
-                  '&:hover': {
-                    background: '#f8fafc',
-                    transform: 'translateY(-1px)'
-                  }
-                }}
-              >
-                Comenzar Gratis
-              </Button>
-              <Button 
-                variant="outlined" 
-                size="large"
-                startIcon={<PlayArrow />}
-                sx={{
-                  borderColor: 'white',
-                  color: 'white',
-                  fontSize: '1.1rem',
-                  px: 4,
-                  py: 1.5,
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.1)'
-                  }
-                }}
-              >
-                Ver Demo
-              </Button>
-            </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mb: 6 }}>
+            <Button 
+              variant="contained" 
+              size="large"
+              onClick={() => navigate('/register')}
+              startIcon={<RocketLaunch />}
+              sx={{
+                background: 'white',
+                color: '#2563eb',
+                fontSize: '1.1rem',
+                px: 4,
+                py: 1.5,
+                fontWeight: 600,
+                '&:hover': {
+                  background: '#f8fafc',
+                  transform: 'translateY(-1px)'
+                }
+              }}
+            >
+              Comenzar Gratis
+            </Button>
+            <Button 
+              variant="outlined" 
+              size="large"
+              startIcon={<PlayArrow />}
+              sx={{
+                borderColor: 'white',
+                color: 'white',
+                fontSize: '1.1rem',
+                px: 4,
+                py: 1.5,
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              Ver Demo
+            </Button>
+          </Stack>
 
-            {/* Estadísticas */}
-            <Grid container spacing={4} sx={{ mt: 8 }}>
-              <Grid item xs={6} md={3}>
+          {/* Estadísticas */}
+          <Grid container spacing={4} sx={{ mt: 8 }}>
+            {[['15K+', 'Empresas'], ['99.9%', 'Uptime'], ['4.8/5', 'Rating'], ['24/7', 'Soporte']].map(([number, label], index) => (
+              <Grid item xs={6} md={3} key={index}>
                 <Box>
-                  <Typography variant="h3" fontWeight={700}>15K+</Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>Empresas</Typography>
+                  <Typography variant="h3" fontWeight={700}>{number}</Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>{label}</Typography>
                 </Box>
               </Grid>
-              <Grid item xs={6} md={3}>
-                <Box>
-                  <Typography variant="h3" fontWeight={700}>99.9%</Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>Uptime</Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <Box>
-                  <Typography variant="h3" fontWeight={700}>4.8/5</Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>Rating</Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <Box>
-                  <Typography variant="h3" fontWeight={700}>24/7</Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>Soporte</Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        </Container>
+            ))}
+          </Grid>
+        </Box>
       </Box>
 
       {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
+      <Box sx={{ 
+        width: '100vw',
+        py: { xs: 8, md: 12 },
+        px: { xs: 2, sm: 3, md: 4 }
+      }}>
+        <Box sx={{ 
+          maxWidth: '1200px', 
+          mx: 'auto',
+          textAlign: 'center', 
+          mb: 8 
+        }}>
           <Typography variant="h2" fontWeight={700} sx={{ mb: 2 }}>
             Soluciones Empresariales
           </Typography>
@@ -216,39 +218,46 @@ const HomePage = () => {
           </Typography>
         </Box>
 
-        <Grid container spacing={4}>
-          {features.map((feature, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Card sx={{ 
-                height: '100%',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                  <Box sx={{ mb: 3 }}>
-                    {feature.icon}
-                  </Box>
-                  <Typography variant="h5" fontWeight={600} gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} md={6} key={index}>
+                <Card sx={{ 
+                  height: '100%',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                  }
+                }}>
+                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                    <Box sx={{ mb: 3 }}>
+                      {feature.icon}
+                    </Box>
+                    <Typography variant="h5" fontWeight={600} gutterBottom>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Box>
 
       {/* Benefits Section */}
-      <Box sx={{ background: '#f8fafc', py: { xs: 8, md: 12 } }}>
-        <Container maxWidth="lg">
+      <Box sx={{ 
+        width: '100vw',
+        background: '#f8fafc', 
+        py: { xs: 8, md: 12 },
+        px: { xs: 2, sm: 3, md: 4 }
+      }}>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
               <Typography variant="h2" fontWeight={700} sx={{ mb: 3 }}>
@@ -280,7 +289,7 @@ const HomePage = () => {
                     Comienza Hoy
                   </Typography>
                   <Typography variant="h6" sx={{ mb: 3, opacity: 0.9 }}>
-                 Prueba 14 días gratis
+                    Prueba 14 días gratis
                   </Typography>
                   <Button 
                     variant="contained" 
@@ -306,99 +315,111 @@ const HomePage = () => {
               </Card>
             </Grid>
           </Grid>
-        </Container>
+        </Box>
       </Box>
 
       {/* Testimonials Section */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography variant="h2" fontWeight={700} sx={{ mb: 2 }}>
-            Confiado por líderes del sector
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            Empresas que han transformado sus operaciones con nuestra plataforma
-          </Typography>
-        </Box>
+      <Box sx={{ 
+        width: '100vw',
+        py: { xs: 8, md: 12 },
+        px: { xs: 2, sm: 3, md: 4 }
+      }}>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Typography variant="h2" fontWeight={700} sx={{ mb: 2 }}>
+              Confiado por líderes del sector
+            </Typography>
+            <Typography variant="h6" color="text.secondary">
+              Empresas que han transformado sus operaciones con nuestra plataforma
+            </Typography>
+          </Box>
 
-        <Grid container spacing={4}>
-          {testimonials.map((testimonial, index) => (
-            <Grid item xs={12} md={4} key={index}>
-              <Card sx={{ 
-                height: '100%',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-              }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', mb: 3 }}>
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} sx={{ color: '#fbbf24', fontSize: 20 }} />
-                    ))}
-                  </Box>
-                  <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic' }}>
-                    "{testimonial.content}"
-                  </Typography>
-                  <Box>
-                    <Typography variant="h6" fontWeight={600}>
-                      {testimonial.name}
+          <Grid container spacing={4}>
+            {testimonials.map((testimonial, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card sx={{ 
+                  height: '100%',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Box sx={{ display: 'flex', mb: 3 }}>
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} sx={{ color: '#fbbf24', fontSize: 20 }} />
+                      ))}
+                    </Box>
+                    <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic' }}>
+                      "{testimonial.content}"
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {testimonial.position}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+                    <Box>
+                      <Typography variant="h6" fontWeight={600}>
+                        {testimonial.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {testimonial.position}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Box>
 
       {/* Final CTA */}
       <Box sx={{ 
+        width: '100vw',
         background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
         color: 'white',
-        py: { xs: 8, md: 12 }
+        py: { xs: 8, md: 12 },
+        px: { xs: 2, sm: 3, md: 4 }
       }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', maxWidth: '600px', mx: 'auto' }}>
-            <Typography variant="h2" fontWeight={700} sx={{ mb: 2 }}>
-              ¿Listo para comenzar?
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 4, opacity: 0.8 }}>
-              Únete a miles de empresas que ya automatizan sus operaciones
-            </Typography>
-            <Button 
-              variant="contained" 
-              size="large"
-              onClick={() => navigate('/register')}
-              startIcon={<RocketLaunch />}
-              sx={{
-                background: '#3b82f6',
-                fontSize: '1.1rem',
-                px: 6,
-                py: 1.5,
-                fontWeight: 600,
-                '&:hover': {
-                  background: '#2563eb'
-                }
-              }}
-            >
-              Comenzar Gratis
-            </Button>
-            <Typography variant="body2" sx={{ mt: 2, opacity: 0.7 }}>
-              Prueba 14 días • Sin compromiso • Soporte incluido
-            </Typography>
-          </Box>
-        </Container>
+        <Box sx={{ 
+          maxWidth: '1200px', 
+          mx: 'auto',
+          textAlign: 'center' 
+        }}>
+          <Typography variant="h2" fontWeight={700} sx={{ mb: 2 }}>
+            ¿Listo para comenzar?
+          </Typography>
+          <Typography variant="h6" sx={{ mb: 4, opacity: 0.8 }}>
+            Únete a miles de empresas que ya automatizan sus operaciones
+          </Typography>
+          <Button 
+            variant="contained" 
+            size="large"
+            onClick={() => navigate('/register')}
+            startIcon={<RocketLaunch />}
+            sx={{
+              background: '#3b82f6',
+              fontSize: '1.1rem',
+              px: 6,
+              py: 1.5,
+              fontWeight: 600,
+              '&:hover': {
+                background: '#2563eb'
+              }
+            }}
+          >
+            Comenzar Gratis
+          </Button>
+          <Typography variant="body2" sx={{ mt: 2, opacity: 0.7 }}>
+            Prueba 14 días • Sin compromiso • Soporte incluido
+          </Typography>
+        </Box>
       </Box>
 
       {/* Footer */}
       <Box sx={{ 
+        width: '100vw',
         background: '#0f172a',
         color: 'white',
         py: 6,
+        px: { xs: 2, sm: 3, md: 4 },
         borderTop: '1px solid rgba(255,255,255,0.1)'
       }}>
-        <Container maxWidth="lg">
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -408,19 +429,18 @@ const HomePage = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                © 2025 UniversalBot. Todos los derechos reservados.
-                Soluciones empresariales de automatización e IA.
+                © 2024 UniversalBot. Todos los derechos reservados.
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <Box sx={{ textAlign: { md: 'right' } }}>
                 <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                  contact@universalbot.com • +1 (555) 123-4567
+                  contact@universalbot.com
                 </Typography>
               </Box>
             </Grid>
           </Grid>
-        </Container>
+        </Box>
       </Box>
     </Box>
   );
