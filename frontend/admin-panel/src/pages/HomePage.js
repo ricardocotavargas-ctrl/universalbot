@@ -7,26 +7,15 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Dashboard,
-  Business,
-  People,
-  Analytics,
-  Chat,
-  TrendingUp,
-  Report,
-  SmartToy,
-  Settings,
   RocketLaunch,
-  Security,
+  Psychology,
   AutoGraph,
   IntegrationInstructions,
-  Psychology,
-  WorkspacePremium,
-  CheckCircle,
+  Security,
   PlayArrow,
-  GitHub,
   Twitter,
-  LinkedIn
+  LinkedIn,
+  GitHub
 } from '@mui/icons-material';
 import { keyframes } from '@emotion/react';
 
@@ -256,7 +245,7 @@ const HomePage = () => {
               </Box>
             </Grid>
           </Grid>
-        </Container>
+        </Box>
 
         {/* Hero Section */}
         <Box sx={{ 
