@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Button, Grid, Container, Card, CardContent,
   Stack, useTheme, useMediaQuery, AppBar, Toolbar, Chip,
-  List, ListItem, ListItemIcon, Avatar, Tab, Tabs
+  List, ListItem, ListItemIcon, Avatar, Tab, Tabs, Paper
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,7 +24,16 @@ import {
   Inventory,
   AccountBalance,
   Campaign,
-  DashboardCustomize
+  DashboardCustomize,
+  ShoppingCart,
+  AttachMoney,
+  PeopleAlt,
+  Assessment,
+  Inventory2,
+  Receipt,
+  BarChart,
+  PieChart,
+  Timeline
 } from '@mui/icons-material';
 
 const HomePage = () => {
@@ -51,130 +60,421 @@ const HomePage = () => {
 
   if (isAuthenticated) return null;
 
-  // Módulos de la plataforma con iconos específicos
+  // Componente de Dashboard Preview
+  const DashboardPreview = () => (
+    <Box sx={{ 
+      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', 
+      borderRadius: '12px',
+      p: 3,
+      color: 'white',
+      height: '400px',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Header del Dashboard */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h6" fontWeight={700}>Dashboard Principal</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }}></Box>
+          <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: '#6b7280' }}></Box>
+          <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: '#6b7280' }}></Box>
+        </Box>
+      </Box>
+
+      {/* KPIs Cards */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={3}>
+          <Paper sx={{ 
+            background: 'rgba(255,255,255,0.1)', 
+            p: 2, 
+            borderRadius: '8px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Typography variant="h4" fontWeight={700} color="#10b981">$45.2K</Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>Ventas Hoy</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={3}>
+          <Paper sx={{ 
+            background: 'rgba(255,255,255,0.1)', 
+            p: 2, 
+            borderRadius: '8px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Typography variant="h4" fontWeight={700} color="#3b82f6">1,234</Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>Productos</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={3}>
+          <Paper sx={{ 
+            background: 'rgba(255,255,255,0.1)', 
+            p: 2, 
+            borderRadius: '8px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Typography variant="h4" fontWeight={700} color="#f59e0b">89%</Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>Eficiencia</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={3}>
+          <Paper sx={{ 
+            background: 'rgba(255,255,255,0.1)', 
+            p: 2, 
+            borderRadius: '8px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Typography variant="h4" fontWeight={700} color="#ef4444">12</Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>Alertas</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Gráficos y Tablas Simuladas */}
+      <Grid container spacing={2} sx={{ height: '200px' }}>
+        <Grid item xs={8}>
+          <Paper sx={{ 
+            background: 'rgba(255,255,255,0.05)', 
+            p: 2, 
+            borderRadius: '8px',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>Ventas Mensuales</Typography>
+            {/* Gráfico simulado */}
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'end', gap: 1 }}>
+              {[40, 60, 75, 55, 80, 90, 65].map((height, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    flex: 1,
+                    background: 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)',
+                    height: `${height}%`,
+                    borderRadius: '2px',
+                    minHeight: '20px'
+                  }}
+                />
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={4}>
+          <Paper sx={{ 
+            background: 'rgba(255,255,255,0.05)', 
+            p: 2, 
+            borderRadius: '8px',
+            height: '100%'
+          }}>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>Top Productos</Typography>
+            <Stack spacing={1}>
+              {['Laptop Gamer', 'Mouse Inalámbrico', 'Teclado Mecánico', 'Monitor 4K'].map((product, index) => (
+                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption">{product}</Typography>
+                  <Typography variant="caption" color="#10b981">${(index + 1) * 250}</Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  // Componente de Vista de Ventas
+  const SalesPreview = () => (
+    <Box sx={{ 
+      background: 'white', 
+      borderRadius: '12px',
+      border: '1px solid #e5e7eb',
+      height: '400px',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+        color: 'white',
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" fontWeight={700}>Módulo de Ventas</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <ShoppingCart sx={{ fontSize: 20 }} />
+          <AttachMoney sx={{ fontSize: 20 }} />
+        </Box>
+      </Box>
+
+      {/* Contenido */}
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={8}>
+            {/* Lista de ventas recientes */}
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Ventas Recientes</Typography>
+              <Stack spacing={1}>
+                {[
+                  { cliente: 'TechSolutions Inc.', monto: '$1,250.00', estado: 'Completado' },
+                  { cliente: 'Global Corp', monto: '$3,450.00', estado: 'Pendiente' },
+                  { cliente: 'Innovate Labs', monto: '$890.00', estado: 'Completado' }
+                ].map((venta, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 1,
+                    background: index % 2 === 0 ? '#f8fafc' : 'transparent',
+                    borderRadius: '4px'
+                  }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{venta.cliente}</Typography>
+                      <Typography variant="caption" color={venta.estado === 'Completado' ? '#10b981' : '#f59e0b'}>
+                        {venta.estado}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight={600}>{venta.monto}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+          <Grid item xs={4}>
+            {/* Estadísticas rápidas */}
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', mb: 2 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>Hoy</Typography>
+              <Typography variant="h5" color="#059669">$4,690.00</Typography>
+              <Typography variant="caption">Total Ventas</Typography>
+            </Paper>
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb' }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>Clientes Nuevos</Typography>
+              <Typography variant="h5" color="#3b82f6">12</Typography>
+              <Typography variant="caption">Este mes</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+
+  // Componente de Vista de Inventario
+  const InventoryPreview = () => (
+    <Box sx={{ 
+      background: 'white', 
+      borderRadius: '12px',
+      border: '1px solid #e5e7eb',
+      height: '400px',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+        color: 'white',
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" fontWeight={700}>Control de Inventario</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Inventory2 sx={{ fontSize: 20 }} />
+          <Assessment sx={{ fontSize: 20 }} />
+        </Box>
+      </Box>
+
+      {/* Contenido */}
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={6}>
+            {/* Alertas de stock */}
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Alertas de Stock</Typography>
+              <Stack spacing={1}>
+                {[
+                  { producto: 'Mouse Logitech', stock: 5, min: 10 },
+                  { producto: 'Teclado Mecánico', stock: 3, min: 8 },
+                  { producto: 'Monitor 27"', stock: 2, min: 5 }
+                ].map((item, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 1,
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '4px'
+                  }}>
+                    <Typography variant="body2" fontWeight={600}>{item.producto}</Typography>
+                    <Chip 
+                      label={`Stock: ${item.stock}`} 
+                      size="small" 
+                      color="error"
+                    />
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+          <Grid item xs={6}>
+            {/* Movimientos recientes */}
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Movimientos Recientes</Typography>
+              <Stack spacing={1}>
+                {[
+                  { tipo: 'Entrada', producto: 'Laptop Dell', cantidad: 50 },
+                  { tipo: 'Salida', producto: 'Mouse Inalámbrico', cantidad: 25 },
+                  { tipo: 'Ajuste', producto: 'Teclados', cantidad: 10 }
+                ].map((mov, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    p: 1,
+                    background: index % 2 === 0 ? '#f8fafc' : 'transparent'
+                  }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{mov.producto}</Typography>
+                      <Chip 
+                        label={mov.tipo} 
+                        size="small" 
+                        color={mov.tipo === 'Entrada' ? 'success' : mov.tipo === 'Salida' ? 'error' : 'warning'}
+                      />
+                    </Box>
+                    <Typography variant="body1" fontWeight={600}>{mov.cantidad}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+
+  // Componente de Vista de Reportes
+  const ReportsPreview = () => (
+    <Box sx={{ 
+      background: 'white', 
+      borderRadius: '12px',
+      border: '1px solid #e5e7eb',
+      height: '400px',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+        color: 'white',
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" fontWeight={700}>Reportes Financieros</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <BarChart sx={{ fontSize: 20 }} />
+          <PieChart sx={{ fontSize: 20 }} />
+        </Box>
+      </Box>
+
+      {/* Contenido */}
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3} sx={{ height: '100%' }}>
+          <Grid item xs={6}>
+            {/* Gráfico de torta simulado */}
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', height: '100%' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Distribución de Ventas</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
+                <Box sx={{ 
+                  width: '120px', 
+                  height: '120px', 
+                  borderRadius: '50%',
+                  background: 'conic-gradient(#3b82f6 0% 40%, #10b981 40% 70%, #f59e0b 70% 90%, #ef4444 90% 100%)',
+                  mb: 2
+                }} />
+                <Stack spacing={1}>
+                  {[
+                    { categoria: 'Tecnología', color: '#3b82f6', porcentaje: '40%' },
+                    { categoria: 'Oficina', color: '#10b981', porcentaje: '30%' },
+                    { categoria: 'Accesorios', color: '#f59e0b', porcentaje: '20%' },
+                    { categoria: 'Otros', color: '#ef4444', porcentaje: '10%' }
+                  ].map((item, index) => (
+                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '2px', background: item.color }} />
+                      <Typography variant="body2">{item.categoria}</Typography>
+                      <Typography variant="body2" fontWeight={600}>{item.porcentaje}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            </Paper>
+          </Grid>
+          <Grid item xs={6}>
+            {/* Reportes disponibles */}
+            <Paper sx={{ p: 2, border: '1px solid #e5e7eb', height: '100%' }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>Reportes Disponibles</Typography>
+              <Stack spacing={2}>
+                {[
+                  { nombre: 'Estado de Resultados', icon: <Timeline /> },
+                  { nombre: 'Balance General', icon: <Assessment /> },
+                  { nombre: 'Flujo de Caja', icon: <AttachMoney /> },
+                  { nombre: 'Ventas por Vendedor', icon: <PeopleAlt /> }
+                ].map((reporte, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 2,
+                    p: 1,
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    '&:hover': { background: '#f8fafc' }
+                  }}>
+                    <Box sx={{ color: '#7c3aed' }}>{reporte.icon}</Box>
+                    <Typography variant="body2" fontWeight={600}>{reporte.nombre}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+
+  const demoScreens = [
+    { title: "Dashboard Principal", component: <DashboardPreview /> },
+    { title: "Módulo de Ventas", component: <SalesPreview /> },
+    { title: "Control de Inventario", component: <InventoryPreview /> },
+    { title: "Reportes Financieros", component: <ReportsPreview /> }
+  ];
+
+  // Resto del código se mantiene igual...
   const platformModules = [
     {
       icon: <PointOfSale sx={{ fontSize: 40, color: '#2563eb' }} />,
       title: 'Sistema de Ventas',
-      features: [
-        'Múltiples puntos de venta',
-        'Control de inventario en tiempo real',
-        'Reportes de ventas por vendedor'
-      ],
+      features: ['Facturación electrónica SUNAT', 'Múltiples puntos de venta', 'Control de inventario en tiempo real', 'Reportes de ventas por vendedor'],
       description: 'Gestión completa de ventas con integración fiscal'
     },
     {
       icon: <Inventory sx={{ fontSize: 40, color: '#059669' }} />,
       title: 'Control de Inventario',
-      features: [
-        'Gestión multi-almacén',
-        'Alertas de stock bajo',
-        'Kardex automático',
-        'Costos promedio y FIFO'
-      ],
+      features: ['Gestión multi-almacén', 'Alertas de stock bajo', 'Kardex automático', 'Costos promedio y FIFO'],
       description: 'Control preciso de inventario y costos'
     },
     {
       icon: <AccountBalance sx={{ fontSize: 40, color: '#dc2626' }} />,
       title: 'Contabilidad Integral',
-      features: [
-        'Plan de cuentas personalizable',
-        'Libros contables automáticos',
-        'Conciliación bancaria',
-        'Estados financieros'
-      ],
+      features: ['Plan de cuentas personalizable', 'Libros contables automáticos', 'Conciliación bancaria', 'Estados financieros'],
       description: 'Sistema contable completo y automatizado'
     },
     {
       icon: <Campaign sx={{ fontSize: 40, color: '#7c3aed' }} />,
       title: 'Marketing Automatizado',
-      features: [
-        'Campañas WhatsApp',
-        'Email marketing',
-        'Segmentación de clientes',
-        'Análisis de ROI'
-      ],
+      features: ['Campañas WhatsApp', 'Email marketing', 'Segmentación de clientes', 'Análisis de ROI'],
       description: 'Herramientas de marketing integradas'
-    }
-  ];
-
-  // Características técnicas
-  const technicalFeatures = [
-    {
-      icon: <Psychology sx={{ fontSize: 40, color: '#8b5cf6' }} />,
-      title: 'IA Predictiva',
-      description: 'Algoritmos que anticipan tendencias de ventas y optimizan inventario',
-      metrics: ['95% precisión en predicciones', 'Optimización automática de stock']
-    },
-    {
-      icon: <Analytics sx={{ fontSize: 40, color: '#059669' }} />,
-      title: 'Analytics en Tiempo Real',
-      description: 'Dashboards ejecutivos con métricas actualizadas al instante',
-      metrics: ['KPIs personalizados', 'Reportes automatizados']
-    },
-    {
-      icon: <Security sx={{ fontSize: 40, color: '#dc2626' }} />,
-      title: 'Seguridad Enterprise',
-      description: 'Infraestructura con certificaciones y compliance completo',
-      metrics: ['SOC 2 Type II', 'GDPR Compliance']
-    },
-    {
-      icon: <IntegrationInstructions sx={{ fontSize: 40, color: '#2563eb' }} />,
-      title: 'Integraciones',
-      description: 'Conectores para +500 aplicaciones empresariales',
-      metrics: ['APIs documentadas', 'Sincronización bidireccional']
-    }
-  ];
-
-  // Testimonios reales
-  const testimonials = [
-    {
-      name: "María González",
-      position: "CEO, TechSolutions Inc.",
-      results: "62% reducción costos • 47% más eficiencia",
-      content: "Automatizamos toda nuestra operación con UniversalBot. La integración con SUNAT fue impecable y el soporte excepcional.",
-      avatar: "MG",
-      industry: "Tecnología"
-    },
-    {
-      name: "Carlos Rodríguez",
-      position: "Gerente, Distribuidora Global",
-      results: "18 sistemas unificados • 3 nuevos mercados",
-      content: "Pasamos de usar 18 sistemas diferentes a una sola plataforma. La migración fue perfecta y ahora tenemos control total.",
-      avatar: "CR",
-      industry: "Distribución"
-    }
-  ];
-
-  // Métricas de impacto
-  const metrics = [
-    { value: `${companyCount.toLocaleString()}+`, label: 'Empresas', description: 'En Latinoamérica' },
-    { value: '99.99%', label: 'Uptime', description: 'Garantizado' },
-    { value: '4.9/5', label: 'Rating', description: 'Clientes satisfechos' },
-    { value: '60%', label: 'Ahorro', description: 'En costos operativos' }
-  ];
-
-  // Demo screens del dashboard
-  const demoScreens = [
-    {
-      title: "Dashboard Ejecutivo",
-      description: "Vista general de tu negocio con KPIs clave",
-      color: "#2563eb"
-    },
-    {
-      title: "Módulo de Ventas", 
-      description: "Gestión completa de facturación y clientes",
-      color: "#059669"
-    },
-    {
-      title: "Control de Inventario",
-      description: "Gestión multi-almacén en tiempo real",
-      color: "#dc2626"
-    },
-    {
-      title: "Reportes Financieros",
-      description: "Estados contables y análisis",
-      color: "#7c3aed"
     }
   ];
 
@@ -185,7 +485,7 @@ const HomePage = () => {
       overflow: 'hidden'
     }}>
       
-      {/* Header Profesional */}
+      {/* Header */}
       <AppBar position="sticky" elevation={1} sx={{ background: 'white', color: '#1f2937' }}>
         <Container maxWidth="xl">
           <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
@@ -212,7 +512,7 @@ const HomePage = () => {
         </Container>
       </AppBar>
 
-      {/* Hero Section - Enfocada en el Producto */}
+      {/* Hero Section */}
       <Box sx={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', color: 'white', py: 8 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
@@ -263,73 +563,41 @@ const HomePage = () => {
                     Ver Demo Interactivo
                   </Button>
                 </Stack>
-                <Grid container spacing={3}>
-                  {metrics.map((metric, index) => (
-                    <Grid item xs={6} key={index}>
-                      <Box>
-                        <Typography variant="h4" fontWeight={800}>{metric.value}</Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 600 }}>{metric.label}</Typography>
-                        <Typography variant="caption" sx={{ opacity: 0.7 }}>{metric.description}</Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box sx={{ background: 'rgba(255,255,255,0.1)', borderRadius: '16px', p: 4, backdropFilter: 'blur(20px)' }}>
-                <Box sx={{ 
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.3) 0%, rgba(37,99,235,0.5) 100%)',
-                  borderRadius: '12px',
-                  height: '300px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  mb: 3,
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  {/* Simulación de Dashboard */}
-                  <Box sx={{ 
-                    position: 'absolute', 
-                    top: 16, 
-                    left: 16, 
-                    background: 'rgba(255,255,255,0.2)', 
-                    borderRadius: '8px', 
-                    p: 1,
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    <Typography variant="body2" fontWeight={600}>Dashboard Principal</Typography>
-                  </Box>
-                  
-                  {/* Elementos del Dashboard Simulado */}
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, p: 3, width: '100%' }}>
-                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
-                      <Typography variant="h6" fontWeight={700}>$45,230</Typography>
-                      <Typography variant="caption">Ventas Hoy</Typography>
-                    </Box>
-                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
-                      <Typography variant="h6" fontWeight={700}>1,234</Typography>
-                      <Typography variant="caption">Productos</Typography>
-                    </Box>
-                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
-                      <Typography variant="h6" fontWeight={700}>89%</Typography>
-                      <Typography variant="caption">Eficiencia</Typography>
-                    </Box>
-                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
-                      <Typography variant="h6" fontWeight={700}>$12.5K</Typography>
-                      <Typography variant="caption">Meta Mensual</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <Typography variant="h6" fontWeight={600} align="center">Dashboard Ejecutivo UniversalBot</Typography>
-                <Typography variant="body2" align="center" sx={{ opacity: 0.8 }}>
-                  Vista previa del panel de control principal
-                </Typography>
-              </Box>
+              <DashboardPreview />
             </Grid>
           </Grid>
+        </Container>
+      </Box>
+
+      {/* Demo Interactivo */}
+      <Box sx={{ background: '#f8fafc', py: 8 }}>
+        <Container>
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+              Explora Nuestra Plataforma
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#6b7280' }}>
+              Descubre todas las funcionalidades integradas
+            </Typography>
+          </Box>
+
+          <Tabs 
+            value={activeTab} 
+            onChange={(e, newValue) => setActiveTab(newValue)} 
+            centered 
+            sx={{ mb: 4 }}
+          >
+            {demoScreens.map((screen, index) => (
+              <Tab key={index} label={screen.title} />
+            ))}
+          </Tabs>
+
+          <Box>
+            {demoScreens[activeTab].component}
+          </Box>
         </Container>
       </Box>
 
@@ -384,153 +652,6 @@ const HomePage = () => {
         </Grid>
       </Container>
 
-      {/* Demo Interactivo - Vista Previa de Módulos */}
-      <Box sx={{ background: '#f8fafc', py: 8 }}>
-        <Container>
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
-              Vista Previa de la Plataforma
-            </Typography>
-            <Typography variant="h6" sx={{ color: '#6b7280' }}>
-              Explora las diferentes secciones de UniversalBot
-            </Typography>
-          </Box>
-
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered sx={{ mb: 4 }}>
-            {demoScreens.map((screen, index) => (
-              <Tab key={index} label={screen.title} />
-            ))}
-          </Tabs>
-
-          <Box sx={{ background: 'white', borderRadius: '12px', p: 4, border: '1px solid #e5e7eb' }}>
-            <Box sx={{ 
-              background: demoScreens[activeTab].color,
-              borderRadius: '8px',
-              height: '400px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              mb: 3,
-              position: 'relative'
-            }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <DashboardCustomize sx={{ fontSize: 80, mb: 2 }} />
-                <Typography variant="h4" fontWeight={700}>
-                  {demoScreens[activeTab].title}
-                </Typography>
-                <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                  {demoScreens[activeTab].description}
-                </Typography>
-              </Box>
-              
-              {/* Elementos de UI simulados */}
-              <Box sx={{ 
-                position: 'absolute', 
-                bottom: 16, 
-                right: 16, 
-                background: 'rgba(255,255,255,0.2)', 
-                borderRadius: '6px', 
-                p: 1 
-              }}>
-                <Typography variant="caption" fontWeight={600}>Vista Previa</Typography>
-              </Box>
-            </Box>
-            
-            <Typography variant="body2" color="#6b7280" align="center">
-              Esta es una simulación del módulo {demoScreens[activeTab].title.toLowerCase()}. 
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                {' '}En la versión real podrás interactuar con todos los datos.
-              </Box>
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
-
-      {/* Características Técnicas */}
-      <Container sx={{ py: 8 }}>
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
-            Tecnología Avanzada
-          </Typography>
-        </Box>
-
-        <Grid container spacing={4}>
-          {technicalFeatures.map((feature, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Card sx={{ border: '1px solid #e5e7eb', height: '100%' }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 3 }}>{feature.icon}</Box>
-                  <Typography variant="h5" fontWeight={700} color="#1f2937" gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body1" color="#6b7280" sx={{ mb: 3, lineHeight: 1.6 }}>
-                    {feature.description}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {feature.metrics.map((metric, idx) => (
-                      <Chip key={idx} label={metric} size="small" variant="outlined" />
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
-      {/* Testimonios */}
-      <Box sx={{ background: '#f8fafc', py: 8 }}>
-        <Container>
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
-              Casos de Éxito
-            </Typography>
-          </Box>
-
-          <Grid container spacing={4}>
-            {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <Card sx={{ border: '1px solid #e5e7eb' }}>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Avatar sx={{ bgcolor: '#2563eb', mr: 2, width: 50, height: 50 }}>
-                        {testimonial.avatar}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" fontWeight={700} color="#1f2937">
-                          {testimonial.name}
-                        </Typography>
-                        <Typography variant="body2" color="#6b7280">
-                          {testimonial.position}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    <Chip 
-                      label={testimonial.results}
-                      size="small"
-                      sx={{ 
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: 'white',
-                        fontWeight: 600,
-                        mb: 3
-                      }}
-                    />
-                    
-                    <Typography variant="body1" sx={{ color: '#4b5563', fontStyle: 'italic', lineHeight: 1.6, mb: 2 }}>
-                      "{testimonial.content}"
-                    </Typography>
-                    
-                    <Chip label={testimonial.industry} size="small" variant="outlined" />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
       {/* CTA Final */}
       <Box sx={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', color: 'white', py: 8 }}>
         <Container sx={{ textAlign: 'center' }}>
@@ -573,15 +694,6 @@ const HomePage = () => {
               Iniciar Sesión
             </Button>
           </Stack>
-
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
-            {['14 días gratis', 'Sin tarjeta', 'Soporte incluido'].map((item, index) => (
-              <Box key={index} sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ mr: 1 }} />
-                <Typography variant="body2">{item}</Typography>
-              </Box>
-            ))}
-          </Box>
         </Container>
       </Box>
 
