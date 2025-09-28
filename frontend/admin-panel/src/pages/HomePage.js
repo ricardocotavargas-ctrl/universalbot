@@ -369,10 +369,10 @@ const HomePage = () => {
       position: 'relative'
     }}>
       
-      {/* ChatBot para lead generation */}
+      {/* ChatBot para lead generation 
       <Suspense fallback={<div />}>
         <ChatBot />
-      </Suspense>
+      </Suspense>*/}
 
       {/* Header Profesional */}
       <AppBar 
