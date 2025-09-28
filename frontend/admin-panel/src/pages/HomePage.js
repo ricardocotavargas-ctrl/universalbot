@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { 
   Box, Typography, Button, Grid, Container, Card, CardContent,
   Stack, useTheme, useMediaQuery, AppBar, Toolbar, Chip,
@@ -32,6 +32,10 @@ import {
   Language
 } from '@mui/icons-material';
 
+// Lazy load components para mejor performance
+const AnimatedCounter = lazy(() => import('../components/AnimatedCounter'));
+ // const ChatBot = lazy(() => import('../components/ChatBot')); //
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -49,6 +53,14 @@ const HomePage = () => {
     if (isAuthenticated) {
       navigate('/dashboard');
       return;
+    }
+
+    // Analytics
+    if (window.gtag) {
+      window.gtag('event', 'page_view', {
+        page_title: 'HomePage - UniversalBot',
+        page_location: window.location.href
+      });
     }
 
     // Simular carga
@@ -91,6 +103,14 @@ const HomePage = () => {
     const handleMouseLeave = (e) => {
       if (e.clientY < 0 && timeOnPage > 10 && !showExitPopup) {
         setShowExitPopup(true);
+        
+        // Track exit intent
+        if (window.gtag) {
+          window.gtag('event', 'exit_intent', {
+            event_category: 'Engagement',
+            event_label: 'Homepage Exit'
+          });
+        }
       }
     };
 
@@ -102,13 +122,24 @@ const HomePage = () => {
     return null;
   }
 
+  // Track conversion events
+  const trackConversion = (action, label) => {
+    if (window.gtag) {
+      window.gtag('event', action, {
+        event_category: 'Conversion',
+        event_label: label
+      });
+    }
+  };
+
   const handleSignupClick = () => {
+    trackConversion('generate_lead', 'Signup Button - Header');
     navigate('/register');
   };
 
   const handleDemoClick = () => {
+    trackConversion('view_item', 'Demo Video');
     // Aquí iría la lógica para abrir el demo
-    console.log('Abrir demo');
   };
 
   // Datos optimizados
@@ -192,7 +223,7 @@ const HomePage = () => {
     },
     {
       question: "¿Ofrecen prueba gratuita sin compromiso?",
-      answer: "Sí, ofrecemos 14 días de prueba gratuita completa con todas las funcionalidades enterprise. No requiere tarjeta de crédito y incluye soporte técnico durante el periodo de prueba. Cancelación instantánea sin penalidades."
+      answer: "Sí, ofrecemos 7 días de prueba gratuita completa con todas las funcionalidades enterprise. No requiere tarjeta de crédito y incluye soporte técnico durante el periodo de prueba. Cancelación instantánea sin penalidades."
     }
   ];
 
@@ -311,6 +342,7 @@ const HomePage = () => {
             variant="contained"
             size="large"
             onClick={() => {
+              trackConversion('generate_lead', 'Exit Popup - Demo');
               setShowExitPopup(false);
               handleDemoClick();
             }}
@@ -337,6 +369,11 @@ const HomePage = () => {
       position: 'relative'
     }}>
       
+      {/* ChatBot para lead generation */}
+      <Suspense fallback={<div />}>
+        <ChatBot />
+      </Suspense>
+
       {/* Header Profesional */}
       <AppBar 
         position="sticky"
@@ -395,7 +432,10 @@ const HomePage = () => {
               ))}
               
               <Button 
-                onClick={() => navigate('/login')}
+                onClick={() => {
+                  trackConversion('login_click', 'Header Login');
+                  navigate('/login');
+                }}
                 sx={{ 
                   color: '#374151',
                   fontWeight: 600,
@@ -985,7 +1025,10 @@ const HomePage = () => {
             <Button
               variant="outlined"
               size="large"
-              onClick={() => navigate('/login')}
+              onClick={() => {
+                trackConversion('login_click', 'Final CTA Login');
+                navigate('/login');
+              }}
               sx={{
                 borderColor: 'white',
                 color: 'white',
@@ -1098,12 +1141,10 @@ const HomePage = () => {
               <Typography variant="h6" fontWeight={600} gutterBottom>Contacto</Typography>
               <Stack spacing={1} sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ opacity: 0.7 }}>📧 contacto@universalbot.com</Typography>
-                <Typography variant="body2" sx={{ opacity: 0.7 }}>📞 +1 (555) 123-4567</Typography>
-                <Typography variant="body2" sx={{ opacity: 0.7 }}>🕒 Soporte 24/7/365</Typography>
-                <Typography variant="body2" sx={{ opacity: 0.7 }}>🏢 Oficinas en 5 países</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.7 }}>🕒 Soporte 24/7</Typography>
               </Stack>
               
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <Chip 
                   label="SOC 2 Certified" 
                   size="small" 
