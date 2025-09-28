@@ -1,47 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Button, Grid, Container, Card, CardContent,
-  Stack, Chip, Avatar, useTheme, useMediaQuery, alpha,
-  Fade, Slide, Zoom, Grow
+  Stack, useTheme, useMediaQuery, alpha
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  RocketLaunch,
-  Shield,
-  TrendingUp,
-  IntegrationInstructions,
-  Analytics,
-  People,
-  CheckCircle,
-  PlayCircle,
-  Star,
-  ArrowForward,
-  AutoGraph,
-  Psychology,
   Security,
-  WorkspacePremium,
-  Bolt,
+  Analytics,
+  Speed,
+  IntegrationInstructions,
   Cloud,
-  DataArray
+  SupportAgent,
+  CheckCircle,
+  PlayArrow,
+  Business,
+  TrendingUp,
+  People,
+  Shield
 } from '@mui/icons-material';
-
-// Animaciones personalizadas
-const floatAnimation = {
-  animation: 'float 6s ease-in-out infinite',
-  '@keyframes float': {
-    '0%, 100%': { transform: 'translateY(0px)' },
-    '50%': { transform: 'translateY(-20px)' }
-  }
-};
-
-const glowAnimation = {
-  animation: 'glow 2s ease-in-out infinite alternate',
-  '@keyframes glow': {
-    '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
-    '100%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.6)' }
-  }
-};
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -55,722 +32,434 @@ const HomePage = () => {
       navigate('/dashboard');
       return;
     }
-    setTimeout(() => setLoaded(true), 500);
+    setTimeout(() => setLoaded(true), 300);
   }, [isAuthenticated, navigate]);
 
   if (isAuthenticated) {
     return null;
   }
 
-  // Características ultra premium
+  // Características empresariales
   const features = [
     {
-      icon: <Psychology sx={{ fontSize: 48 }} />,
-      title: 'IA Predictiva Avanzada',
-      description: 'Algoritmos de machine learning que anticipan tendencias y optimizan operaciones',
-      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
-      delay: 0
+      icon: <Security sx={{ fontSize: 40, color: '#2563eb' }} />,
+      title: 'Seguridad Enterprise',
+      description: 'Certificación SOC 2, encriptación end-to-end y compliance completo'
     },
     {
-      icon: <AutoGraph sx={{ fontSize: 48 }} />,
+      icon: <Analytics sx={{ fontSize: 40, color: '#059669' }} />,
       title: 'Analytics en Tiempo Real',
-      description: 'Dashboards interactivos con visualización de datos avanzada',
-      gradient: 'linear-gradient(135deg, #06d6a0 0%, #118ab2 100%)',
-      delay: 200
+      description: 'Dashboards ejecutivos con KPIs y métricas de negocio'
     },
     {
-      icon: <Security sx={{ fontSize: 48 }} />,
-      title: 'Seguridad Nivel Enterprise',
-      description: 'Encriptación AES-256, compliance GDPR y auditorías continuas',
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #dc2626 100%)',
-      delay: 400
+      icon: <Speed sx={{ fontSize: 40, color: '#dc2626' }} />,
+      title: 'Alta Performance',
+      description: 'Infraestructura escalable con 99.99% uptime garantizado'
     },
     {
-      icon: <IntegrationInstructions sx={{ fontSize: 48 }} />,
-      title: 'Integraciones Ilimitadas',
-      description: 'API-first architecture con +100 integraciones pre-built',
-      gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-      delay: 600
+      icon: <IntegrationInstructions sx={{ fontSize: 40, color: '#7c3aed' }} />,
+      title: 'Integraciones',
+      description: 'Conectores pre-built para ERP, CRM y herramientas empresariales'
     }
   ];
 
-  // Testimonios de élite
-  const testimonials = [
-    {
-      name: 'María González',
-      company: 'TechSolutions Inc.',
-      role: 'CEO',
-      content: 'La plataforma revolucionó nuestro negocio. Incrementamos eficiencia en 400% y redujimos costos en 60%.',
-      avatar: 'MG',
-      rating: 5,
-      image: '/api/placeholder/80/80'
-    },
-    {
-      name: 'Carlos Rodríguez',
-      company: 'Global Enterprises',
-      role: 'Director de Operaciones',
-      content: 'Implementación impecable y soporte 24/7. La mejor inversión tecnológica que hemos hecho.',
-      avatar: 'CR',
-      rating: 5,
-      image: '/api/placeholder/80/80'
-    },
-    {
-      name: 'Ana Martínez',
-      company: 'InnovateCorp',
-      role: 'CTO',
-      content: 'La escalabilidad y robustez del sistema superó todas nuestras expectativas. Simply outstanding.',
-      avatar: 'AM',
-      rating: 5,
-      image: '/api/placeholder/80/80'
-    }
-  ];
-
-  // Estadísticas impresionantes
-  const stats = [
-    { value: '15,000+', label: 'Empresas de Élite', icon: <WorkspacePremium /> },
-    { value: '99.99%', label: 'Uptime Garantizado', icon: <Cloud /> },
-    { value: '4.9/5', label: 'Rating Global', icon: <Star /> },
-    { value: '3.2x', label: 'ROI Promedio', icon: <TrendingUp /> }
-  ];
-
-  // Empresas que confían
-  const trustedBy = [
-    { name: 'Microsoft', logo: 'MS' },
-    { name: 'Google', logo: 'GG' },
-    { name: 'Amazon', logo: 'AZ' },
-    { name: 'Tesla', logo: 'TS' },
-    { name: 'Netflix', logo: 'NF' }
+  // Beneficios claros
+  const benefits = [
+    'Reducción de costos operativos hasta 60%',
+    'Incremento de productividad del equipo',
+    'Toma de decisiones basada en datos reales',
+    'Escalabilidad ilimitada',
+    'Soporte técnico dedicado 24/7',
+    'Implementación en menos de 48 horas'
   ];
 
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2d2d2d 100%)',
-      overflow: 'hidden',
-      position: 'relative'
+      background: '#ffffff',
+      overflow: 'hidden'
     }}>
       
-      {/* Efectos de fondo ultra premium */}
+      {/* Hero Section - Profesional y Confiable */}
       <Box sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: `
-          radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-          radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-          radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-          linear-gradient(135deg, rgba(0,0,0,0.8) 0%, transparent 100%)
-        `,
-        pointerEvents: 'none'
-      }} />
-
-      {/* Partículas animadas */}
-      <Box sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: `
-          radial-gradient(2px 2px at 20% 30%, rgba(59, 130, 246, 0.6) 0%, transparent 100%),
-          radial-gradient(3px 3px at 40% 70%, rgba(139, 92, 246, 0.4) 0%, transparent 100%),
-          radial-gradient(1px 1px at 60% 20%, rgba(16, 185, 129, 0.8) 0%, transparent 100%),
-          radial-gradient(2px 2px at 80% 50%, rgba(245, 158, 11, 0.5) 0%, transparent 100%)
-        `,
-        animation: 'float 8s ease-in-out infinite',
-        pointerEvents: 'none'
-      }} />
-
-      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
-        
-        {/* Hero Section - Nivel Ultra Dios */}
-        <Box sx={{ 
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          position: 'relative'
-        }}>
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+        color: 'white',
+        pt: { xs: 6, md: 12 },
+        pb: { xs: 8, md: 15 },
+        position: 'relative'
+      }}>
+        <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Fade in={loaded} timeout={1000}>
-                <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                  
-                  {/* Badge Ultra Premium */}
-                  <Chip 
-                    icon={<Bolt sx={{ color: '#fbbf24' }} />}
-                    label="PLATAFORMA ENTERPRISE 2024"
-                    sx={{ 
-                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-                      color: '#fbbf24',
-                      fontWeight: 700,
-                      fontSize: '0.7rem',
-                      px: 3,
-                      py: 1,
-                      mb: 4,
-                      border: '1px solid rgba(251, 191, 36, 0.3)',
-                      backdropFilter: 'blur(10px)'
-                    }}
-                  />
-
-                  {/* Título Principal Épico */}
-                  <Typography variant="h1" sx={{
-                    fontSize: { xs: '3rem', md: '5rem', lg: '6rem' },
-                    fontWeight: 900,
-                    background: 'linear-gradient(135deg, #ffffff 0%, #3b82f6 30%, #8b5cf6 70%, #ec4899 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    lineHeight: 1.1,
-                    mb: 3,
-                    textShadow: '0 0 50px rgba(59, 130, 246, 0.5)'
-                  }}>
-                    Revoluciona
-                    <Box component="span" sx={{ 
-                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent'
-                    }}>
-                      {' '}Tu Negocio
-                    </Box>
-                    <br />
-                    Con IA
-                  </Typography>
-
-                  {/* Subtítulo Élite */}
-                  <Typography variant="h4" sx={{
-                    color: '#e5e7eb',
-                    fontWeight: 300,
-                    lineHeight: 1.4,
-                    mb: 4,
-                    maxWidth: '600px',
-                    mx: { xs: 'auto', md: 0 },
-                    fontSize: { xs: '1.25rem', md: '1.5rem' }
-                  }}>
-                    La plataforma definitiva que combina <strong>inteligencia artificial</strong>, 
-                    <strong> automatización avanzada</strong> y <strong>analytics predictivo</strong> 
-                    para llevar tu empresa al siguiente nivel.
-                  </Typography>
-
-                  {/* Botones de Acción Ultra Premium */}
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ mb: 8 }}>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={() => navigate('/register')}
-                      startIcon={<RocketLaunch />}
-                      sx={{
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        fontSize: '1.2rem',
-                        px: 6,
-                        py: 2,
-                        fontWeight: 700,
-                        borderRadius: '15px',
-                        minWidth: '200px',
-                        ...glowAnimation,
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                          transform: 'translateY(-3px) scale(1.02)',
-                          boxShadow: '0 20px 40px rgba(16, 185, 129, 0.4)'
-                        }
-                      }}
-                    >
-                      Comenzar Gratis
-                    </Button>
-                    
-                    <Button
-                      variant="outlined"
-                      size="large"
-                      startIcon={<PlayCircle />}
-                      sx={{
-                        border: '2px solid',
-                        borderColor: '#3b82f6',
-                        color: '#3b82f6',
-                        fontSize: '1.2rem',
-                        px: 6,
-                        py: 2,
-                        fontWeight: 700,
-                        borderRadius: '15px',
-                        minWidth: '200px',
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          borderColor: '#60a5fa',
-                          background: 'rgba(59, 130, 246, 0.2)',
-                          transform: 'translateY(-3px)',
-                          boxShadow: '0 15px 30px rgba(59, 130, 246, 0.3)'
-                        }
-                      }}
-                    >
-                      Ver Demo
-                    </Button>
-                  </Stack>
-
-                  {/* Estadísticas Impresionantes */}
-                  <Grid container spacing={4}>
-                    {stats.map((stat, index) => (
-                      <Grid item xs={6} sm={3} key={index}>
-                        <Grow in={loaded} timeout={800 + index * 200}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Box sx={{ 
-                              color: '#3b82f6', 
-                              mb: 1,
-                              fontSize: '2rem'
-                            }}>
-                              {stat.icon}
-                            </Box>
-                            <Typography variant="h4" fontWeight={900} color="#fbbf24">
-                              {stat.value}
-                            </Typography>
-                            <Typography variant="body2" color="#9ca3af" sx={{ fontSize: '0.8rem' }}>
-                              {stat.label}
-                            </Typography>
-                          </Box>
-                        </Grow>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              </Fade>
-            </Grid>
-
-            {/* Ilustración Hero Ultra Premium */}
-            <Grid item xs={12} md={6}>
-              <Zoom in={loaded} timeout={1500}>
-                <Box sx={{
-                  position: 'relative',
-                  perspective: '1000px'
-                }}>
-                  {/* Tarjeta 3D Principal */}
-                  <Box sx={{
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-                    borderRadius: '30px',
-                    p: 6,
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(40px)',
-                    textAlign: 'center',
-                    transform: 'rotateY(5deg) rotateX(5deg)',
-                    transition: 'transform 0.5s ease',
-                    '&:hover': {
-                      transform: 'rotateY(0deg) rotateX(0deg) scale(1.02)'
-                    },
-                    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
-                  }}>
-                    <Box sx={{
-                      width: '100%',
-                      height: '400px',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
-                      borderRadius: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '6rem',
-                      fontWeight: 'bold',
-                      mb: 3,
-                      ...floatAnimation
-                    }}>
-                      <Box sx={{ 
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        borderRadius: '50%',
-                        width: '200px',
-                        height: '200px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backdropFilter: 'blur(10px)'
-                      }}>
-                        UB
-                      </Box>
-                    </Box>
-                    <Typography variant="h3" sx={{ color: 'white', fontWeight: 800, mb: 1 }}>
-                      Universal Bot
-                    </Typography>
-                    <Typography variant="h6" sx={{ color: '#cbd5e1', fontWeight: 300 }}>
-                      Enterprise AI Platform
-                    </Typography>
-                  </Box>
-
-                  {/* Elementos flotantes alrededor */}
-                  <Box sx={{
-                    position: 'absolute',
-                    top: -20,
-                    right: -20,
-                    background: 'linear-gradient(135deg, #10b981 0%, #06d6a0 100%)',
-                    borderRadius: '15px',
-                    p: 2,
-                    transform: 'rotate(12deg)',
-                    ...floatAnimation,
-                    animationDelay: '2s'
-                  }}>
-                    <DataArray sx={{ color: 'white', fontSize: 32 }} />
-                  </Box>
-
-                  <Box sx={{
-                    position: 'absolute',
-                    bottom: -20,
-                    left: -20,
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
-                    borderRadius: '15px',
-                    p: 2,
-                    transform: 'rotate(-8deg)',
-                    ...floatAnimation,
-                    animationDelay: '4s'
-                  }}>
-                    <TrendingUp sx={{ color: 'white', fontSize: 32 }} />
-                  </Box>
-                </Box>
-              </Zoom>
-            </Grid>
-          </Grid>
-        </Box>
-
-        {/* Sección de Empresas que Confían */}
-        <Slide in={loaded} timeout={1000} direction="up">
-          <Box sx={{ py: 8, textAlign: 'center' }}>
-            <Typography variant="h6" color="#9ca3af" sx={{ mb: 4, fontWeight: 300 }}>
-              Confiado por las empresas más innovadoras del mundo
-            </Typography>
-            <Stack direction="row" spacing={8} justifyContent="center" alignItems="center" flexWrap="wrap">
-              {trustedBy.map((company, index) => (
-                <Box key={index} sx={{ 
-                  opacity: 0.7,
-                  transition: 'opacity 0.3s ease',
-                  '&:hover': { opacity: 1 }
-                }}>
-                  <Typography variant="h6" fontWeight={700} color="#e5e7eb">
-                    {company.logo}
-                  </Typography>
-                  <Typography variant="caption" color="#9ca3af">
-                    {company.name}
-                  </Typography>
-                </Box>
-              ))}
-            </Stack>
-          </Box>
-        </Slide>
-
-        {/* Features Section Ultra Premium */}
-        <Box sx={{ py: { xs: 8, md: 15 } }}>
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Typography variant="h2" sx={{
-              fontSize: { xs: '3rem', md: '4.5rem' },
-              fontWeight: 900,
-              background: 'linear-gradient(135deg, #ffffff 0%, #3b82f6 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 3
-            }}>
-              Características
-              <Box component="span" sx={{ 
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                {' '}Élite
-              </Box>
-            </Typography>
-            <Typography variant="h5" sx={{ 
-              color: '#d1d5db', 
-              fontWeight: 300,
-              maxWidth: '700px', 
-              mx: 'auto',
-              lineHeight: 1.6 
-            }}>
-              Diseñado para ejecutivos que exigen excelencia. Tecnología de vanguardia 
-              para resultados extraordinarios.
-            </Typography>
-          </Box>
-
-          <Grid container spacing={6}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <Grow in={loaded} timeout={800 + feature.delay}>
-                  <Card sx={{
-                    background: `linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(50, 50, 50, 0.4) 100%)`,
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '25px',
-                    backdropFilter: 'blur(30px)',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&:hover': {
-                      transform: 'translateY(-15px) scale(1.02)',
-                      borderColor: 'rgba(59, 130, 246, 0.5)',
-                      boxShadow: '0 30px 60px rgba(0, 0, 0, 0.5)'
-                    },
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '4px',
-                      background: feature.gradient
-                    }
-                  }}>
-                    <CardContent sx={{ p: 5 }}>
-                      <Box sx={{ 
-                        background: feature.gradient,
-                        borderRadius: '20px',
-                        width: '80px',
-                        height: '80px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mb: 4,
-                        color: 'white'
-                      }}>
-                        {feature.icon}
-                      </Box>
-                      <Typography variant="h4" fontWeight={800} color="white" gutterBottom>
-                        {feature.title}
-                      </Typography>
-                      <Typography variant="body1" sx={{ 
-                        color: '#d1d5db', 
-                        lineHeight: 1.7,
-                        fontSize: '1.1rem'
-                      }}>
-                        {feature.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grow>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Testimonials Section Ultra Premium */}
-        <Box sx={{ py: { xs: 8, md: 15 } }}>
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Typography variant="h2" sx={{
-              fontSize: { xs: '3rem', md: '4.5rem' },
-              fontWeight: 900,
-              background: 'linear-gradient(135deg, #ffffff 0%, #10b981 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 3
-            }}>
-              Voces de
-              <Box component="span" sx={{ 
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                {' '}Éxito
-              </Box>
-            </Typography>
-          </Box>
-
-          <Grid container spacing={4}>
-            {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Slide in={loaded} timeout={800 + index * 300} direction="up">
-                  <Card sx={{
-                    background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(50, 50, 50, 0.4) 100%)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '25px',
-                    backdropFilter: 'blur(30px)',
-                    height: '100%',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-10px)',
-                      borderColor: 'rgba(16, 185, 129, 0.5)'
-                    }
-                  }}>
-                    <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                      {/* Rating */}
-                      <Box sx={{ display: 'flex', mb: 3 }}>
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} sx={{ 
-                            color: '#fbbf24', 
-                            fontSize: 24,
-                            filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.5))'
-                          }} />
-                        ))}
-                      </Box>
-
-                      {/* Testimonio */}
-                      <Typography variant="body1" sx={{ 
-                        color: '#e5e7eb', 
-                        fontStyle: 'italic',
-                        lineHeight: 1.7,
-                        mb: 4,
-                        flexGrow: 1,
-                        fontSize: '1.1rem'
-                      }}>
-                        "{testimonial.content}"
-                      </Typography>
-
-                      {/* Información del cliente */}
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto' }}>
-                        <Avatar sx={{ 
-                          bgcolor: '#3b82f6', 
-                          mr: 3,
-                          width: 60,
-                          height: 60,
-                          fontSize: '1.5rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {testimonial.avatar}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" fontWeight={800} color="white">
-                            {testimonial.name}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>
-                            {testimonial.role}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                            {testimonial.company}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Slide>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Final CTA Section - Épico */}
-        <Box sx={{ py: { xs: 8, md: 15 } }}>
-          <Fade in={loaded} timeout={1500}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '35px',
-              backdropFilter: 'blur(40px)',
-              p: { xs: 4, md: 8 },
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%)'
-              }
-            }}>
-              <CardContent sx={{ 
-                textAlign: 'center', 
-                position: 'relative', 
-                zIndex: 2 
-              }}>
-                <Typography variant="h2" sx={{
-                  fontSize: { xs: '3rem', md: '4.5rem' },
-                  fontWeight: 900,
-                  background: 'linear-gradient(135deg, #ffffff 0%, #fbbf24 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+              <Box>
+                {/* Encabezado profesional */}
+                <Typography variant="h1" sx={{
+                  fontSize: { xs: '2.5rem', md: '3.5rem' },
+                  fontWeight: 700,
+                  lineHeight: 1.1,
                   mb: 3
                 }}>
-                  ¿Listo para la Revolución?
-                </Typography>
-                
-                <Typography variant="h4" sx={{ 
-                  color: '#e5e7eb', 
-                  fontWeight: 300,
-                  mb: 6,
-                  lineHeight: 1.6,
-                  maxWidth: '800px',
-                  mx: 'auto'
-                }}>
-                  Únete a los líderes que ya están transformando sus negocios con 
-                  la plataforma más avanzada del mercado. El futuro espera.
+                  Gestión Empresarial 
+                  <Box component="span" sx={{ display: 'block', color: '#dbeafe' }}>
+                    Inteligente
+                  </Box>
                 </Typography>
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="center" sx={{ mb: 4 }}>
+                <Typography variant="h5" sx={{
+                  fontWeight: 400,
+                  lineHeight: 1.6,
+                  mb: 4,
+                  opacity: 0.9
+                }}>
+                  La plataforma todo-en-uno que simplifica operaciones complejas, 
+                  optimiza recursos y impulsa el crecimiento de tu empresa.
+                </Typography>
+
+                {/* Botones de acción claros */}
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 6 }}>
                   <Button
                     variant="contained"
                     size="large"
                     onClick={() => navigate('/register')}
-                    endIcon={<ArrowForward />}
                     sx={{
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                      fontSize: '1.3rem',
-                      px: 8,
-                      py: 2.5,
-                      fontWeight: 800,
-                      borderRadius: '20px',
-                      minWidth: '250px',
-                      ...glowAnimation,
+                      background: '#ffffff',
+                      color: '#2563eb',
+                      fontSize: '1.1rem',
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 600,
+                      borderRadius: '8px',
                       '&:hover': {
-                        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                        transform: 'translateY(-3px) scale(1.05)',
-                        boxShadow: '0 25px 50px rgba(16, 185, 129, 0.5)'
+                        background: '#f8fafc',
+                        transform: 'translateY(-1px)'
                       }
                     }}
                   >
-                    Comenzar Ahora
+                    Comenzar Gratis
                   </Button>
-
+                  
                   <Button
                     variant="outlined"
                     size="large"
-                    onClick={() => navigate('/login')}
+                    startIcon={<PlayArrow />}
                     sx={{
-                      border: '3px solid',
-                      borderColor: '#3b82f6',
-                      color: '#3b82f6',
-                      fontSize: '1.3rem',
-                      px: 8,
-                      py: 2.5,
-                      fontWeight: 800,
-                      borderRadius: '20px',
-                      minWidth: '250px',
-                      background: 'rgba(59, 130, 246, 0.1)',
-                      backdropFilter: 'blur(10px)',
+                      borderColor: 'white',
+                      color: 'white',
+                      fontSize: '1.1rem',
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 600,
                       '&:hover': {
-                        borderColor: '#60a5fa',
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 20px 40px rgba(59, 130, 246, 0.4)'
+                        background: 'rgba(255, 255, 255, 0.1)'
                       }
                     }}
                   >
-                    Iniciar Sesión
+                    Ver Demo
                   </Button>
                 </Stack>
 
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  gap: 2,
-                  flexWrap: 'wrap'
-                }}>
-                  {[
-                    '✓ 14 días gratis',
-                    '✓ Sin tarjeta requerida', 
-                    '✓ Implementación express',
-                    '✓ Soporte premium 24/7'
-                  ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      color: '#10b981',
-                      fontWeight: 600
-                    }}>
-                      <CheckCircle sx={{ mr: 1, fontSize: 20 }} />
-                      {item}
+                {/* Estadísticas de confianza */}
+                <Grid container spacing={4}>
+                  <Grid item xs={6}>
+                    <Box>
+                      <Typography variant="h4" fontWeight={700}>15,000+</Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>Empresas</Typography>
                     </Box>
-                  ))}
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Box>
+                      <Typography variant="h4" fontWeight={700}>99.9%</Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>Uptime</Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              {/* Ilustración profesional */}
+              <Box sx={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                p: 4,
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <Box sx={{
+                  width: '100%',
+                  height: '300px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '4rem',
+                  fontWeight: 'bold',
+                  mb: 3
+                }}>
+                  <Business sx={{ fontSize: 80 }} />
                 </Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Universal Bot Platform
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  Soluciones empresariales verificadas
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Sección de Confianza */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h3" fontWeight={700} color="#1f2937" gutterBottom>
+            Confiado por empresas líderes
+          </Typography>
+          <Typography variant="h6" color="#6b7280" sx={{ maxWidth: '600px', mx: 'auto' }}>
+            Empresas de todos los tamaños confían en nuestra plataforma para sus operaciones críticas
+          </Typography>
+        </Box>
+
+        {/* Logos de empresas (simulados) */}
+        <Grid container spacing={4} sx={{ mb: 8 }}>
+          {['Financiera', 'Retail', 'Tecnología', 'Manufactura', 'Salud', 'Educación'].map((industry, index) => (
+            <Grid item xs={6} md={2} key={index}>
+              <Box sx={{ 
+                textAlign: 'center',
+                p: 2,
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  borderColor: '#3b82f6',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                }
+              }}>
+                <Business sx={{ fontSize: 40, color: '#3b82f6', mb: 1 }} />
+                <Typography variant="body2" fontWeight={600}>{industry}</Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Características Principales */}
+      <Box sx={{ background: '#f8fafc', py: 8 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h3" fontWeight={700} color="#1f2937" gutterBottom>
+              Soluciones Completas
+            </Typography>
+            <Typography variant="h6" color="#6b7280">
+              Todo lo que tu empresa necesita en una sola plataforma
+            </Typography>
+          </Box>
+
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} md={6} key={index}>
+                <Card sx={{ 
+                  height: '100%',
+                  border: '1px solid #e5e7eb',
+                  boxShadow: 'none',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
+                  }
+                }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Box sx={{ mb: 3 }}>
+                      {feature.icon}
+                    </Box>
+                    <Typography variant="h5" fontWeight={600} gutterBottom color="#1f2937">
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body1" color="#6b7280">
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Beneficios Claros */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Grid container spacing={6} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <Typography variant="h3" fontWeight={700} color="#1f2937" gutterBottom>
+              Resultados Tangibles
+            </Typography>
+            <Typography variant="h6" color="#6b7280" sx={{ mb: 4 }}>
+              Transforma tu negocio con beneficios medibles desde el primer día
+            </Typography>
+            
+            <Stack spacing={2}>
+              {benefits.map((benefit, index) => (
+                <Box key={index} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <CheckCircle sx={{ color: '#10b981', mr: 2 }} />
+                  <Typography variant="body1">{benefit}</Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Card sx={{ 
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+              color: 'white',
+              p: 4
+            }}>
+              <CardContent>
+                <Typography variant="h4" fontWeight={700} gutterBottom>
+                  Comienza Hoy
+                </Typography>
+                <Typography variant="h6" sx={{ mb: 3, opacity: 0.9 }}>
+                  Prueba gratuita de 14 días
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  size="large"
+                  onClick={() => navigate('/register')}
+                  sx={{
+                    background: 'white',
+                    color: '#2563eb',
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 600,
+                    '&:hover': {
+                      background: '#f8fafc'
+                    }
+                  }}
+                >
+                  Crear Cuenta
+                </Button>
+                <Typography variant="body2" sx={{ mt: 2, opacity: 0.8 }}>
+                  Sin compromiso • Sin tarjeta requerida
+                </Typography>
               </CardContent>
             </Card>
-          </Fade>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Casos de Éxito */}
+      <Box sx={{ background: '#1f2937', color: 'white', py: 8 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h3" fontWeight={700} gutterBottom>
+              Casos de Éxito
+            </Typography>
+            <Typography variant="h6" sx={{ opacity: 0.8 }}>
+              Empresas que han transformado sus operaciones
+            </Typography>
+          </Box>
+
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
+                <CardContent sx={{ p: 4 }}>
+                  <People sx={{ fontSize: 40, color: '#3b82f6', mb: 2 }} />
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    TechSolutions Inc.
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
+                    "Incrementamos la eficiencia operativa en un 300% y redujimos costos en un 45%."
+                  </Typography>
+                  <Typography variant="caption">María González, CEO</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Card sx={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
+                <CardContent sx={{ p: 4 }}>
+                  <TrendingUp sx={{ fontSize: 40, color: '#10b981', mb: 2 }} />
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    Global Enterprises
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
+                    "La plataforma nos permitió escalar nuestras operaciones internacionalmente sin problemas."
+                  </Typography>
+                  <Typography variant="caption">Carlos Rodríguez, Director</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Card sx={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Shield sx={{ fontSize: 40, color: '#f59e0b', mb: 2 }} />
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    InnovateCorp
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
+                    "La seguridad y confiabilidad del sistema superaron todas nuestras expectativas."
+                  </Typography>
+                  <Typography variant="caption">Ana Martínez, CTO</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Call to Action Final */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Box sx={{ 
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          borderRadius: '16px',
+          p: 6
+        }}>
+          <Typography variant="h3" fontWeight={700} color="#1f2937" gutterBottom>
+            ¿Listo para Comenzar?
+          </Typography>
+          <Typography variant="h6" color="#6b7280" sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}>
+            Únete a miles de empresas que ya optimizan sus operaciones con nuestra plataforma
+          </Typography>
+          
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/register')}
+              sx={{
+                background: '#2563eb',
+                fontSize: '1.1rem',
+                px: 6,
+                py: 1.5,
+                fontWeight: 600,
+                '&:hover': {
+                  background: '#1d4ed8'
+                }
+              }}
+            >
+              Comenzar Gratis
+            </Button>
+            
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => navigate('/login')}
+              sx={{
+                borderColor: '#2563eb',
+                color: '#2563eb',
+                fontSize: '1.1rem',
+                px: 6,
+                py: 1.5,
+                fontWeight: 600
+              }}
+            >
+              Iniciar Sesión
+            </Button>
+          </Stack>
         </Box>
       </Container>
     </Box>
