@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Button, Grid, Container, Card, CardContent,
   Stack, useTheme, useMediaQuery, AppBar, Toolbar, Chip,
-  List, ListItem, ListItemIcon, Avatar, alpha
+  List, ListItem, ListItemIcon, Avatar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -502,7 +502,7 @@ const HomePage = () => {
                         {testimonial.position}
                       </Typography>
                     </Box>
-                  </div>
+                  </Box>
                   
                   <Chip 
                     label={testimonial.results}
@@ -613,7 +613,7 @@ const HomePage = () => {
             flexWrap: 'wrap'
           }}>
             {[
-              '14 días completamente gratis',
+              '7 días completamente gratis',
               'Sin tarjeta de crédito requerida', 
               'Implementación y soporte incluidos',
               'Cancelación instantánea'
@@ -659,7 +659,7 @@ const HomePage = () => {
             textAlign: 'center' 
           }}>
             <Typography variant="body2" sx={{ opacity: 0.7 }}>
-              © 2024 UniversalBot Platform. Todos los derechos reservados.
+              © 2025 UniversalBot Platform. Todos los derechos reservados.
             </Typography>
           </Box>
         </Container>
