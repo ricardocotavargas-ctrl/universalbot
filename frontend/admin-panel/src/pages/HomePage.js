@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Button, Grid, Container, Card, CardContent,
   Stack, useTheme, useMediaQuery, AppBar, Toolbar, Chip,
-  List, ListItem, ListItemIcon, Avatar
+  List, ListItem, ListItemIcon, Avatar, Tab, Tabs
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,8 +20,11 @@ import {
   ArrowForward,
   AutoGraph,
   Psychology,
-  Cloud,
-  SupportAgent
+  PointOfSale,
+  Inventory,
+  AccountBalance,
+  Campaign,
+  DashboardCustomize
 } from '@mui/icons-material';
 
 const HomePage = () => {
@@ -30,6 +33,7 @@ const HomePage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [companyCount, setCompanyCount] = useState(14800);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -37,87 +41,141 @@ const HomePage = () => {
       return;
     }
 
-    // Contador animado
     if (companyCount < 15000) {
       const interval = setInterval(() => {
-        setCompanyCount(prev => {
-          if (prev >= 15000) {
-            clearInterval(interval);
-            return 15000;
-          }
-          return prev + 10;
-        });
+        setCompanyCount(prev => prev >= 15000 ? 15000 : prev + 10);
       }, 50);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, navigate, companyCount]);
 
-  if (isAuthenticated) {
-    return null;
-  }
+  if (isAuthenticated) return null;
 
-  // Características con beneficios claros
-  const features = [
+  // Módulos de la plataforma con iconos específicos
+  const platformModules = [
     {
-      icon: <Psychology sx={{ fontSize: 40, color: '#8b5cf6' }} />,
-      title: 'IA Predictiva Avanzada',
-      description: 'Algoritmos de machine learning que anticipan tendencias del mercado y optimizan automáticamente tus operaciones',
-      benefits: ['Predicción de demanda con 95% de precisión', 'Detección temprana de oportunidades', 'Recomendaciones inteligentes en tiempo real']
+      icon: <PointOfSale sx={{ fontSize: 40, color: '#2563eb' }} />,
+      title: 'Sistema de Ventas',
+      features: [
+        'Múltiples puntos de venta',
+        'Control de inventario en tiempo real',
+        'Reportes de ventas por vendedor'
+      ],
+      description: 'Gestión completa de ventas con integración fiscal'
     },
     {
-      icon: <AutoGraph sx={{ fontSize: 40, color: '#059669' }} />,
-      title: 'Business Intelligence',
-      description: 'Dashboards ejecutivos interactivos con análisis predictivo y reportes automatizados',
-      benefits: ['KPIs personalizados por departamento', 'Alertas proactivas de desempeño', 'Benchmarking contra competidores']
+      icon: <Inventory sx={{ fontSize: 40, color: '#059669' }} />,
+      title: 'Control de Inventario',
+      features: [
+        'Gestión multi-almacén',
+        'Alertas de stock bajo',
+        'Kardex automático',
+        'Costos promedio y FIFO'
+      ],
+      description: 'Control preciso de inventario y costos'
+    },
+    {
+      icon: <AccountBalance sx={{ fontSize: 40, color: '#dc2626' }} />,
+      title: 'Contabilidad Integral',
+      features: [
+        'Plan de cuentas personalizable',
+        'Libros contables automáticos',
+        'Conciliación bancaria',
+        'Estados financieros'
+      ],
+      description: 'Sistema contable completo y automatizado'
+    },
+    {
+      icon: <Campaign sx={{ fontSize: 40, color: '#7c3aed' }} />,
+      title: 'Marketing Automatizado',
+      features: [
+        'Campañas WhatsApp',
+        'Email marketing',
+        'Segmentación de clientes',
+        'Análisis de ROI'
+      ],
+      description: 'Herramientas de marketing integradas'
+    }
+  ];
+
+  // Características técnicas
+  const technicalFeatures = [
+    {
+      icon: <Psychology sx={{ fontSize: 40, color: '#8b5cf6' }} />,
+      title: 'IA Predictiva',
+      description: 'Algoritmos que anticipan tendencias de ventas y optimizan inventario',
+      metrics: ['95% precisión en predicciones', 'Optimización automática de stock']
+    },
+    {
+      icon: <Analytics sx={{ fontSize: 40, color: '#059669' }} />,
+      title: 'Analytics en Tiempo Real',
+      description: 'Dashboards ejecutivos con métricas actualizadas al instante',
+      metrics: ['KPIs personalizados', 'Reportes automatizados']
     },
     {
       icon: <Security sx={{ fontSize: 40, color: '#dc2626' }} />,
       title: 'Seguridad Enterprise',
-      description: 'Infraestructura con certificaciones SOC 2 Type II, ISO 27001 y compliance GDPR completo',
-      benefits: ['Encriptación end-to-end AES-256', 'Auditorías de seguridad trimestrales', 'Backup automático y recovery']
+      description: 'Infraestructura con certificaciones y compliance completo',
+      metrics: ['SOC 2 Type II', 'GDPR Compliance']
     },
     {
       icon: <IntegrationInstructions sx={{ fontSize: 40, color: '#2563eb' }} />,
-      title: 'Ecosistema de Integraciones',
-      description: 'Conectores nativos para +500 aplicaciones empresariales con sincronización en tiempo real',
-      benefits: ['ERP/CRM pre-configurados', 'APIs documentadas y soportadas', 'Migración de datos asistida']
+      title: 'Integraciones',
+      description: 'Conectores para +500 aplicaciones empresariales',
+      metrics: ['APIs documentadas', 'Sincronización bidireccional']
     }
   ];
 
-  // Testimonios con resultados específicos
+  // Testimonios reales
   const testimonials = [
     {
       name: "María González",
       position: "CEO, TechSolutions Inc.",
-      results: "62% reducción en costos operativos • 47% aumento en eficiencia",
-      content: "UniversalBot transformó completamente nuestras operaciones. En 6 meses logramos resultados que no habíamos alcanzado en años con otras plataformas.",
-      avatar: "MG"
+      results: "62% reducción costos • 47% más eficiencia",
+      content: "Automatizamos toda nuestra operación con UniversalBot. La integración con SUNAT fue impecable y el soporte excepcional.",
+      avatar: "MG",
+      industry: "Tecnología"
     },
     {
       name: "Carlos Rodríguez",
-      position: "Director de Operaciones, Global Manufacturing",
-      results: "Unificación de 18 sistemas • Expansión a 3 nuevos mercados",
-      content: "La capacidad de la plataforma para integrar todos nuestros sistemas legacy fue extraordinaria. El soporte durante la implementación fue impecable.",
-      avatar: "CR"
+      position: "Gerente, Distribuidora Global",
+      results: "18 sistemas unificados • 3 nuevos mercados",
+      content: "Pasamos de usar 18 sistemas diferentes a una sola plataforma. La migración fue perfecta y ahora tenemos control total.",
+      avatar: "CR",
+      industry: "Distribución"
     }
   ];
 
   // Métricas de impacto
   const metrics = [
-    { value: `${companyCount.toLocaleString()}+`, label: 'Empresas Confían', description: 'En 30+ países' },
-    { value: '99.99%', label: 'Tiempo de Actividad', description: 'SLA Enterprise garantizado' },
-    { value: '4.9/5', label: 'Satisfacción Cliente', description: 'Basado en 2,500+ reviews' },
-    { value: '3.2x', label: 'ROI Promedio', description: 'En los primeros 12 meses' }
+    { value: `${companyCount.toLocaleString()}+`, label: 'Empresas', description: 'En Latinoamérica' },
+    { value: '99.99%', label: 'Uptime', description: 'Garantizado' },
+    { value: '4.9/5', label: 'Rating', description: 'Clientes satisfechos' },
+    { value: '60%', label: 'Ahorro', description: 'En costos operativos' }
   ];
 
-  // Beneficios clave
-  const keyBenefits = [
-    'Reducción de costos operativos hasta en 60%',
-    'Incremento de productividad del equipo en 45%',
-    'Toma de decisiones basada en datos en tiempo real',
-    'Escalabilidad ilimitada sin interrupciones',
-    'Implementación rápida en menos de 48 horas',
-    'Soporte técnico dedicado 24/7 en español'
+  // Demo screens del dashboard
+  const demoScreens = [
+    {
+      title: "Dashboard Ejecutivo",
+      description: "Vista general de tu negocio con KPIs clave",
+      color: "#2563eb"
+    },
+    {
+      title: "Módulo de Ventas", 
+      description: "Gestión completa de facturación y clientes",
+      color: "#059669"
+    },
+    {
+      title: "Control de Inventario",
+      description: "Gestión multi-almacén en tiempo real",
+      color: "#dc2626"
+    },
+    {
+      title: "Reportes Financieros",
+      description: "Estados contables y análisis",
+      color: "#7c3aed"
+    }
   ];
 
   return (
@@ -128,153 +186,68 @@ const HomePage = () => {
     }}>
       
       {/* Header Profesional */}
-      <AppBar 
-        position="sticky"
-        elevation={1}
-        sx={{ 
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          color: '#1f2937',
-          borderBottom: '1px solid #e5e7eb'
-        }}
-      >
+      <AppBar position="sticky" elevation={1} sx={{ background: 'white', color: '#1f2937' }}>
         <Container maxWidth="xl">
-          <Toolbar sx={{ 
-            justifyContent: 'space-between', 
-            py: 2,
-            px: { xs: 0, sm: 2 }
-          }}>
+          <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Business sx={{ color: '#2563eb', fontSize: 32 }} />
-              <Typography variant="h6" fontWeight={700}>
-                UniversalBot
-              </Typography>
+              <Typography variant="h6" fontWeight={700}>UniversalBot</Typography>
             </Box>
-            
-            <Stack direction="row" spacing={3}>
-              <Button 
-                onClick={() => navigate('/login')}
-                sx={{ 
-                  color: '#374151',
-                  fontWeight: 600,
-                  '&:hover': {
-                    background: 'rgba(59, 130, 246, 0.1)'
-                  }
-                }}
-              >
+            <Stack direction="row" spacing={2}>
+              <Button onClick={() => navigate('/login')} sx={{ color: '#374151', fontWeight: 600 }}>
                 Iniciar Sesión
               </Button>
               <Button 
-                variant="contained"
+                variant="contained" 
                 onClick={() => navigate('/register')}
                 sx={{ 
                   background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                  fontWeight: 600,
-                  px: 3,
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                    transform: 'translateY(-1px)'
-                  },
-                  transition: 'all 0.2s ease'
+                  fontWeight: 600 
                 }}
               >
-                Prueba Gratuita
+                Probar Gratis
               </Button>
             </Stack>
           </Toolbar>
         </Container>
       </AppBar>
 
-      {/* Hero Section - Atractiva y Persuasiva */}
-      <Box sx={{
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-        color: 'white',
-        pt: { xs: 8, md: 12 },
-        pb: { xs: 8, md: 12 },
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <Box sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `
-            radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)
-          `,
-          pointerEvents: 'none'
-        }} />
-        
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+      {/* Hero Section - Enfocada en el Producto */}
+      <Box sx={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', color: 'white', py: 8 }}>
+        <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box>
                 <Chip 
-                  label="PLATAFORMA ENTERPRISE 2024"
-                  sx={{ 
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    color: 'white',
-                    fontWeight: 600,
-                    mb: 4,
-                    fontSize: '0.8rem',
-                    backdropFilter: 'blur(10px)'
-                  }}
+                  label="PLATAFORMA TODO-EN-UNO"
+                  sx={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600, mb: 3 }}
                 />
-
-                <Typography variant="h1" sx={{
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  mb: 3
-                }}>
-                  Transforma Tu Empresa
-                  <Box component="span" sx={{ 
-                    display: 'block', 
-                    color: '#dbeafe',
-                    fontWeight: 700
-                  }}>
-                    Con IA Avanzada
+                <Typography variant="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, fontWeight: 800, lineHeight: 1.1, mb: 3 }}>
+                  Gestión Empresarial
+                  <Box component="span" sx={{ display: 'block', color: '#dbeafe', fontWeight: 700 }}>
+                    Completamente Integrada
                   </Box>
                 </Typography>
-
-                <Typography variant="h6" sx={{
-                  fontWeight: 400,
-                  lineHeight: 1.6,
-                  mb: 4,
-                  opacity: 0.9
-                }}>
-                  La plataforma todo-en-uno que combina inteligencia artificial predictiva, 
-                  analytics en tiempo real y automatización para impulsar el crecimiento 
-                  y rentabilidad de tu negocio.
+                <Typography variant="h6" sx={{ opacity: 0.9, lineHeight: 1.6, mb: 4 }}>
+                  La única plataforma que unifica ventas, inventario, contabilidad y marketing 
+                  en un solo sistema con IA predictiva.
                 </Typography>
-
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 6 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
                   <Button
                     variant="contained"
                     size="large"
                     onClick={() => navigate('/register')}
-                    endIcon={<ArrowForward />}
                     sx={{
                       background: '#ffffff',
                       color: '#2563eb',
-                      fontSize: '1.1rem',
+                      fontWeight: 700,
                       px: 4,
                       py: 1.5,
-                      fontWeight: 700,
-                      borderRadius: '8px',
-                      '&:hover': {
-                        background: '#f8fafc',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
-                      },
-                      transition: 'all 0.3s ease'
+                      '&:hover': { background: '#f8fafc' }
                     }}
                   >
-                    Comenzar Prueba Gratuita
+                    Probar 7 Días Gratis
                   </Button>
-                  
                   <Button
                     variant="outlined"
                     size="large"
@@ -282,178 +255,274 @@ const HomePage = () => {
                     sx={{
                       borderColor: 'white',
                       color: 'white',
-                      fontSize: '1.1rem',
-                      px: 4,
-                      py: 1.5,
                       fontWeight: 600,
-                      '&:hover': {
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        borderColor: '#dbeafe'
-                      }
+                      px: 4,
+                      py: 1.5
                     }}
                   >
-                    Ver Demo en Vivo
+                    Ver Demo Interactivo
                   </Button>
                 </Stack>
-
-                {/* Métricas de Impacto */}
-                <Grid container spacing={4}>
+                <Grid container spacing={3}>
                   {metrics.map((metric, index) => (
                     <Grid item xs={6} key={index}>
                       <Box>
-                        <Typography variant="h4" fontWeight={800}>
-                          {metric.value}
-                        </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 600 }}>
-                          {metric.label}
-                        </Typography>
-                        <Typography variant="caption" sx={{ opacity: 0.7, display: 'block' }}>
-                          {metric.description}
-                        </Typography>
+                        <Typography variant="h4" fontWeight={800}>{metric.value}</Typography>
+                        <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 600 }}>{metric.label}</Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.7 }}>{metric.description}</Typography>
                       </Box>
                     </Grid>
                   ))}
                 </Grid>
               </Box>
             </Grid>
-
             <Grid item xs={12} md={6}>
-              <Box sx={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '16px',
-                p: 4,
-                textAlign: 'center',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}>
-                <Box sx={{
-                  width: '100%',
-                  height: '300px',
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.5) 100%)',
+              <Box sx={{ background: 'rgba(255,255,255,0.1)', borderRadius: '16px', p: 4, backdropFilter: 'blur(20px)' }}>
+                <Box sx={{ 
+                  background: 'linear-gradient(135deg, rgba(59,130,246,0.3) 0%, rgba(37,99,235,0.5) 100%)',
                   borderRadius: '12px',
+                  height: '300px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'white',
-                  mb: 3
+                  mb: 3,
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
-                  <Box sx={{ textAlign: 'center' }}>
-                    <AutoGraph sx={{ fontSize: 80, mb: 2 }} />
-                    <Typography variant="h4" fontWeight={700}>
-                      Dashboard Ejecutivo
-                    </Typography>
-                    <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                      Vista previa interactiva
-                    </Typography>
+                  {/* Simulación de Dashboard */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    top: 16, 
+                    left: 16, 
+                    background: 'rgba(255,255,255,0.2)', 
+                    borderRadius: '8px', 
+                    p: 1,
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <Typography variant="body2" fontWeight={600}>Dashboard Principal</Typography>
+                  </Box>
+                  
+                  {/* Elementos del Dashboard Simulado */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, p: 3, width: '100%' }}>
+                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
+                      <Typography variant="h6" fontWeight={700}>$45,230</Typography>
+                      <Typography variant="caption">Ventas Hoy</Typography>
+                    </Box>
+                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
+                      <Typography variant="h6" fontWeight={700}>1,234</Typography>
+                      <Typography variant="caption">Productos</Typography>
+                    </Box>
+                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
+                      <Typography variant="h6" fontWeight={700}>89%</Typography>
+                      <Typography variant="caption">Eficiencia</Typography>
+                    </Box>
+                    <Box sx={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', p: 2, textAlign: 'center' }}>
+                      <Typography variant="h6" fontWeight={700}>$12.5K</Typography>
+                      <Typography variant="caption">Meta Mensual</Typography>
+                    </Box>
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box>
-                    <Typography variant="body2" sx={{ opacity: 0.8 }}>Disponible en</Typography>
-                    <Typography variant="body1" fontWeight={600}>Web • Mobile • Desktop</Typography>
-                  </Box>
-                  <Chip 
-                    label="Demo Interactiva" 
-                    sx={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  />
-                </Box>
+                <Typography variant="h6" fontWeight={600} align="center">Dashboard Ejecutivo UniversalBot</Typography>
+                <Typography variant="body2" align="center" sx={{ opacity: 0.8 }}>
+                  Vista previa del panel de control principal
+                </Typography>
               </Box>
             </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* Beneficios Clave */}
-      <Container maxWidth="lg" sx={{ 
-        py: 8,
-        px: { xs: 2, sm: 3 }
-      }}>
+      {/* Módulos de la Plataforma */}
+      <Container sx={{ py: 8 }}>
         <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h2" sx={{
-            fontSize: { xs: '2rem', md: '2.5rem' },
-            fontWeight: 700,
-            color: '#1f2937',
-            mb: 3
-          }}>
-            Resultados Comprobados
+          <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+            Módulos Integrados
+          </Typography>
+          <Typography variant="h6" sx={{ color: '#6b7280', maxWidth: '600px', mx: 'auto' }}>
+            Todas las herramientas que tu empresa necesita en una sola plataforma
           </Typography>
         </Box>
 
-        <Grid container spacing={3}>
-          {keyBenefits.map((benefit, index) => (
+        <Grid container spacing={4}>
+          {platformModules.map((module, index) => (
             <Grid item xs={12} md={6} key={index}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                p: 3,
-                background: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-              }}>
-                <CheckCircle sx={{ color: '#10b981', mr: 2, fontSize: 24 }} />
-                <Typography variant="h6" fontWeight={600}>
-                  {benefit}
-                </Typography>
-              </Box>
+              <Card sx={{ border: '1px solid #e5e7eb', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3 }}>
+                    <Box sx={{ 
+                      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                      borderRadius: '12px',
+                      p: 2,
+                      minWidth: '70px'
+                    }}>
+                      {module.icon}
+                    </Box>
+                    <Box>
+                      <Typography variant="h5" fontWeight={700} color="#1f2937" gutterBottom>
+                        {module.title}
+                      </Typography>
+                      <Typography variant="body1" color="#6b7280" sx={{ mb: 2 }}>
+                        {module.description}
+                      </Typography>
+                      <List dense>
+                        {module.features.map((feature, idx) => (
+                          <ListItem key={idx} sx={{ px: 0 }}>
+                            <ListItemIcon sx={{ minWidth: '30px' }}>
+                              <CheckCircle sx={{ color: '#10b981', fontSize: 18 }} />
+                            </ListItemIcon>
+                            <Typography variant="body2">{feature}</Typography>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
           ))}
         </Grid>
       </Container>
 
-      {/* Características Destacadas */}
+      {/* Demo Interactivo - Vista Previa de Módulos */}
       <Box sx={{ background: '#f8fafc', py: 8 }}>
-        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+        <Container>
           <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography variant="h2" sx={{
-              fontSize: { xs: '2rem', md: '2.5rem' },
-              fontWeight: 700,
-              color: '#1f2937',
-              mb: 2
-            }}>
-              Tecnología de Vanguardia
+            <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+              Vista Previa de la Plataforma
             </Typography>
-            <Typography variant="h6" sx={{ color: '#6b7280', maxWidth: '700px', mx: 'auto' }}>
-              Características diseñadas específicamente para empresas que buscan ventaja competitiva
+            <Typography variant="h6" sx={{ color: '#6b7280' }}>
+              Explora las diferentes secciones de UniversalBot
+            </Typography>
+          </Box>
+
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered sx={{ mb: 4 }}>
+            {demoScreens.map((screen, index) => (
+              <Tab key={index} label={screen.title} />
+            ))}
+          </Tabs>
+
+          <Box sx={{ background: 'white', borderRadius: '12px', p: 4, border: '1px solid #e5e7eb' }}>
+            <Box sx={{ 
+              background: demoScreens[activeTab].color,
+              borderRadius: '8px',
+              height: '400px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              mb: 3,
+              position: 'relative'
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <DashboardCustomize sx={{ fontSize: 80, mb: 2 }} />
+                <Typography variant="h4" fontWeight={700}>
+                  {demoScreens[activeTab].title}
+                </Typography>
+                <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                  {demoScreens[activeTab].description}
+                </Typography>
+              </Box>
+              
+              {/* Elementos de UI simulados */}
+              <Box sx={{ 
+                position: 'absolute', 
+                bottom: 16, 
+                right: 16, 
+                background: 'rgba(255,255,255,0.2)', 
+                borderRadius: '6px', 
+                p: 1 
+              }}>
+                <Typography variant="caption" fontWeight={600}>Vista Previa</Typography>
+              </Box>
+            </Box>
+            
+            <Typography variant="body2" color="#6b7280" align="center">
+              Esta es una simulación del módulo {demoScreens[activeTab].title.toLowerCase()}. 
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                {' '}En la versión real podrás interactuar con todos los datos.
+              </Box>
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Características Técnicas */}
+      <Container sx={{ py: 8 }}>
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+            Tecnología Avanzada
+          </Typography>
+        </Box>
+
+        <Grid container spacing={4}>
+          {technicalFeatures.map((feature, index) => (
+            <Grid item xs={12} md={6} key={index}>
+              <Card sx={{ border: '1px solid #e5e7eb', height: '100%' }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ mb: 3 }}>{feature.icon}</Box>
+                  <Typography variant="h5" fontWeight={700} color="#1f2937" gutterBottom>
+                    {feature.title}
+                  </Typography>
+                  <Typography variant="body1" color="#6b7280" sx={{ mb: 3, lineHeight: 1.6 }}>
+                    {feature.description}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {feature.metrics.map((metric, idx) => (
+                      <Chip key={idx} label={metric} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Testimonios */}
+      <Box sx={{ background: '#f8fafc', py: 8 }}>
+        <Container>
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+              Casos de Éxito
             </Typography>
           </Box>
 
           <Grid container spacing={4}>
-            {features.map((feature, index) => (
+            {testimonials.map((testimonial, index) => (
               <Grid item xs={12} md={6} key={index}>
-                <Card sx={{ 
-                  height: '100%',
-                  border: '1px solid #e5e7eb',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)'
-                  }
-                }}>
+                <Card sx={{ border: '1px solid #e5e7eb' }}>
                   <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ mb: 3 }}>
-                      {feature.icon}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <Avatar sx={{ bgcolor: '#2563eb', mr: 2, width: 50, height: 50 }}>
+                        {testimonial.avatar}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={700} color="#1f2937">
+                          {testimonial.name}
+                        </Typography>
+                        <Typography variant="body2" color="#6b7280">
+                          {testimonial.position}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Typography variant="h5" fontWeight={700} color="#1f2937" gutterBottom>
-                      {feature.title}
-                    </Typography>
-                    <Typography variant="body1" color="#6b7280" sx={{ mb: 3, lineHeight: 1.6 }}>
-                      {feature.description}
+                    
+                    <Chip 
+                      label={testimonial.results}
+                      size="small"
+                      sx={{ 
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        mb: 3
+                      }}
+                    />
+                    
+                    <Typography variant="body1" sx={{ color: '#4b5563', fontStyle: 'italic', lineHeight: 1.6, mb: 2 }}>
+                      "{testimonial.content}"
                     </Typography>
                     
-                    <List dense>
-                      {feature.benefits.map((benefit, idx) => (
-                        <ListItem key={idx} sx={{ px: 0 }}>
-                          <ListItemIcon sx={{ minWidth: '30px' }}>
-                            <CheckCircle sx={{ color: '#10b981', fontSize: 18 }} />
-                          </ListItemIcon>
-                          <Typography variant="body2" fontWeight={500}>
-                            {benefit}
-                          </Typography>
-                        </ListItem>
-                      ))}
-                    </List>
+                    <Chip label={testimonial.industry} size="small" variant="outlined" />
                   </CardContent>
                 </Card>
               </Grid>
@@ -462,106 +531,17 @@ const HomePage = () => {
         </Container>
       </Box>
 
-      {/* Testimonios de Clientes */}
-      <Container maxWidth="lg" sx={{ 
-        py: 8,
-        px: { xs: 2, sm: 3 }
-      }}>
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h2" sx={{
-            fontSize: { xs: '2rem', md: '2.5rem' },
-            fontWeight: 700,
-            color: '#1f2937',
-            mb: 2
-          }}>
-            Casos de Éxito
+      {/* CTA Final */}
+      <Box sx={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', color: 'white', py: 8 }}>
+        <Container sx={{ textAlign: 'center' }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '2rem', md: '2.5rem' }, fontWeight: 700, mb: 2 }}>
+            ¿Listo para Transformar tu Empresa?
           </Typography>
-          <Typography variant="h6" sx={{ color: '#6b7280' }}>
-            Empresas líderes comparten sus resultados
-          </Typography>
-        </Box>
-
-        <Grid container spacing={4}>
-          {testimonials.map((testimonial, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Card sx={{ 
-                height: '100%',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
-              }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <Avatar sx={{ bgcolor: '#2563eb', mr: 2, width: 50, height: 50 }}>
-                      {testimonial.avatar}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={700} color="#1f2937">
-                        {testimonial.name}
-                      </Typography>
-                      <Typography variant="body2" color="#6b7280">
-                        {testimonial.position}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  
-                  <Chip 
-                    label={testimonial.results}
-                    size="small"
-                    sx={{ 
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                      color: 'white',
-                      fontWeight: 600,
-                      mb: 3
-                    }}
-                  />
-                  
-                  <Typography variant="body1" sx={{ 
-                    color: '#4b5563', 
-                    fontStyle: 'italic',
-                    lineHeight: 1.6
-                  }}>
-                    "{testimonial.content}"
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
-      {/* Call to Action Final */}
-      <Box sx={{ 
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-        color: 'white',
-        py: 8
-      }}>
-        <Container maxWidth="lg" sx={{ 
-          px: { xs: 2, sm: 3 },
-          textAlign: 'center' 
-        }}>
-          <Typography variant="h2" sx={{
-            fontSize: { xs: '2rem', md: '2.5rem' },
-            fontWeight: 700,
-            mb: 2
-          }}>
-            ¿Listo para la Transformación?
+          <Typography variant="h5" sx={{ opacity: 0.9, mb: 4, maxWidth: '600px', mx: 'auto' }}>
+            Únete a las {companyCount.toLocaleString()}+ empresas que ya automatizaron sus operaciones
           </Typography>
           
-          <Typography variant="h5" sx={{ 
-            opacity: 0.9, 
-            mb: 4,
-            maxWidth: '600px',
-            mx: 'auto'
-          }}>
-            Únete a las empresas más innovadoras que ya están revolucionando sus operaciones
-          </Typography>
-          
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={3} 
-            justifyContent="center"
-            sx={{ mb: 4 }}
-          >
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="center" sx={{ mb: 4 }}>
             <Button
               variant="contained"
               size="large"
@@ -569,21 +549,14 @@ const HomePage = () => {
               sx={{
                 background: '#ffffff',
                 color: '#2563eb',
-                fontSize: '1.1rem',
+                fontWeight: 700,
                 px: 6,
                 py: 1.5,
-                fontWeight: 700,
-                minWidth: { xs: '100%', sm: '250px' },
-                borderRadius: '8px',
-                '&:hover': {
-                  background: '#f8fafc',
-                  transform: 'translateY(-2px)'
-                }
+                minWidth: { xs: '100%', sm: '250px' }
               }}
             >
               Comenzar Prueba Gratuita
             </Button>
-            
             <Button
               variant="outlined"
               size="large"
@@ -591,77 +564,37 @@ const HomePage = () => {
               sx={{
                 borderColor: 'white',
                 color: 'white',
-                fontSize: '1.1rem',
+                fontWeight: 600,
                 px: 6,
                 py: 1.5,
-                fontWeight: 600,
-                minWidth: { xs: '100%', sm: '250px' },
-                '&:hover': {
-                  background: 'rgba(255, 255, 255, 0.1)'
-                }
+                minWidth: { xs: '100%', sm: '250px' }
               }}
             >
               Iniciar Sesión
             </Button>
           </Stack>
 
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            gap: 4,
-            flexWrap: 'wrap'
-          }}>
-            {[
-              '7 días completamente gratis',
-              'Sin tarjeta de crédito requerida', 
-              'Implementación y soporte incluidos',
-              'Cancelación instantánea'
-            ].map((item, index) => (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
+            {['14 días gratis', 'Sin tarjeta', 'Soporte incluido'].map((item, index) => (
               <Box key={index} sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ mr: 1, fontSize: 20 }} />
-                <Typography variant="body2" fontWeight={500}>{item}</Typography>
+                <CheckCircle sx={{ mr: 1 }} />
+                <Typography variant="body2">{item}</Typography>
               </Box>
             ))}
           </Box>
         </Container>
       </Box>
 
-      {/* Footer Profesional */}
-      <Box sx={{ background: '#111827', color: 'white', py: 6 }}>
-        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Business sx={{ fontSize: 32, color: '#2563eb' }} />
-                <Typography variant="h5" fontWeight={700}>
-                  UniversalBot
-                </Typography>
-              </Box>
-              <Typography variant="body1" sx={{ opacity: 0.7, lineHeight: 1.6 }}>
-                La plataforma de gestión empresarial más avanzada, diseñada para empresas 
-                que buscan resultados extraordinarios mediante tecnología de vanguardia.
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" fontWeight={600} gutterBottom>Contacto</Typography>
-              <Typography variant="body2" sx={{ opacity: 0.7, mb: 1 }}>contacto@universalbot.com</Typography>
-              <Typography variant="body2" sx={{ opacity: 0.7, mb: 1 }}>+1 (555) 123-4567</Typography>
-              <Typography variant="body2" sx={{ opacity: 0.7 }}>Soporte 24/7 disponible</Typography>
-            </Grid>
-          </Grid>
-          
-          <Box sx={{ 
-            borderTop: '1px solid rgba(255,255,255,0.1)', 
-            mt: 4, 
-            pt: 4, 
-            textAlign: 'center' 
-          }}>
-            <Typography variant="body2" sx={{ opacity: 0.7 }}>
-              © 2025 UniversalBot Platform. Todos los derechos reservados.
-            </Typography>
+      {/* Footer */}
+      <Box sx={{ background: '#111827', color: 'white', py: 4 }}>
+        <Container sx={{ textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+            <Business sx={{ color: '#2563eb' }} />
+            <Typography variant="h6" fontWeight={700}>UniversalBot</Typography>
           </Box>
+          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+            © 2025 UniversalBot Platform. Todos los derechos reservados.
+          </Typography>
         </Container>
       </Box>
     </Box>
