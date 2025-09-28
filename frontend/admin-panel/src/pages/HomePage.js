@@ -139,13 +139,13 @@ const HomePage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Componente de Gráfico de Barras Animado - COMPLETAMENTE CORREGIDO
+  // Componente de Gráfico de Barras Animado - CORREGIDO DIRECCIÓN
   const AnimatedBarChart = ({ data, isVisible }) => {
     const [animatedHeights, setAnimatedHeights] = useState(data.map(() => 0));
 
     useEffect(() => {
       if (isVisible) {
-        // Animación inmediata con pequeño delay entre barras
+        // Animación de abajo hacia arriba
         data.forEach((bar, index) => {
           setTimeout(() => {
             setAnimatedHeights(prev => {
@@ -153,7 +153,7 @@ const HomePage = () => {
               newHeights[index] = bar.height;
               return newHeights;
             });
-          }, index * 200); // Delay aumentado para mejor visualización
+          }, index * 150);
         });
       } else {
         // Reset cuando no es visible
@@ -166,8 +166,8 @@ const HomePage = () => {
         display: 'flex', 
         alignItems: 'end', 
         gap: 1, 
-        height: '180px',
-        padding: '20px 0 10px 0',
+        height: '140px',
+        padding: '10px 0',
         justifyContent: 'space-between'
       }}>
         {data.map((bar, index) => (
@@ -176,7 +176,8 @@ const HomePage = () => {
             flexDirection: 'column', 
             alignItems: 'center', 
             flex: 1,
-            height: '100%'
+            height: '100%',
+            justifyContent: 'flex-end'
           }}>
             <Box
               sx={{
@@ -184,10 +185,10 @@ const HomePage = () => {
                 minWidth: '25px',
                 background: `linear-gradient(180deg, ${bar.color} 0%, ${bar.color}DD 100%)`,
                 height: `${animatedHeights[index]}%`,
-                borderRadius: '6px 6px 0 0',
-                minHeight: '10px',
-                transition: `height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.2}s`,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '4px 4px 0 0',
+                minHeight: '8px',
+                transition: `height 0.8s ease-out ${index * 0.15}s`,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 position: 'relative',
                 overflow: 'hidden',
                 '&::after': {
@@ -196,27 +197,27 @@ const HomePage = () => {
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: '40%',
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%)',
-                  borderRadius: '6px 6px 0 0'
+                  height: '30%',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%)',
+                  borderRadius: '4px 4px 0 0'
                 },
                 '&:hover': {
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.25)'
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                 }
               }}
             />
             <Typography variant="caption" sx={{ 
               color: '#6b7280', 
-              fontSize: '0.7rem',
-              mt: 1,
+              fontSize: '0.65rem',
+              mt: 0.5,
               fontWeight: 600
             }}>
               {bar.label}
             </Typography>
             <Typography variant="caption" sx={{ 
               color: bar.color, 
-              fontSize: '0.65rem',
+              fontSize: '0.6rem',
               fontWeight: 700
             }}>
               {bar.value}
@@ -227,7 +228,162 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Dashboard Preview - Animación inmediata
+  // Componente de Gráfico de Líneas - NUEVO
+  const AnimatedLineChart = ({ data, isVisible }) => {
+    const [animatedPath, setAnimatedPath] = useState(0);
+
+    useEffect(() => {
+      if (isVisible) {
+        const timeout = setTimeout(() => {
+          setAnimatedPath(1);
+        }, 300);
+        return () => clearTimeout(timeout);
+      } else {
+        setAnimatedPath(0);
+      }
+    }, [isVisible]);
+
+    const maxValue = Math.max(...data.map(d => d.value));
+    const points = data.map((point, index) => {
+      const x = (index / (data.length - 1)) * 100;
+      const y = 100 - (point.value / maxValue) * 80;
+      return `${x},${y}`;
+    }).join(' ');
+
+    return (
+      <Box sx={{ height: '140px', position: 'relative' }}>
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+          {/* Línea de fondo */}
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth="1"
+            strokeDasharray="2,2"
+          />
+          
+          {/* Línea animada */}
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="1000"
+            strokeDashoffset={1000 - (animatedPath * 1000)}
+            style={{
+              transition: 'stroke-dashoffset 1.5s ease-in-out'
+            }}
+          />
+          
+          {/* Puntos */}
+          {data.map((point, index) => {
+            const x = (index / (data.length - 1)) * 100;
+            const y = 100 - (point.value / maxValue) * 80;
+            return (
+              <circle
+                key={index}
+                cx={x}
+                cy={y}
+                r="2"
+                fill="#3b82f6"
+                opacity={animatedPath}
+                style={{
+                  transition: `opacity 0.5s ease-in-out ${index * 0.1}s`
+                }}
+              />
+            );
+          })}
+        </svg>
+        
+        {/* Etiquetas */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+          {data.map((point, index) => (
+            <Typography key={index} variant="caption" sx={{ color: '#6b7280', fontSize: '0.6rem' }}>
+              {point.label}
+            </Typography>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
+  // Componente de Gráfico Circular - NUEVO
+  const AnimatedPieChart = ({ data, isVisible }) => {
+    const [animatedValues, setAnimatedValues] = useState(data.map(() => 0));
+
+    useEffect(() => {
+      if (isVisible) {
+        data.forEach((item, index) => {
+          setTimeout(() => {
+            setAnimatedValues(prev => {
+              const newValues = [...prev];
+              newValues[index] = item.value;
+              return newValues;
+            });
+          }, index * 200);
+        });
+      } else {
+        setAnimatedValues(data.map(() => 0));
+      }
+    }, [isVisible, data]);
+
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    let currentAngle = 0;
+
+    return (
+      <Box sx={{ height: '140px', position: 'relative' }}>
+        <svg width="100%" height="100%" viewBox="0 0 100 100">
+          {data.map((item, index) => {
+            const percentage = (animatedValues[index] / total) * 100;
+            const angle = (percentage / 100) * 360;
+            const largeArcFlag = angle > 180 ? 1 : 0;
+            
+            const x1 = 50 + 40 * Math.cos((currentAngle * Math.PI) / 180);
+            const y1 = 50 + 40 * Math.sin((currentAngle * Math.PI) / 180);
+            const x2 = 50 + 40 * Math.cos(((currentAngle + angle) * Math.PI) / 180);
+            const y2 = 50 + 40 * Math.sin(((currentAngle + angle) * Math.PI) / 180);
+
+            const pathData = [
+              `M 50 50`,
+              `L ${x1} ${y1}`,
+              `A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+              `L 50 50`
+            ].join(' ');
+
+            currentAngle += angle;
+
+            return (
+              <path
+                key={index}
+                d={pathData}
+                fill={item.color}
+                opacity={isVisible ? 1 : 0}
+                style={{
+                  transition: `opacity 0.5s ease-in-out ${index * 0.2}s, fill 0.3s ease`
+                }}
+              />
+            );
+          })}
+        </svg>
+        
+        {/* Leyenda */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+          {data.map((item, index) => (
+            <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box sx={{ width: 8, height: 8, backgroundColor: item.color, borderRadius: '50%' }} />
+              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.6rem' }}>
+                {item.label} ({((item.value / total) * 100).toFixed(0)}%)
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
+  // Componente de Dashboard Preview
   const DashboardPreview = () => {
     const [ref, inView] = useInView();
     const chartData = [
@@ -251,20 +407,7 @@ const HomePage = () => {
         overflow: 'hidden',
         border: '1px solid #f1f5f9',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-        opacity: 1,
-        transform: 'translateY(0)'
       }}>
-        
-        {/* Elementos decorativos de fondo */}
-        <Box sx={{
-          position: 'absolute',
-          top: -50,
-          right: -50,
-          width: 200,
-          height: 200,
-          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 70%)',
-          borderRadius: '50%'
-        }} />
         
         {/* Header del Dashboard */}
         <Box sx={{ 
@@ -273,9 +416,7 @@ const HomePage = () => {
           alignItems: { xs: 'flex-start', sm: 'center' }, 
           mb: 3, 
           flexDirection: { xs: 'column', sm: 'row' },
-          gap: { xs: 1, sm: 0 },
-          position: 'relative',
-          zIndex: 2
+          gap: { xs: 1, sm: 0 }
         }}>
           <Box>
             <Typography variant="h6" fontWeight={700} sx={{ 
@@ -307,7 +448,7 @@ const HomePage = () => {
         </Box>
 
         {/* KPIs Cards */}
-        <Grid container spacing={1.5} sx={{ mb: 3, position: 'relative', zIndex: 2 }}>
+        <Grid container spacing={1.5} sx={{ mb: 3 }}>
           {[
             { value: `$${(animatedStats.growth * 1800).toLocaleString()}`, label: 'Ingresos Mensuales', color: '#10b981', trend: '+27%' },
             { value: `${animatedStats.efficiency}%`, label: 'Eficiencia', color: '#3b82f6', trend: '+15%' },
@@ -321,16 +462,10 @@ const HomePage = () => {
                 borderRadius: '12px',
                 border: '1px solid #f1f5f9',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                height: '100%',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
-                }
+                height: '100%'
               }}>
                 <Typography variant="h4" fontWeight={800} color={kpi.color} sx={{ 
-                  fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
-                  lineHeight: 1.2
+                  fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' }
                 }}>
                   {kpi.value}
                 </Typography>
@@ -359,15 +494,14 @@ const HomePage = () => {
         </Grid>
 
         {/* Gráficos y Métricas IA */}
-        <Grid container spacing={1.5} sx={{ position: 'relative', zIndex: 2 }}>
+        <Grid container spacing={1.5}>
           <Grid item xs={12} md={8}>
             <Paper sx={{ 
               background: 'white', 
               p: { xs: 1.5, sm: 2 }, 
               borderRadius: '12px',
-              height: { xs: '240px', sm: '260px', md: '280px' },
+              height: { xs: '200px', sm: '220px' },
               border: '1px solid #f1f5f9',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
             }}>
               <Typography variant="body2" fontWeight={600} sx={{ 
                 mb: 1, 
@@ -387,9 +521,8 @@ const HomePage = () => {
               background: 'white', 
               p: { xs: 1.5, sm: 2 }, 
               borderRadius: '12px',
-              height: { xs: '240px', sm: '260px', md: '280px' },
+              height: { xs: '200px', sm: '220px' },
               border: '1px solid #f1f5f9',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
             }}>
               <Typography variant="body2" fontWeight={600} sx={{ 
                 mb: 1,
@@ -440,22 +573,16 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Ventas - CON GRÁFICOS GRANDES
+  // Componente de Vista de Ventas - CON GRÁFICO DE LÍNEAS
   const SalesPreview = () => {
     const [ref, inView] = useInView();
-    const salesData = [
-      { height: 45, label: 'Ene', value: '$12.4K', color: '#10b981' },
-      { height: 52, label: 'Feb', value: '$14.2K', color: '#10b981' },
-      { height: 48, label: 'Mar', value: '$13.1K', color: '#10b981' },
-      { height: 65, label: 'Abr', value: '$18.9K', color: '#10b981' },
-      { height: 72, label: 'May', value: '$21.3K', color: '#10b981' },
-      { height: 85, label: 'Jun', value: '$25.7K', color: '#059669' }
-    ];
-
-    const performanceData = [
-      { height: 60, label: 'Meta', value: '100%', color: '#3b82f6' },
-      { height: 75, label: 'Real', value: '125%', color: '#10b981' },
-      { height: 45, label: 'Min', value: '75%', color: '#ef4444' }
+    const lineData = [
+      { label: 'Ene', value: 12400 },
+      { label: 'Feb', value: 14200 },
+      { label: 'Mar', value: 13100 },
+      { label: 'Abr', value: 18900 },
+      { label: 'May', value: 21300 },
+      { label: 'Jun', value: 25700 }
     ];
 
     return (
@@ -463,7 +590,7 @@ const HomePage = () => {
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
-        minHeight: { xs: '450px', sm: '500px' },
+        minHeight: { xs: '400px', sm: '450px' },
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
       }}>
         <Box sx={{ 
@@ -486,25 +613,30 @@ const HomePage = () => {
                 background: 'white', 
                 borderRadius: '8px', 
                 border: '1px solid #e5e7eb',
-                height: '320px'
+                height: '280px'
               }}>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                  Progresión de Ventas - Primer Semestre
+                  Evolución de Ventas - Primer Semestre
                 </Typography>
-                <AnimatedBarChart data={salesData} isVisible={inView} />
+                <AnimatedLineChart data={lineData} isVisible={inView} />
               </Paper>
             </Grid>
             <Grid item xs={12} md={4}>
               <Stack spacing={2}>
-                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '150px' }}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Conversión</Typography>
                   <Typography variant="h5" color="#059669" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>+{animatedStats.efficiency}%</Typography>
                   <Typography variant="caption" sx={{ color: '#6b7280' }}>Mejora mensual</Typography>
                 </Paper>
-                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '150px' }}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Nuevos Clientes</Typography>
                   <Typography variant="h5" color="#2563eb" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>+{Math.floor(animatedStats.growth / 1.5)}</Typography>
                   <Typography variant="caption" sx={{ color: '#6b7280' }}>Este mes</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Meta Cumplida</Typography>
+                  <Typography variant="h5" color="#f59e0b" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>125%</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Del objetivo</Typography>
                 </Paper>
               </Stack>
             </Grid>
@@ -514,7 +646,7 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Inventario - CON GRÁFICOS GRANDES
+  // Componente de Vista de Inventario - CON GRÁFICO DE BARRAS
   const InventoryPreview = () => {
     const [ref, inView] = useInView();
     const stockData = [
@@ -525,18 +657,12 @@ const HomePage = () => {
       { height: 95, label: 'Prod E', value: '95%', color: '#10b981' }
     ];
 
-    const rotationData = [
-      { height: 70, label: 'Alta', value: '70%', color: '#10b981' },
-      { height: 20, label: 'Media', value: '20%', color: '#f59e0b' },
-      { height: 10, label: 'Baja', value: '10%', color: '#ef4444' }
-    ];
-
     return (
       <Box ref={ref} sx={{ 
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
-        minHeight: { xs: '450px', sm: '500px' },
+        minHeight: { xs: '400px', sm: '450px' },
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
       }}>
         <Box sx={{ 
@@ -553,17 +679,30 @@ const HomePage = () => {
 
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '320px' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Niveles de Stock</Typography>
+            <Grid item xs={12} md={8}>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '280px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Niveles de Stock por Producto</Typography>
                 <AnimatedBarChart data={stockData} isVisible={inView} />
               </Paper>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '320px' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Rotación de Productos</Typography>
-                <AnimatedBarChart data={rotationData} isVisible={inView} />
-              </Paper>
+            <Grid item xs={12} md={4}>
+              <Stack spacing={2}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Rotación</Typography>
+                  <Typography variant="h5" color="#059669" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>92%</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Eficiencia</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Alertas</Typography>
+                  <Typography variant="h5" color="#ef4444" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>3</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Productos bajos</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Precisión</Typography>
+                  <Typography variant="h5" color="#3b82f6" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>98.5%</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Inventario real</Typography>
+                </Paper>
+              </Stack>
             </Grid>
           </Grid>
         </Box>
@@ -571,21 +710,14 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Finanzas - CON GRÁFICOS GRANDES
+  // Componente de Vista de Finanzas - CON GRÁFICO CIRCULAR
   const FinancePreview = () => {
     const [ref, inView] = useInView();
-    const revenueData = [
-      { height: 60, label: 'Q1', value: '$60K', color: '#3b82f6' },
-      { height: 75, label: 'Q2', value: '$75K', color: '#3b82f6' },
-      { height: 85, label: 'Q3', value: '$85K', color: '#3b82f6' },
-      { height: 95, label: 'Q4', value: '$95K', color: '#10b981' }
-    ];
-
     const expenseData = [
-      { height: 45, label: 'Oper', value: '45%', color: '#ef4444' },
-      { height: 25, label: 'Mkt', value: '25%', color: '#f59e0b' },
-      { height: 20, label: 'Dev', value: '20%', color: '#8b5cf6' },
-      { height: 10, label: 'Otros', value: '10%', color: '#6b7280' }
+      { label: 'Operaciones', value: 45, color: '#ef4444' },
+      { label: 'Marketing', value: 25, color: '#f59e0b' },
+      { label: 'Desarrollo', value: 20, color: '#8b5cf6' },
+      { label: 'Otros', value: 10, color: '#6b7280' }
     ];
 
     return (
@@ -593,7 +725,7 @@ const HomePage = () => {
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
-        minHeight: { xs: '450px', sm: '500px' },
+        minHeight: { xs: '400px', sm: '450px' },
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
       }}>
         <Box sx={{ 
@@ -611,16 +743,24 @@ const HomePage = () => {
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '320px' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Ingresos por Trimestre</Typography>
-                <AnimatedBarChart data={revenueData} isVisible={inView} />
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '280px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Distribución de Gastos</Typography>
+                <AnimatedPieChart data={expenseData} isVisible={inView} />
               </Paper>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '320px' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Distribución de Gastos</Typography>
-                <AnimatedBarChart data={expenseData} isVisible={inView} />
-              </Paper>
+              <Stack spacing={2} sx={{ height: '100%' }}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', flex: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Ingresos Trimestrales</Typography>
+                  <Typography variant="h4" color="#059669" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>${(95000).toLocaleString()}</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Total Q4 2024</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', flex: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Margen Neto</Typography>
+                  <Typography variant="h4" color="#3b82f6" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>28.5%</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Por encima del objetivo</Typography>
+                </Paper>
+              </Stack>
             </Grid>
           </Grid>
         </Box>
@@ -628,7 +768,7 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Automatización IA - CON GRÁFICOS GRANDES
+  // Componente de Vista de Automatización IA - CON GRÁFICO DE BARRAS
   const AutomationIAPreview = () => {
     const [ref, inView] = useInView();
     const automationData = [
@@ -638,17 +778,12 @@ const HomePage = () => {
       { height: 95, label: 'Reportes', value: '95%', color: '#8b5cf6' }
     ];
 
-    const efficiencyData = [
-      { height: 65, label: 'Antes', value: '65%', color: '#6b7280' },
-      { height: 88, label: 'Ahora', value: '88%', color: '#10b981' }
-    ];
-
     return (
       <Box ref={ref} sx={{ 
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
-        minHeight: { xs: '450px', sm: '500px' },
+        minHeight: { xs: '400px', sm: '450px' },
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
       }}>
         <Box sx={{ 
@@ -665,17 +800,30 @@ const HomePage = () => {
 
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '320px' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Automatización por Área</Typography>
+            <Grid item xs={12} md={8}>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '280px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Nivel de Automatización por Área</Typography>
                 <AnimatedBarChart data={automationData} isVisible={inView} />
               </Paper>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '320px' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Eficiencia Operativa</Typography>
-                <AnimatedBarChart data={efficiencyData} isVisible={inView} />
-              </Paper>
+            <Grid item xs={12} md={4}>
+              <Stack spacing={2}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Tiempo Ahorrado</Typography>
+                  <Typography variant="h5" color="#059669" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>-12h</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Por semana</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Procesos Automatizados</Typography>
+                  <Typography variant="h5" color="#3b82f6" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>24/7</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Funcionamiento</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Eficiencia</Typography>
+                  <Typography variant="h5" color="#f59e0b" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>+88%</Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280' }}>Mejora general</Typography>
+                </Paper>
+              </Stack>
             </Grid>
           </Grid>
         </Box>
@@ -683,7 +831,7 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Marketing IA - CON GRÁFICOS GRANDES
+  // Componente de Vista de Marketing IA - CON GRÁFICO DE BARRAS
   const MarketingIAPreview = () => {
     const [ref, inView] = useInView();
     const [activeMessage, setActiveMessage] = useState(0);
@@ -702,12 +850,6 @@ const HomePage = () => {
       { height: 45, label: 'Email', value: '45%', color: '#EA4335' }
     ];
 
-    const conversionData = [
-      { height: 82, label: 'Tasa', value: '82%', color: '#10b981' },
-      { height: 75, label: 'Crec', value: '+75%', color: '#3b82f6' },
-      { height: 68, label: 'Ret', value: '68%', color: '#f59e0b' }
-    ];
-
     useEffect(() => {
       const interval = setInterval(() => {
         setActiveMessage(prev => (prev + 1) % messages.length);
@@ -720,7 +862,7 @@ const HomePage = () => {
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
-        minHeight: { xs: '450px', sm: '500px' },
+        minHeight: { xs: '400px', sm: '450px' },
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
       }}>
         <Box sx={{ 
@@ -799,21 +941,12 @@ const HomePage = () => {
             </Grid>
             
             <Grid item xs={12} md={6}>
-              <Stack spacing={2}>
-                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '200px' }}>
-                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>
-                    Engagement por Plataforma
-                  </Typography>
-                  <AnimatedBarChart data={engagementData} isVisible={inView} />
-                </Paper>
-
-                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '200px' }}>
-                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>
-                    Métricas de Conversión
-                  </Typography>
-                  <AnimatedBarChart data={conversionData} isVisible={inView} />
-                </Paper>
-              </Stack>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '280px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  Engagement por Plataforma
+                </Typography>
+                <AnimatedBarChart data={engagementData} isVisible={inView} />
+              </Paper>
             </Grid>
           </Grid>
         </Box>
@@ -830,6 +963,9 @@ const HomePage = () => {
     { title: "Finanzas", component: <FinancePreview /> },
     { title: "Automatización IA", component: <AutomationIAPreview /> }
   ];
+
+  // [El resto del código permanece igual...]
+  // ... (platformModules, testimonials, TestimonialCard, y el resto del JSX)
 
   const platformModules = [
     {
@@ -869,9 +1005,6 @@ const HomePage = () => {
       description: 'Plataforma completa de inteligencia de negocios'
     }
   ];
-
-  // Resto del código se mantiene igual...
-  // [El resto del código permanece idéntico desde testimonials hasta el final]
 
   // Datos para testimonios
   const testimonials = [
@@ -1515,7 +1648,7 @@ const HomePage = () => {
         </Grid>
       </Container>
 
-      {/* CTA Final - Texto corregido */}
+      {/* CTA Final */}
       <Box sx={{ 
         background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)', 
         color: 'white', 
