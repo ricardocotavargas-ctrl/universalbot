@@ -83,6 +83,9 @@ const HomePage = () => {
     automation: 0
   });
 
+  // Estados para controlar la animación de las barras
+  const [barsAnimated, setBarsAnimated] = useState(false);
+
   // Animaciones optimizadas - más rápidas
   useEffect(() => {
     if (isAuthenticated) {
@@ -139,7 +142,7 @@ const HomePage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Componente de Gráfico de Barras Animado - Efectos inmediatos
+  // Componente de Gráfico de Barras Animado - CORREGIDO
   const AnimatedBarChart = ({ data, isVisible }) => {
     const [animatedHeights, setAnimatedHeights] = useState(data.map(() => 0));
 
@@ -153,7 +156,7 @@ const HomePage = () => {
               newHeights[index] = data[index].height;
               return newHeights;
             });
-          }, index * 80);
+          }, index * 150); // Aumentado el delay para mejor visualización
         });
       }
     }, [isVisible, data]);
@@ -176,7 +179,7 @@ const HomePage = () => {
                 height: `${animatedHeights[index]}%`,
                 borderRadius: '4px 4px 0 0',
                 minHeight: '8px',
-                transition: `height 0.6s ease-out ${index * 0.08}s, transform 0.3s ease`,
+                transition: `height 0.8s ease-out ${index * 0.15}s, transform 0.3s ease`,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 position: 'relative',
                 overflow: 'hidden',
@@ -370,7 +373,7 @@ const HomePage = () => {
                 <TrendingUp sx={{ fontSize: { xs: 14, sm: 16 }, color: '#2563eb' }} />
                 Tendencias de Crecimiento - Última Semana
               </Typography>
-              <AnimatedBarChart data={chartData} isVisible={true} />
+              <AnimatedBarChart data={chartData} isVisible={inView} />
             </Paper>
           </Grid>
           <Grid item xs={12} md={4}>
@@ -431,8 +434,9 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Ventas
+  // Componente de Vista de Ventas - CON GRÁFICOS
   const SalesPreview = () => {
+    const [ref, inView] = useInView();
     const salesData = [
       { height: 45, label: 'Ene', value: '$12.4K', color: '#10b981' },
       { height: 52, label: 'Feb', value: '$14.2K', color: '#10b981' },
@@ -442,8 +446,14 @@ const HomePage = () => {
       { height: 85, label: 'Jun', value: '$25.7K', color: '#059669' }
     ];
 
+    const performanceData = [
+      { height: 60, label: 'Meta', value: '100%', color: '#3b82f6' },
+      { height: 75, label: 'Real', value: '125%', color: '#10b981' },
+      { height: 45, label: 'Min', value: '75%', color: '#ef4444' }
+    ];
+
     return (
-      <Box sx={{ 
+      <Box ref={ref} sx={{ 
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
@@ -475,7 +485,7 @@ const HomePage = () => {
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                   Progresión de Ventas - Primer Semestre
                 </Typography>
-                <AnimatedBarChart data={salesData} isVisible={true} />
+                <AnimatedBarChart data={salesData} isVisible={inView} />
               </Paper>
             </Grid>
             <Grid item xs={12} md={4}>
@@ -490,6 +500,10 @@ const HomePage = () => {
                   <Typography variant="h5" color="#2563eb" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>+{Math.floor(animatedStats.growth / 1.5)}</Typography>
                   <Typography variant="caption" sx={{ color: '#6b7280' }}>Este mes</Typography>
                 </Paper>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>Rendimiento</Typography>
+                  <AnimatedBarChart data={performanceData} isVisible={inView} />
+                </Paper>
               </Stack>
             </Grid>
           </Grid>
@@ -498,10 +512,25 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Inventario
+  // Componente de Vista de Inventario - CON GRÁFICOS
   const InventoryPreview = () => {
+    const [ref, inView] = useInView();
+    const stockData = [
+      { height: 85, label: 'Prod A', value: '85%', color: '#10b981' },
+      { height: 45, label: 'Prod B', value: '45%', color: '#ef4444' },
+      { height: 92, label: 'Prod C', value: '92%', color: '#10b981' },
+      { height: 78, label: 'Prod D', value: '78%', color: '#f59e0b' },
+      { height: 95, label: 'Prod E', value: '95%', color: '#10b981' }
+    ];
+
+    const rotationData = [
+      { height: 70, label: 'Alta', value: '70%', color: '#10b981' },
+      { height: 20, label: 'Media', value: '20%', color: '#f59e0b' },
+      { height: 10, label: 'Baja', value: '10%', color: '#ef4444' }
+    ];
+
     return (
-      <Box sx={{ 
+      <Box ref={ref} sx={{ 
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
@@ -523,63 +552,15 @@ const HomePage = () => {
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Estado de Stock</Typography>
-                <Stack spacing={1}>
-                  {[
-                    { producto: 'Producto A', stock: 'Óptimo', estado: '✅', color: '#10b981' },
-                    { producto: 'Producto B', stock: 'Bajo', estado: '⚠️', color: '#ef4444' },
-                    { producto: 'Producto C', stock: 'Estable', estado: '✅', color: '#10b981' }
-                  ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      p: 1,
-                      background: `${item.color}08`,
-                      border: `1px solid ${item.color}20`,
-                      borderRadius: '6px',
-                    }}>
-                      <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>{item.producto}</Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="caption" sx={{ 
-                          color: item.color, 
-                          fontSize: { xs: '0.7rem', sm: '0.8rem' } 
-                        }}>
-                          {item.stock}
-                        </Typography>
-                        <span>{item.estado}</span>
-                      </Box>
-                    </Box>
-                  ))}
-                </Stack>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '260px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Niveles de Stock</Typography>
+                <AnimatedBarChart data={stockData} isVisible={inView} />
               </Paper>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Eficiencia</Typography>
-                <Stack spacing={1}>
-                  {[
-                    { tipo: 'Rotación Stock', porcentaje: '92%', icon: '🔄' },
-                    { tipo: 'Precisión', porcentaje: '98.5%', icon: '🎯' },
-                    { tipo: 'Ahorro Tiempo', porcentaje: '85%', icon: '⏱️' }
-                  ].map((mov, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      p: 1,
-                      background: index % 2 === 0 ? '#f8fafc' : 'transparent',
-                      borderRadius: '6px'
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{mov.icon}</span>
-                        <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>{mov.tipo}</Typography>
-                      </Box>
-                      <Typography variant="body2" fontWeight={600} color="#2563eb" sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>{mov.porcentaje}</Typography>
-                    </Box>
-                  ))}
-                </Stack>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '260px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Rotación de Productos</Typography>
+                <AnimatedBarChart data={rotationData} isVisible={inView} />
               </Paper>
             </Grid>
           </Grid>
@@ -588,8 +569,121 @@ const HomePage = () => {
     );
   };
 
-  // Componente de Vista de Marketing IA - NUEVO
+  // Componente de Vista de Finanzas - NUEVO CON GRÁFICOS
+  const FinancePreview = () => {
+    const [ref, inView] = useInView();
+    const revenueData = [
+      { height: 60, label: 'Q1', value: '$60K', color: '#3b82f6' },
+      { height: 75, label: 'Q2', value: '$75K', color: '#3b82f6' },
+      { height: 85, label: 'Q3', value: '$85K', color: '#3b82f6' },
+      { height: 95, label: 'Q4', value: '$95K', color: '#10b981' }
+    ];
+
+    const expenseData = [
+      { height: 45, label: 'Oper', value: '45%', color: '#ef4444' },
+      { height: 25, label: 'Mkt', value: '25%', color: '#f59e0b' },
+      { height: 20, label: 'Dev', value: '20%', color: '#8b5cf6' },
+      { height: 10, label: 'Otros', value: '10%', color: '#6b7280' }
+    ];
+
+    return (
+      <Box ref={ref} sx={{ 
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
+        borderRadius: '16px',
+        border: '1px solid #f1f5f9',
+        minHeight: { xs: '400px', sm: '450px' },
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      }}>
+        <Box sx={{ 
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          color: 'white',
+          p: 2,
+          borderTopLeftRadius: '16px',
+          borderTopRightRadius: '16px'
+        }}>
+          <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+            Análisis Financiero
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '260px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Ingresos por Trimestre</Typography>
+                <AnimatedBarChart data={revenueData} isVisible={inView} />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '260px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Distribución de Gastos</Typography>
+                <AnimatedBarChart data={expenseData} isVisible={inView} />
+              </Paper>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+    );
+  };
+
+  // Componente de Vista de Automatización IA - NUEVO
+  const AutomationIAPreview = () => {
+    const [ref, inView] = useInView();
+    const automationData = [
+      { height: 85, label: 'Ventas', value: '85%', color: '#10b981' },
+      { height: 92, label: 'Soporte', value: '92%', color: '#3b82f6' },
+      { height: 78, label: 'Stock', value: '78%', color: '#f59e0b' },
+      { height: 95, label: 'Reportes', value: '95%', color: '#8b5cf6' }
+    ];
+
+    const efficiencyData = [
+      { height: 65, label: 'Antes', value: '65%', color: '#6b7280' },
+      { height: 88, label: 'Ahora', value: '88%', color: '#10b981' }
+    ];
+
+    return (
+      <Box ref={ref} sx={{ 
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
+        borderRadius: '16px',
+        border: '1px solid #f1f5f9',
+        minHeight: { xs: '400px', sm: '450px' },
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      }}>
+        <Box sx={{ 
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+          color: 'white',
+          p: 2,
+          borderTopLeftRadius: '16px',
+          borderTopRightRadius: '16px'
+        }}>
+          <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+            Automatización IA
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '260px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Automatización por Área</Typography>
+                <AnimatedBarChart data={automationData} isVisible={inView} />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '260px' }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Eficiencia Operativa</Typography>
+                <AnimatedBarChart data={efficiencyData} isVisible={inView} />
+              </Paper>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+    );
+  };
+
+  // Componente de Vista de Marketing IA - CON GRÁFICOS
   const MarketingIAPreview = () => {
+    const [ref, inView] = useInView();
     const [activeMessage, setActiveMessage] = useState(0);
     
     const messages = [
@@ -597,6 +691,19 @@ const HomePage = () => {
       { platform: 'Instagram', message: '¡Qué bueno verte por aquí! 😊 ¿Te interesa conocer nuestras promociones?', time: '10:32 AM', status: 'Enviado' },
       { platform: 'Facebook', message: 'Buenos días 🌞 ¿Necesitas ayuda con algún producto?', time: '10:35 AM', status: 'Enviado' },
       { platform: 'Email', message: 'Estimado cliente, tenemos ofertas especiales para ti esta semana. ¿Te gustaría conocer más?', time: '10:40 AM', status: 'Programado' }
+    ];
+
+    const engagementData = [
+      { height: 75, label: 'WApp', value: '75%', color: '#25D366' },
+      { height: 65, label: 'IG', value: '65%', color: '#E4405F' },
+      { height: 55, label: 'FB', value: '55%', color: '#1877F2' },
+      { height: 45, label: 'Email', value: '45%', color: '#EA4335' }
+    ];
+
+    const conversionData = [
+      { height: 82, label: 'Tasa', value: '82%', color: '#10b981' },
+      { height: 75, label: 'Crec', value: '+75%', color: '#3b82f6' },
+      { height: 68, label: 'Ret', value: '68%', color: '#f59e0b' }
     ];
 
     useEffect(() => {
@@ -607,7 +714,7 @@ const HomePage = () => {
     }, [messages.length]);
 
     return (
-      <Box sx={{ 
+      <Box ref={ref} sx={{ 
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)', 
         borderRadius: '16px',
         border: '1px solid #f1f5f9',
@@ -691,85 +798,18 @@ const HomePage = () => {
             
             <Grid item xs={12} md={6}>
               <Stack spacing={2}>
-                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '180px' }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>
-                    Plataformas Conectadas
+                    Engagement por Plataforma
                   </Typography>
-                  <Stack spacing={1}>
-                    {[
-                      { platform: 'WhatsApp', connected: true, messages: '1,247' },
-                      { platform: 'Instagram', connected: true, messages: '892' },
-                      { platform: 'Facebook', connected: true, messages: '756' },
-                      { platform: 'Email', connected: true, messages: '2,134' }
-                    ].map((platform, index) => (
-                      <Box key={index} sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between',
-                        p: 1,
-                        background: '#f8fafc',
-                        borderRadius: '6px'
-                      }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {platform.platform === 'WhatsApp' && <Chat sx={{ color: '#25D366', fontSize: 18 }} />}
-                          {platform.platform === 'Instagram' && <Instagram sx={{ color: '#E4405F', fontSize: 18 }} />}
-                          {platform.platform === 'Facebook' && <Facebook sx={{ color: '#1877F2', fontSize: 18 }} />}
-                          {platform.platform === 'Email' && <Email sx={{ color: '#EA4335', fontSize: 18 }} />}
-                          <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
-                            {platform.platform}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip 
-                            label={platform.connected ? 'Conectado' : 'Desconectado'} 
-                            size="small" 
-                            color={platform.connected ? 'success' : 'error'}
-                            sx={{ height: 20, fontSize: '0.6rem' }}
-                          />
-                          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-                            {platform.messages} msgs
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ))}
-                  </Stack>
+                  <AnimatedBarChart data={engagementData} isVisible={inView} />
                 </Paper>
 
-                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                <Paper sx={{ p: 2, background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', height: '180px' }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>
-                    Métricas del Bot
+                    Métricas de Conversión
                   </Typography>
-                  <Grid container spacing={1}>
-                    {[
-                      { metric: 'Tasa Respuesta', value: '94%', trend: '+8%' },
-                      { metric: 'Clientes Atendidos', value: '2,847', trend: '+12%' },
-                      { metric: 'Tiempo Respuesta', value: '2.3s', trend: '-1.2s' },
-                      { metric: 'Satisfacción', value: '4.8/5', trend: '+0.3' }
-                    ].map((item, index) => (
-                      <Grid item xs={6} key={index}>
-                        <Box sx={{ textAlign: 'center', p: 1 }}>
-                          <Typography variant="h6" fontWeight={800} color="#2563eb" sx={{ fontSize: '0.9rem' }}>
-                            {item.value}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.6rem' }}>
-                            {item.metric}
-                          </Typography>
-                          <Chip 
-                            label={item.trend} 
-                            size="small" 
-                            sx={{ 
-                              height: 16, 
-                              fontSize: '0.5rem', 
-                              background: '#10b98115', 
-                              color: '#10b981',
-                              fontWeight: 600,
-                              mt: 0.5
-                            }} 
-                          />
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
+                  <AnimatedBarChart data={conversionData} isVisible={inView} />
                 </Paper>
               </Stack>
             </Grid>
@@ -783,7 +823,9 @@ const HomePage = () => {
     { title: "Dashboard Principal", component: <DashboardPreview /> },
     { title: "Gestión de Ventas", component: <SalesPreview /> },
     { title: "Control Inventario", component: <InventoryPreview /> },
-    { title: "Marketing IA", component: <MarketingIAPreview /> }
+    { title: "Marketing IA", component: <MarketingIAPreview /> },
+    { title: "Finanzas", component: <FinancePreview /> },
+    { title: "Automatización IA", component: <AutomationIAPreview /> }
   ];
 
   const platformModules = [
@@ -806,10 +848,22 @@ const HomePage = () => {
       description: 'Asistente IA que responde automáticamente en WhatsApp, Instagram, Facebook y Email'
     },
     {
-      icon: <AccountBalance sx={{ fontSize: { xs: 32, sm: 40 }, color: '#dc2626' }} />,
+      icon: <AccountBalance sx={{ fontSize: { xs: 32, sm: 40 }, color: '#f59e0b' }} />,
       title: 'Análisis Financiero',
       features: ['Reportes automáticos', 'Detección de anomalías', 'Análisis de rentabilidad', 'Proyecciones realistas'],
       description: 'Sistema que analiza y optimiza el rendimiento financiero'
+    },
+    {
+      icon: <AutoGraph sx={{ fontSize: { xs: 32, sm: 40 }, color: '#8b5cf6' }} />,
+      title: 'Automatización IA',
+      features: ['Procesos automatizados', 'Optimización inteligente', 'Alertas predictivas', 'Eficiencia operativa'],
+      description: 'Automatización inteligente de procesos empresariales'
+    },
+    {
+      icon: <Analytics sx={{ fontSize: { xs: 32, sm: 40 }, color: '#dc2626' }} />,
+      title: 'Business Intelligence',
+      features: ['Dashboards interactivos', 'Métricas en tiempo real', 'Análisis avanzado', 'Reportes ejecutivos'],
+      description: 'Plataforma completa de inteligencia de negocios'
     }
   ];
 
