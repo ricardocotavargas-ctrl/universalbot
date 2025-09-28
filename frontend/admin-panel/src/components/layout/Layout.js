@@ -1,3 +1,4 @@
+// frontend/admin-panel/src/components/layout/Layout.js
 import React, { useState } from 'react';
 import {
   Box,
@@ -9,8 +10,7 @@ import {
   Menu,
   MenuItem,
   useTheme,
-  useMediaQuery,
-  alpha
+  useMediaQuery
 } from '@mui/material';
 import {
   Notifications,
@@ -32,13 +32,6 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  // No mostrar layout en páginas de login/register
-  const isAuthPage = ['/login', '/register'].includes(location.pathname);
-  
-  if (isAuthPage) {
-    return <Box>{children}</Box>;
-  }
-
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -59,7 +52,7 @@ const Layout = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      {/* Header completo de punta a punta */}
+      {/* Header */}
       <AppBar 
         position="static" 
         elevation={0} 
@@ -80,7 +73,6 @@ const Layout = ({ children }) => {
         }}>
           {/* Left side - Menu button and Logo */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Botón de menú (siempre visible) */}
             <IconButton 
               onClick={toggleSidebar}
               sx={{ 
@@ -94,7 +86,6 @@ const Layout = ({ children }) => {
               <MenuIcon />
             </IconButton>
 
-            {/* Logo */}
             <Box
               sx={{
                 display: 'flex',
@@ -130,20 +121,6 @@ const Layout = ({ children }) => {
               </Typography>
             </Box>
           </Box>
-
-          {/* Center - Page Title (opcional, para mobile) */}
-          {isMobile && (
-            <Typography variant="h6" sx={{ 
-              fontWeight: 600, 
-              fontSize: '1rem',
-              color: '#1f2937',
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)'
-            }}>
-              {getPageTitle(location.pathname)}
-            </Typography>
-          )}
 
           {/* Right side - User menu */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -227,9 +204,9 @@ const Layout = ({ children }) => {
         </Toolbar>
       </AppBar>
 
-      {/* Contenido principal con sidebar y page content */}
+      {/* Contenido principal */}
       <Box sx={{ display: 'flex', flex: 1, width: '100%' }}>
-        {/* Sidebar debajo del header */}
+        {/* Sidebar */}
         <Box
           sx={{
             width: sidebarOpen ? 280 : 0,
@@ -250,57 +227,13 @@ const Layout = ({ children }) => {
           p: { xs: 2, md: 3 },
           minHeight: 'calc(100vh - 64px)',
           background: '#f9fafb',
-          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          ml: sidebarOpen ? 0 : 0
+          width: '100%'
         }}>
-          {!isMobile && (
-            <Typography variant="h4" sx={{ 
-              fontWeight: 700,
-              color: '#1f2937',
-              mb: 3
-            }}>
-              {getPageTitle(location.pathname)}
-            </Typography>
-          )}
           {children}
         </Box>
       </Box>
     </Box>
   );
-};
-
-// Función auxiliar para obtener el título de la página
-// Le quite el titulo de pagina 
-const getPageTitle = (pathname) => {
-  const pathTitles = {
-    '/dashboard': ' ',
-    '/sales': ' ',
-    '/sales/new': ' ',
-    '/sales/tables': ' ',
-    '/sales/channels': ' ',
-    '/sales/history': ' ',
-    '/inventory': ' ',
-    '/inventory/recipes': ' ',
-    '/accounts': ' ',
-    '/accounts/banks': ' ',
-    '/accounts/payables': ' ',
-    '/accounts/receivables': ' ',
-    '/financial': ' ',
-    '/financial/profit-loss': ' ',
-    '/financial/expenses': ' ',
-    '/marketing': ' ',
-    '/statistics': ' ',
-    '/ai': ' ',
-    '/settings': ' '
-  };
-  
-  for (const [path, title] of Object.entries(pathTitles)) {
-    if (pathname === path || pathname.startsWith(path + '/')) {
-      return title;
-    }
-  }
-  
-  return 'Universal Bot';
 };
 
 export default Layout;
