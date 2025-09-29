@@ -162,21 +162,14 @@ const HomePage = () => {
     }, [isVisible, data]);
 
     return (
-      <Box sx={{
-        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-        borderRadius: '10px',
-        width: 60,
-        height: 60,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: '1.25rem',
-        margin: '0 auto 16px'
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'end', 
+        gap: 1, 
+        height: '140px',
+        padding: '10px 0',
+        justifyContent: 'space-between'
       }}>
-        UB
-      </Box>
         {data.map((bar, index) => (
           <Box key={index} sx={{ 
             display: 'flex', 
@@ -1115,27 +1108,33 @@ const HomePage = () => {
             minHeight: { xs: '60px', sm: '70px' },
             px: '0 !important'
           }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => scrollToTop()}>
-              <Box sx={{
-                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                borderRadius: '10px',
-                p: 0.8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <SmartToy sx={{ color: 'white', fontSize: { xs: 22, sm: 26 } }} />
-              </Box>
-              <Typography variant="h6" fontWeight={800} sx={{ 
-                fontSize: { xs: '1rem', sm: '1.2rem' },
-                background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                color: 'transparent'
-              }}>
-                UniversalBot<span style={{ color: '#2563eb' }}>AI</span>
-              </Typography>
+            // REEMPLAZAR este bloque en el Header de HomePage:
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => scrollToTop()}>
+            <Box sx={{
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              borderRadius: '10px',
+              width: 40,
+              height: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+            }}>
+              UB
             </Box>
+            <Typography variant="h6" fontWeight={800} sx={{ 
+              fontSize: { xs: '1rem', sm: '1.2rem' },
+              background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
+              UniversalBot<span style={{ color: '#2563eb' }}>AI</span>
+            </Typography>
+          </Box>
 
             {/* Desktop Menu */}
             {!isMobile ? (
