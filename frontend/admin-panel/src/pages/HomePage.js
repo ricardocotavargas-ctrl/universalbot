@@ -1108,7 +1108,6 @@ const HomePage = () => {
             minHeight: { xs: '60px', sm: '70px' },
             px: '0 !important'
           }}>
-            // REEMPLAZAR este bloque en el Header de HomePage:
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => scrollToTop()}>
             <Box sx={{
               background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
