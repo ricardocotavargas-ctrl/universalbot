@@ -162,14 +162,21 @@ const HomePage = () => {
     }, [isVisible, data]);
 
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'end', 
-        gap: 1, 
-        height: '140px',
-        padding: '10px 0',
-        justifyContent: 'space-between'
+      <Box sx={{
+        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+        borderRadius: '10px',
+        width: 60,
+        height: 60,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: '1.25rem',
+        margin: '0 auto 16px'
       }}>
+        UB
+      </Box>
         {data.map((bar, index) => (
           <Box key={index} sx={{ 
             display: 'flex', 
