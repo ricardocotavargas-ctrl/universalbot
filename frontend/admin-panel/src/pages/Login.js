@@ -11,18 +11,14 @@ import {
   Alert,
   IconButton,
   InputAdornment,
-  Fade,
-  Zoom,
-  Chip
+  Fade
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
-  Security,
-  Person,
-  Lock,
-  RocketLaunch,
-  SmartToy
+  Business,
+  VpnKey,
+  Security
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,7 +44,6 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    // Validación básica
     if (!formData.email || !formData.password) {
       setError('Por favor completa todos los campos');
       setLoading(false);
@@ -58,7 +53,6 @@ const Login = () => {
     try {
       const result = await login(formData.email, formData.password);
       if (result.success) {
-        // Pequeño delay para mostrar éxito
         setTimeout(() => {
           navigate('/dashboard');
         }, 500);
@@ -87,362 +81,214 @@ const Login = () => {
     }
   };
 
-  const handleQuickFill = (type) => {
-    handleDemoLogin(type);
-    // Auto-submit después de llenar
-    setTimeout(() => {
-      document.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-    }, 100);
-  };
-
   return (
     <Box sx={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      position: 'relative',
-      overflow: 'hidden',
+      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
       py: 4
     }}>
-      {/* Elementos decorativos de fondo */}
-      <Box sx={{
-        position: 'absolute',
-        top: -100,
-        right: -100,
-        width: 300,
-        height: 300,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
-      }} />
-      <Box sx={{
-        position: 'absolute',
-        bottom: -50,
-        left: -50,
-        width: 200,
-        height: 200,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)',
-      }} />
-
       <Container maxWidth="sm">
-        <Zoom in={animate} timeout={800}>
-          <Paper elevation={8} sx={{ 
-            p: { xs: 3, sm: 4 },
-            borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            position: 'relative',
-            overflow: 'hidden'
+        <Fade in={animate} timeout={600}>
+          <Paper elevation={3} sx={{ 
+            p: 4,
+            borderRadius: '12px',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0'
           }}>
-            {/* Elemento decorativo superior */}
-            <Box sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: 'linear-gradient(90deg, #2563eb, #7c3aed, #2563eb)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 3s ease-in-out infinite',
-              '@keyframes shimmer': {
-                '0%': { backgroundPosition: '-200% 0' },
-                '100%': { backgroundPosition: '200% 0' }
-              }
-            }} />
-
-            <Fade in={animate} timeout={1000}>
-              <Box sx={{ textAlign: 'center', mb: 4 }}>
-                <Box sx={{
-                  background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-                  borderRadius: '16px',
-                  width: 70,
-                  height: 70,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  margin: '0 auto 20px',
-                  boxShadow: '0 8px 25px rgba(37, 99, 235, 0.3)'
-                }}>
-                  <SmartToy sx={{ fontSize: 32 }} />
-                </Box>
-                <Typography variant="h4" component="h1" gutterBottom fontWeight="800" sx={{
-                  background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  color: 'transparent'
-                }}>
-                  Iniciar Sesión
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
-                  Bienvenido de vuelta a UniversalBot AI
-                </Typography>
+            {/* Logo/Header profesional */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box sx={{
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                borderRadius: '10px',
+                width: 60,
+                height: 60,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1.25rem',
+                margin: '0 auto 16px',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+              }}>
+                UB
               </Box>
-            </Fade>
+              <Typography variant="h4" component="h1" gutterBottom fontWeight="700" color="#1e293b">
+                Iniciar Sesión
+              </Typography>
+              <Typography variant="body1" color="#64748b">
+                Accede a tu cuenta de Universal Bot Platform
+              </Typography>
+            </Box>
             
             {error && (
-              <Fade in={!!error}>
-                <Alert 
-                  severity="error" 
-                  sx={{ 
-                    mb: 3,
-                    borderRadius: '12px',
-                    alignItems: 'center'
-                  }}
-                  onClose={() => setError('')}
-                >
-                  {error}
-                </Alert>
-              </Fade>
+              <Alert severity="error" sx={{ mb: 3, borderRadius: '8px' }} onClose={() => setError('')}>
+                {error}
+              </Alert>
             )}
 
             <Box component="form" onSubmit={handleSubmit}>
-              <Fade in={animate} timeout={1200}>
-                <TextField
-                  fullWidth
-                  label="Correo electrónico"
-                  type="email"
-                  margin="normal"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  sx={{ mb: 2 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Person sx={{ color: '#6b7280' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="tu@empresa.com"
-                />
-              </Fade>
+              <TextField
+                fullWidth
+                label="Correo electrónico"
+                type="email"
+                margin="normal"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Business sx={{ color: '#64748b', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                placeholder="admin@empresa.com"
+              />
 
-              <Fade in={animate} timeout={1400}>
-                <TextField
-                  fullWidth
-                  label="Contraseña"
-                  type={showPassword ? 'text' : 'password'}
-                  margin="normal"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  sx={{ mb: 3 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Lock sx={{ color: '#6b7280' }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          sx={{ color: '#6b7280' }}
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="••••••••"
-                />
-              </Fade>
+              <TextField
+                fullWidth
+                label="Contraseña"
+                type={showPassword ? 'text' : 'password'}
+                margin="normal"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                sx={{ mb: 3 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <VpnKey sx={{ color: '#64748b', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: '#64748b' }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                placeholder="••••••••"
+              />
               
-              <Fade in={animate} timeout={1600}>
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  startIcon={loading ? <Security /> : <RocketLaunch />}
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{ 
+                  mb: 2,
+                  py: 1.5,
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  backgroundColor: '#2563eb',
+                  '&:hover': {
+                    backgroundColor: '#1d4ed8'
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#9ca3af'
+                  }
+                }}
+              >
+                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              </Button>
+              
+              <Box textAlign="center" sx={{ mb: 3 }}>
+                <Link 
+                  component={RouterLink} 
+                  to="/register" 
+                  variant="body2"
                   sx={{ 
-                    mb: 3,
-                    py: 1.5,
-                    borderRadius: '12px',
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                    boxShadow: '0 8px 25px rgba(37, 99, 235, 0.3)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                      boxShadow: '0 12px 35px rgba(37, 99, 235, 0.4)',
-                      transform: 'translateY(-2px)'
-                    },
-                    '&:disabled': {
-                      background: '#9ca3af',
-                      transform: 'none'
-                    },
-                    transition: 'all 0.3s ease'
+                    color: '#2563eb',
+                    fontWeight: 500,
+                    '&:hover': { color: '#1d4ed8' }
                   }}
                 >
-                  {loading ? 'Iniciando sesión...' : 'Acceder a la Plataforma'}
-                </Button>
-              </Fade>
-              
-              <Fade in={animate} timeout={1800}>
-                <Box textAlign="center" sx={{ mb: 3 }}>
-                  <Link 
-                    component={RouterLink} 
-                    to="/register" 
-                    variant="body2"
-                    sx={{ 
-                      color: '#2563eb',
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                      '&:hover': { 
-                        color: '#1d4ed8',
-                        textDecoration: 'underline'
-                      },
-                      transition: 'color 0.3s ease'
-                    }}
-                  >
-                    ¿No tienes cuenta? Regístrate aquí
-                  </Link>
-                </Box>
-              </Fade>
+                  ¿No tienes cuenta? Regístrate aquí
+                </Link>
+              </Box>
 
-              {/* Separador */}
-              <Fade in={animate} timeout={2000}>
-                <Box sx={{ display: 'flex', alignItems: 'center', my: 3 }}>
-                  <Box sx={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }} />
-                  <Typography variant="body2" sx={{ mx: 2, color: '#6b7280', fontWeight: 600 }}>
-                    Acceso Rápido
-                  </Typography>
-                  <Box sx={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }} />
-                </Box>
-              </Fade>
-
-              {/* Botones de demo mejorados */}
-              <Fade in={animate} timeout={2200}>
-                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              {/* Demo Access Section */}
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: '#f8fafc', 
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#374151', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Security sx={{ fontSize: 18, color: '#2563eb' }} />
+                  Acceso de Demostración
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                   <Button
                     fullWidth
                     variant="outlined"
-                    size="medium"
-                    onClick={() => handleQuickFill('admin')}
+                    size="small"
+                    onClick={() => handleDemoLogin('admin')}
                     disabled={loading}
                     sx={{ 
-                      borderRadius: '10px',
-                      py: 1.2,
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      py: 0.75,
                       borderColor: '#059669',
                       color: '#059669',
-                      fontWeight: 600,
                       '&:hover': {
                         backgroundColor: '#059669',
                         color: 'white',
-                        borderColor: '#059669',
-                        transform: 'translateY(-1px)'
-                      },
-                      transition: 'all 0.3s ease'
+                        borderColor: '#059669'
+                      }
                     }}
                   >
-                    <Box sx={{ textAlign: 'left', flex: 1 }}>
-                      <Typography variant="caption" display="block" fontWeight={700}>
-                        Demo Admin
-                      </Typography>
-                      <Typography variant="caption" display="block" color="inherit" sx={{ opacity: 0.8 }}>
-                        Acceso completo
-                      </Typography>
-                    </Box>
+                    Admin Demo
                   </Button>
-                  
                   <Button
                     fullWidth
                     variant="outlined"
-                    size="medium"
-                    onClick={() => handleQuickFill('user')}
+                    size="small"
+                    onClick={() => handleDemoLogin('user')}
                     disabled={loading}
                     sx={{ 
-                      borderRadius: '10px',
-                      py: 1.2,
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      py: 0.75,
                       borderColor: '#7c3aed',
                       color: '#7c3aed',
-                      fontWeight: 600,
                       '&:hover': {
                         backgroundColor: '#7c3aed',
                         color: 'white',
-                        borderColor: '#7c3aed',
-                        transform: 'translateY(-1px)'
-                      },
-                      transition: 'all 0.3s ease'
+                        borderColor: '#7c3aed'
+                      }
                     }}
                   >
-                    <Box sx={{ textAlign: 'left', flex: 1 }}>
-                      <Typography variant="caption" display="block" fontWeight={700}>
-                        Demo Usuario
-                      </Typography>
-                      <Typography variant="caption" display="block" color="inherit" sx={{ opacity: 0.8 }}>
-                        Acceso estándar
-                      </Typography>
-                    </Box>
+                    Usuario Demo
                   </Button>
                 </Box>
-              </Fade>
 
-              {/* Credenciales de prueba mejoradas */}
-              <Fade in={animate} timeout={2400}>
-                <Box sx={{ 
-                  p: 3, 
-                  backgroundColor: '#f8fafc', 
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'
-                }}>
-                  <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#374151', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Security sx={{ fontSize: 18 }} />
-                    Credenciales de Prueba
-                  </Typography>
-                  
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Chip 
-                        label="Admin" 
-                        size="small" 
-                        color="success"
-                        sx={{ fontWeight: 600, minWidth: 60 }}
-                      />
-                      <Box>
-                        <Typography variant="caption" fontWeight={600} display="block" color="#374151">
-                          admin@universalbot.com
-                        </Typography>
-                        <Typography variant="caption" display="block" color="#6b7280">
-                          Contraseña: admin123
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Chip 
-                        label="Usuario" 
-                        size="small" 
-                        color="primary"
-                        sx={{ fontWeight: 600, minWidth: 60 }}
-                      />
-                      <Box>
-                        <Typography variant="caption" fontWeight={600} display="block" color="#374151">
-                          usuario@empresa.com
-                        </Typography>
-                        <Typography variant="caption" display="block" color="#6b7280">
-                          Contraseña: usuario123
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                  
-                  <Typography variant="caption" sx={{ display: 'block', mt: 2, color: '#ef4444', fontStyle: 'italic' }}>
-                    ⚠️ Estas credenciales son de demostración
-                  </Typography>
-                </Box>
-              </Fade>
+                <Typography variant="caption" component="div" sx={{ display: 'block', color: '#6b7280', mb: 0.5, fontWeight: 500 }}>
+                  <strong>Admin:</strong> admin@universalbot.com
+                </Typography>
+                <Typography variant="caption" component="div" sx={{ display: 'block', color: '#6b7280', fontWeight: 500 }}>
+                  <strong>Usuario:</strong> usuario@empresa.com
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#ef4444', fontStyle: 'italic' }}>
+                  Contraseña: admin123 / usuario123
+                </Typography>
+              </Box>
             </Box>
           </Paper>
-        </Zoom>
+        </Fade>
       </Container>
     </Box>
   );
