@@ -1,7 +1,4 @@
-// frontend/admin-panel/src/pages/dashboard/Dashboard.js
-import React, { useState, useEffect } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Grid,
@@ -60,146 +57,229 @@ import CustomerInsights from './widgets/CustomerInsights';
 import InventoryAlerts from './widgets/InventoryAlerts';
 import RecentActivity from './widgets/RecentActivity';
 
-// Tipo para el sistema de drag & drop
-const ItemTypes = {
-  WIDGET: 'widget'
-};
-
-// Componente de Widget Draggable
+// Componente de Widget Draggable Nativo
 const DraggableWidget = ({ widgetId, title, children, onToggle, onMoveWidget, size, index }) => {
   const theme = useTheme();
-  
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: ItemTypes.WIDGET,
-    item: { widgetId, index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  }), [widgetId, index]);
+  const widgetRef = useRef(null);
+  const dragRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOver, setIsOver] = useState(false);
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.WIDGET,
-    drop: (item) => {
-      if (item.widgetId !== widgetId) {
-        onMoveWidget(item.index, index);
+  useEffect(() => {
+    const dragElement = dragRef.current;
+    const widgetElement = widgetRef.current;
+
+    if (!dragElement || !widgetElement) return;
+
+    let startX, startY, originalIndex;
+
+    const handleDragStart = (e) => {
+      setIsDragging(true);
+      originalIndex = index;
+      
+      // Para touch events
+      if (e.type === 'touchstart') {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      } else {
+        startX = e.clientX;
+        startY = e.clientY;
       }
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  }), [widgetId, index, onMoveWidget]);
+
+      // Estilo durante el drag
+      widgetElement.style.opacity = '0.6';
+      widgetElement.style.transform = 'scale(0.98)';
+      widgetElement.style.zIndex = '1000';
+    };
+
+    const handleDrag = (e) => {
+      if (!isDragging) return;
+
+      let clientX, clientY;
+      if (e.type === 'touchmove') {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      // Aquí podrías implementar lógica de reordenamiento visual
+      // Por simplicidad, usamos el sistema de drop zones
+    };
+
+    const handleDragEnd = (e) => {
+      setIsDragging(false);
+      widgetElement.style.opacity = '1';
+      widgetElement.style.transform = 'scale(1)';
+      widgetElement.style.zIndex = '1';
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      setIsOver(true);
+    };
+
+    const handleDragLeave = (e) => {
+      if (!widgetElement.contains(e.relatedTarget)) {
+        setIsOver(false);
+      }
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      setIsOver(false);
+      
+      const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      if (draggedIndex !== index) {
+        onMoveWidget(draggedIndex, index);
+      }
+    };
+
+    // Eventos para el elemento de arrastre
+    dragElement.addEventListener('mousedown', handleDragStart);
+    dragElement.addEventListener('touchstart', handleDragStart, { passive: true });
+    
+    // Eventos para el widget como drop zone
+    widgetElement.addEventListener('dragover', handleDragOver);
+    widgetElement.addEventListener('dragleave', handleDragLeave);
+    widgetElement.addEventListener('drop', handleDrop);
+
+    // Eventos globales
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('touchmove', handleDrag, { passive: true });
+    document.addEventListener('mouseup', handleDragEnd);
+    document.addEventListener('touchend', handleDragEnd);
+
+    return () => {
+      dragElement.removeEventListener('mousedown', handleDragStart);
+      dragElement.removeEventListener('touchstart', handleDragStart);
+      widgetElement.removeEventListener('dragover', handleDragOver);
+      widgetElement.removeEventListener('dragleave', handleDragLeave);
+      widgetElement.removeEventListener('drop', handleDrop);
+      document.removeEventListener('mousemove', handleDrag);
+      document.removeEventListener('touchmove', handleDrag);
+      document.removeEventListener('mouseup', handleDragEnd);
+      document.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging, index, onMoveWidget]);
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
   return (
-    <div ref={drop} style={{ height: '100%' }}>
-      <Paper
-        ref={drag}
+    <Paper
+      ref={widgetRef}
+      draggable={true}
+      onDragStart={handleDragStart}
+      sx={{
+        height: '100%',
+        position: 'relative',
+        border: `2px solid ${
+          isOver 
+            ? alpha(theme.palette.primary.main, 0.5)
+            : isDragging
+            ? alpha(theme.palette.primary.main, 0.3)
+            : alpha(theme.palette.primary.main, 0.1)
+        }`,
+        borderRadius: 3,
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        '&:hover': {
+          borderColor: alpha(theme.palette.primary.main, 0.3),
+          boxShadow: theme.shadows[4]
+        }
+      }}
+    >
+      {/* Header del Widget */}
+      <Box
         sx={{
-          height: '100%',
-          position: 'relative',
-          border: `2px solid ${
-            isOver 
-              ? alpha(theme.palette.primary.main, 0.5)
-              : isDragging
-              ? alpha(theme.palette.primary.main, 0.3)
-              : alpha(theme.palette.primary.main, 0.1)
-          }`,
-          borderRadius: 3,
-          overflow: 'hidden',
-          transition: 'all 0.3s ease',
-          opacity: isDragging ? 0.6 : 1,
-          transform: isDragging ? 'scale(0.98)' : 'scale(1)',
-          cursor: isDragging ? 'grabbing' : 'grab',
-          '&:hover': {
-            borderColor: alpha(theme.palette.primary.main, 0.3),
-            boxShadow: theme.shadows[4]
-          }
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          background: alpha(theme.palette.primary.main, 0.02)
         }}
       >
-        {/* Header del Widget */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            p: 2,
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            background: alpha(theme.palette.primary.main, 0.02)
-          }}
+        <Box 
+          ref={dragRef}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <DragIndicator 
-              sx={{ 
-                color: 'text.secondary',
-                cursor: isDragging ? 'grabbing' : 'grab',
-                '&:active': { cursor: 'grabbing' }
-              }} 
-            />
-            <Typography variant="h6" fontWeight={600}>
-              {title}
-            </Typography>
-            <Chip 
-              label={size === 'large' ? 'Grande' : size === 'medium' ? 'Mediano' : 'Pequeño'} 
-              size="small" 
-              variant="outlined"
-              sx={{ height: 20, fontSize: '0.6rem' }}
-            />
-          </Box>
-          <Tooltip title={isDragging ? "Suelta para reordenar" : "Arrastra para reordenar"}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle(widgetId);
-              }}
-              sx={{
-                color: isDragging ? 'primary.main' : 'text.secondary'
-              }}
-            >
-              {isDragging ? <Reorder /> : <Visibility />}
-            </IconButton>
-          </Tooltip>
+          <DragIndicator 
+            sx={{ 
+              color: 'text.secondary',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              '&:active': { cursor: 'grabbing' }
+            }} 
+          />
+          <Typography variant="h6" fontWeight={600}>
+            {title}
+          </Typography>
+          <Chip 
+            label={size === 'large' ? 'Grande' : size === 'medium' ? 'Mediano' : 'Pequeño'} 
+            size="small" 
+            variant="outlined"
+            sx={{ height: 20, fontSize: '0.6rem' }}
+          />
         </Box>
-
-        {/* Contenido del Widget */}
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-
-        {/* Indicador de arrastre */}
-        {isOver && (
-          <Box
+        <Tooltip title={isDragging ? "Suelta para reordenar" : "Arrastra para reordenar"}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(widgetId);
+            }}
             sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              border: `3px dashed ${theme.palette.primary.main}`,
-              borderRadius: 3,
-              background: alpha(theme.palette.primary.main, 0.05),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1
+              color: isDragging ? 'primary.main' : 'text.secondary'
             }}
           >
-            <Typography variant="body2" color="primary.main" fontWeight={600}>
-              Soltar aquí
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-    </div>
+            {isDragging ? <Reorder /> : <Visibility />}
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Contenido del Widget */}
+      <Box sx={{ p: 3 }}>
+        {children}
+      </Box>
+
+      {/* Indicador de arrastre */}
+      {isOver && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            border: `3px dashed ${theme.palette.primary.main}`,
+            borderRadius: 3,
+            background: alpha(theme.palette.primary.main, 0.05),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+        >
+          <Typography variant="body2" color="primary.main" fontWeight={600}>
+            Soltar aquí
+          </Typography>
+        </Box>
+      )}
+    </Paper>
   );
 };
 
-// Componente principal del Dashboard con Drag & Drop
-const DashboardContent = () => {
+// Componente principal del Dashboard
+const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const [widgetsConfig, setWidgetsConfig] = useState({});
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Configuración inicial de widgets
   const defaultWidgets = {
@@ -250,10 +330,7 @@ const DashboardContent = () => {
     
     // Recalcular posiciones
     enabledWidgets.forEach(([widgetId], index) => {
-      if (index === fromIndex) {
-        // Este widget será movido, lo manejamos después
-        return;
-      }
+      if (index === fromIndex) return;
       
       let newPosition;
       if (index < toIndex && index < fromIndex) {
@@ -379,7 +456,7 @@ const DashboardContent = () => {
 
   return (
     <Container maxWidth="xl" sx={{ pb: 4 }}>
-      {/* Header Principal Mejorado */}
+      {/* Header Principal */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -401,7 +478,6 @@ const DashboardContent = () => {
               })}
             </Typography>
             
-            {/* Estadísticas rápidas del header */}
             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
               <Chip 
                 icon={<TrendingUp />} 
@@ -421,15 +497,6 @@ const DashboardContent = () => {
                 color="warning" 
                 variant="outlined" 
               />
-              {isDragging && (
-                <Chip 
-                  icon={<Reorder />} 
-                  label="Modo Reordenamiento Activo" 
-                  color="info" 
-                  variant="filled"
-                  sx={{ animation: 'pulse 2s infinite' }}
-                />
-              )}
             </Box>
           </Box>
           
@@ -477,7 +544,7 @@ const DashboardContent = () => {
         </Box>
       </Box>
 
-      {/* Grid de Widgets con Drag & Drop */}
+      {/* Grid de Widgets */}
       <Grid container spacing={3}>
         {getEnabledWidgets().map(([widgetId, config], index) => (
           <Grid item xs={12} md={getGridSize(config.size)} key={widgetId}>
@@ -486,7 +553,7 @@ const DashboardContent = () => {
         ))}
       </Grid>
 
-      {/* Diálogo de Configuración Mejorado */}
+      {/* Diálogo de Configuración */}
       <Dialog 
         open={settingsOpen} 
         onClose={() => setSettingsOpen(false)} 
@@ -501,7 +568,7 @@ const DashboardContent = () => {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Selecciona qué widgets quieres mostrar en tu dashboard. Puedes reordenarlos arrastrándolos directamente en el dashboard.
+            Selecciona qué widgets quieres mostrar en tu dashboard.
           </Typography>
           
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -531,29 +598,18 @@ const DashboardContent = () => {
                     }`,
                     background: config.enabled 
                       ? alpha(theme.palette.primary.main, 0.05)
-                      : 'transparent',
-                    opacity: config.enabled ? 1 : 0.7,
-                    transition: 'all 0.3s ease'
+                      : 'transparent'
                   }}
                 >
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Box sx={{ flex: 1 }}>
+                      <Box>
                         <Typography variant="h6" gutterBottom>
                           {getWidgetTitle(widgetId)}
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          <Chip 
-                            label={`Tamaño: ${config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}`}
-                            size="small" 
-                            variant="outlined"
-                          />
-                          <Chip 
-                            label={`Posición: ${config.position}`}
-                            size="small" 
-                            variant="outlined"
-                          />
-                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
+                        </Typography>
                       </Box>
                       <FormControlLabel
                         control={
@@ -578,9 +634,7 @@ const DashboardContent = () => {
           </Button>
           <Button 
             variant="contained" 
-            onClick={() => {
-              setSettingsOpen(false);
-            }}
+            onClick={() => setSettingsOpen(false)}
           >
             Guardar Cambios
           </Button>
@@ -611,25 +665,7 @@ const DashboardContent = () => {
           </UBButton>
         </Box>
       )}
-
-      {/* Estilos para animaciones */}
-      <style jsx>{`
-        @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.7; }
-          100% { opacity: 1; }
-        }
-      `}</style>
     </Container>
-  );
-};
-
-// Componente principal que envuelve con DndProvider
-const Dashboard = () => {
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <DashboardContent />
-    </DndProvider>
   );
 };
 
