@@ -9,17 +9,17 @@ import {
   Paper,
   alpha,
   useTheme,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  FormControlLabel,
+  Switch,
   Card,
   CardContent,
-  LinearProgress,
-  Button,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  IconButton,
-  Badge
+  Tooltip
 } from '@mui/material';
 import {
   WhatsApp,
@@ -36,732 +36,394 @@ import {
   Rocket,
   NotificationsActive,
   AutoAwesome,
-  Inventory,
-  AccountBalance,
-  Receipt,
-  Campaign,
-  SmartToy,
   Settings,
-  Warning,
-  CheckCircle,
-  Error,
-  ShoppingCart,
-  Group,
-  BarChart,
-  MoreVert,
-  Notifications,
-  CalendarToday,
-  LocalOffer
+  DragIndicator,
+  Add,
+  Visibility,
+  VisibilityOff,
+  Dashboard as DashboardIcon
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
 import { useAuth } from '../../contexts/AuthContext';
 
+// Componentes de Widgets
+import CommunicationsCenter from './widgets/CommunicationsCenter';
+import FinancialOverview from './widgets/FinancialOverview';
+import QuickActions from './widgets/QuickActions';
+import PerformanceMetrics from './widgets/PerformanceMetrics';
+import SalesAnalytics from './widgets/SalesAnalytics';
+import CustomerInsights from './widgets/CustomerInsights';
+import InventoryAlerts from './widgets/InventoryAlerts';
+import RecentActivity from './widgets/RecentActivity';
+
 const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState({
-    channels: {
-      whatsapp: { connected: true, messages: 1240, responses: 1180, trend: '+12%' },
-      facebook: { connected: true, messages: 890, responses: 820, trend: '+8%' },
-      instagram: { connected: true, messages: 670, responses: 610, trend: '+15%' },
-      email: { connected: true, messages: 450, responses: 430, trend: '+5%' }
-    },
-    business: {
-      revenue: { current: 23450, target: 50000, progress: 47 },
-      clients: { total: 284, new: 12, active: 268 },
-      conversions: { leads: 156, customers: 42, rate: 26.9 },
-      satisfaction: 94.5,
-      expenses: 18760,
-      profit: 4690
-    },
-    performance: {
-      responseTime: '1.2 min',
-      automation: 87.3,
-      uptime: 99.9
-    },
-    inventory: {
-      totalProducts: 156,
-      lowStock: 8,
-      outOfStock: 3,
-      totalValue: 45230
-    },
-    financial: {
-      accountsReceivable: 12500,
-      accountsPayable: 8700,
-      cashFlow: 3800
+  const [widgetsConfig, setWidgetsConfig] = useState({});
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Configuración inicial de widgets
+  const defaultWidgets = {
+    communicationsCenter: { enabled: true, size: 'large', position: 1 },
+    financialOverview: { enabled: true, size: 'medium', position: 2 },
+    quickActions: { enabled: true, size: 'medium', position: 3 },
+    performanceMetrics: { enabled: true, size: 'small', position: 4 },
+    salesAnalytics: { enabled: true, size: 'medium', position: 5 },
+    customerInsights: { enabled: true, size: 'medium', position: 6 },
+    inventoryAlerts: { enabled: true, size: 'small', position: 7 },
+    recentActivity: { enabled: true, size: 'small', position: 8 }
+  };
+
+  useEffect(() => {
+    // Cargar configuración desde localStorage o usar defaults
+    const savedConfig = localStorage.getItem('dashboardWidgets');
+    if (savedConfig) {
+      setWidgetsConfig(JSON.parse(savedConfig));
+    } else {
+      setWidgetsConfig(defaultWidgets);
     }
-  });
+  }, []);
 
-  const [recentActivities, setRecentActivities] = useState([
-    { id: 1, type: 'sale', message: 'Nueva venta realizada - $350', time: 'Hace 5 min', user: 'Carlos Rodríguez' },
-    { id: 2, type: 'client', message: 'Cliente nuevo registrado', time: 'Hace 12 min', user: 'Ana Martínez' },
-    { id: 3, type: 'inventory', message: 'Stock bajo en Café Premium', time: 'Hace 25 min', user: 'Sistema' },
-    { id: 4, type: 'payment', message: 'Pago recibido - $1,250', time: 'Hace 1 hora', user: 'María González' },
-    { id: 5, type: 'alert', message: 'Recordatorio: Impuestos por pagar', time: 'Hace 2 horas', user: 'Sistema' }
-  ]);
+  const saveWidgetsConfig = (newConfig) => {
+    setWidgetsConfig(newConfig);
+    localStorage.setItem('dashboardWidgets', JSON.stringify(newConfig));
+  };
 
-  const [alerts, setAlerts] = useState([
-    { id: 1, type: 'warning', message: '5 productos con stock bajo', action: 'Revisar inventario' },
-    { id: 2, type: 'error', message: '2 productos agotados', action: 'Reabastecer' },
-    { id: 3, type: 'info', message: 'Reporte mensual listo', action: 'Descargar' }
-  ]);
-
-  const channelStats = [
-    {
-      platform: 'WhatsApp',
-      icon: <WhatsApp sx={{ color: '#25D366', fontSize: 32 }} />,
-      connected: metrics.channels.whatsapp.connected,
-      messages: metrics.channels.whatsapp.messages,
-      responses: metrics.channels.whatsapp.responses,
-      trend: metrics.channels.whatsapp.trend,
-      color: '#25D366'
-    },
-    {
-      platform: 'Facebook',
-      icon: <Facebook sx={{ color: '#1877F2', fontSize: 32 }} />,
-      connected: metrics.channels.facebook.connected,
-      messages: metrics.channels.facebook.messages,
-      responses: metrics.channels.facebook.responses,
-      trend: metrics.channels.facebook.trend,
-      color: '#1877F2'
-    },
-    {
-      platform: 'Instagram',
-      icon: <Instagram sx={{ color: '#E4405F', fontSize: 32 }} />,
-      connected: metrics.channels.instagram.connected,
-      messages: metrics.channels.instagram.messages,
-      responses: metrics.channels.instagram.responses,
-      trend: metrics.channels.instagram.trend,
-      color: '#E4405F'
-    },
-    {
-      platform: 'Email',
-      icon: <Email sx={{ color: '#EA4335', fontSize: 32 }} />,
-      connected: metrics.channels.email.connected,
-      messages: metrics.channels.email.messages,
-      responses: metrics.channels.email.responses,
-      trend: metrics.channels.email.trend,
-      color: '#EA4335'
-    }
-  ];
-
-  const quickActions = [
-    {
-      label: 'Nueva Venta',
-      icon: <ShoppingCart sx={{ fontSize: 24 }} />,
-      description: 'Registrar nueva venta',
-      color: theme.palette.primary.main,
-      path: '/sales/new'
-    },
-    {
-      label: 'Gestión de Inventario',
-      icon: <Inventory sx={{ fontSize: 24 }} />,
-      description: 'Ver y gestionar productos',
-      color: theme.palette.success.main,
-      path: '/inventory/products'
-    },
-    {
-      label: 'Reportes Financieros',
-      icon: <AccountBalance sx={{ fontSize: 24 }} />,
-      description: 'Análisis financiero',
-      color: theme.palette.warning.main,
-      path: '/financial/reports'
-    },
-    {
-      label: 'Campañas Marketing',
-      icon: <Campaign sx={{ fontSize: 24 }} />,
-      description: 'Crear campañas',
-      color: theme.palette.info.main,
-      path: '/marketing/campaigns'
-    },
-    {
-      label: 'Respuestas IA',
-      icon: <SmartToy sx={{ fontSize: 24 }} />,
-      description: 'Configurar automatizaciones',
-      color: theme.palette.success.main,
-      path: '/ai-flows'
-    },
-    {
-      label: 'Configuración',
-      icon: <Settings sx={{ fontSize: 24 }} />,
-      description: 'Ajustes del sistema',
-      color: theme.palette.grey[600],
-      path: '/settings'
-    }
-  ];
-
-  const moduleStats = [
-    {
-      module: 'Ventas',
-      icon: <ShoppingCart sx={{ fontSize: 24 }} />,
-      value: '125',
-      label: 'Ventas este mes',
-      trend: '+15%',
-      color: 'primary'
-    },
-    {
-      module: 'Inventario',
-      icon: <Inventory sx={{ fontSize: 24 }} />,
-      value: '156',
-      label: 'Productos activos',
-      trend: '+8%',
-      color: 'success'
-    },
-    {
-      module: 'Clientes',
-      icon: <Group sx={{ fontSize: 24 }} />,
-      value: '284',
-      label: 'Clientes registrados',
-      trend: '+12%',
-      color: 'info'
-    },
-    {
-      module: 'Finanzas',
-      icon: <AttachMoney sx={{ fontSize: 24 }} />,
-      value: '$23,450',
-      label: 'Ingresos mensuales',
-      trend: '+22%',
-      color: 'warning'
-    }
-  ];
-
-  const ChannelCard = ({ channel }) => (
-    <UBCard sx={{ 
-      height: '100%',
-      background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha(channel.color, 0.05)} 100%)`,
-      border: `2px solid ${alpha(channel.color, 0.2)}`,
-      transition: 'all 0.3s ease',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        borderColor: alpha(channel.color, 0.4),
-        boxShadow: `0 8px 32px ${alpha(channel.color, 0.15)}`
+  const toggleWidget = (widgetId) => {
+    const newConfig = {
+      ...widgetsConfig,
+      [widgetId]: {
+        ...widgetsConfig[widgetId],
+        enabled: !widgetsConfig[widgetId]?.enabled
       }
-    }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {channel.icon}
-          <Box>
-            <Typography variant="h6" fontWeight={600}>
-              {channel.platform}
-            </Typography>
-            <Chip
-              label={channel.connected ? 'Conectado' : 'Desconectado'}
-              size="small"
-              color={channel.connected ? 'success' : 'error'}
-              sx={{ height: 20, fontSize: '0.7rem' }}
-            />
-          </Box>
-        </Box>
-        <Chip
-          label={channel.trend}
-          size="small"
-          sx={{ 
-            backgroundColor: alpha('#059669', 0.2),
-            color: '#059669',
-            fontWeight: 600
-          }}
-        />
-      </Box>
+    };
+    saveWidgetsConfig(newConfig);
+  };
 
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h4" fontWeight={700} color={channel.color}>
-              {channel.messages}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Mensajes
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h4" fontWeight={700}>
-              {channel.responses}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Respuestas
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
+  const getEnabledWidgets = () => {
+    return Object.entries(widgetsConfig)
+      .filter(([_, config]) => config.enabled)
+      .sort((a, b) => a[1].position - b[1].position);
+  };
 
-      <Box sx={{ 
-        background: alpha(theme.palette.background.paper, 0.5),
-        borderRadius: 2,
-        p: 1.5,
-        textAlign: 'center'
-      }}>
-        <Typography variant="body2" fontWeight={600}>
-          {((channel.responses / channel.messages) * 100).toFixed(1)}%
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Tasa de efectividad
-        </Typography>
-      </Box>
-    </UBCard>
-  );
+  const getGridSize = (size) => {
+    switch (size) {
+      case 'large': return 12;
+      case 'medium': return 6;
+      case 'small': return 4;
+      default: return 6;
+    }
+  };
 
-  const MetricCard = ({ title, value, subtitle, icon, color = 'primary', progress }) => (
-    <UBCard sx={{ height: '100%' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            {title}
-          </Typography>
-          <Typography variant="h4" fontWeight={700} sx={{ mb: 0.5 }}>
-            {value}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {subtitle}
-          </Typography>
-          {progress !== undefined && (
-            <LinearProgress 
-              variant="determinate" 
-              value={progress} 
-              color={color}
-              sx={{ mt: 1, height: 6, borderRadius: 3 }}
-            />
-          )}
-        </Box>
-        <Box sx={{ color: `${color}.main`, fontSize: 40 }}>
-          {icon}
-        </Box>
-      </Box>
-    </UBCard>
-  );
-
-  const ModuleStatCard = ({ stat }) => (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ 
-            background: alpha(theme.palette[stat.color].main, 0.1),
-            borderRadius: 2,
-            p: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Box sx={{ color: `${stat.color}.main` }}>
-              {stat.icon}
-            </Box>
-          </Box>
-          <Chip
-            label={stat.trend}
-            size="small"
-            color="success"
-            sx={{ fontWeight: 600 }}
-          />
-        </Box>
-        
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          {stat.value}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {stat.label}
-        </Typography>
-        <Typography variant="caption" color={`${stat.color}.main`} fontWeight={600}>
-          {stat.module}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-
-  const QuickActionCard = ({ action }) => (
+  const WidgetContainer = ({ children, widgetId, title, onToggle }) => (
     <Paper
       sx={{
-        p: 2,
         height: '100%',
-        background: `linear-gradient(135deg, ${alpha(action.color, 0.1)} 0%, ${alpha(action.color, 0.05)} 100%)`,
-        border: `2px solid ${alpha(action.color, 0.2)}`,
-        borderRadius: 2,
+        position: 'relative',
+        border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+        borderRadius: 3,
+        overflow: 'hidden',
         transition: 'all 0.3s ease',
-        cursor: 'pointer',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          borderColor: alpha(action.color, 0.4),
-          boxShadow: `0 6px 24px ${alpha(action.color, 0.15)}`
+          borderColor: alpha(theme.palette.primary.main, 0.3),
+          boxShadow: theme.shadows[4]
         }
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Box sx={{ 
-          background: alpha(action.color, 0.2),
-          borderRadius: 2,
-          p: 1,
+      {/* Header del Widget */}
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          {action.icon}
-        </Box>
-        <Typography variant="h6" fontWeight={600}>
-          {action.label}
-        </Typography>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {action.description}
-      </Typography>
-      <UBButton
-        variant="outlined"
-        fullWidth
-        size="small"
-        sx={{ 
-          borderColor: alpha(action.color, 0.3),
-          color: action.color,
-          '&:hover': {
-            borderColor: action.color,
-            backgroundColor: alpha(action.color, 0.1)
-          }
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          background: alpha(theme.palette.primary.main, 0.02)
         }}
       >
-        Acceder
-      </UBButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DragIndicator 
+            sx={{ 
+              color: 'text.secondary',
+              cursor: 'grab',
+              '&:active': { cursor: 'grabbing' }
+            }} 
+          />
+          <Typography variant="h6" fontWeight={600}>
+            {title}
+          </Typography>
+        </Box>
+        <Tooltip title={widgetsConfig[widgetId]?.enabled ? "Ocultar widget" : "Mostrar widget"}>
+          <IconButton
+            size="small"
+            onClick={() => onToggle(widgetId)}
+            sx={{
+              color: widgetsConfig[widgetId]?.enabled ? 'primary.main' : 'text.disabled'
+            }}
+          >
+            {widgetsConfig[widgetId]?.enabled ? <Visibility /> : <VisibilityOff />}
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Contenido del Widget */}
+      <Box sx={{ p: 3 }}>
+        {children}
+      </Box>
     </Paper>
   );
 
-  const ActivityItem = ({ activity }) => {
-    const getActivityIcon = (type) => {
-      switch (type) {
-        case 'sale': return <ShoppingCart color="success" />;
-        case 'client': return <People color="info" />;
-        case 'inventory': return <Inventory color="warning" />;
-        case 'payment': return <AttachMoney color="success" />;
-        case 'alert': return <Warning color="error" />;
-        default: return <Notifications color="primary" />;
-      }
+  const renderWidget = (widgetId, config) => {
+    const widgetProps = {
+      key: widgetId,
+      widgetId,
+      title: getWidgetTitle(widgetId),
+      onToggle: toggleWidget
     };
 
-    return (
-      <ListItem sx={{ px: 0 }}>
-        <ListItemIcon>
-          {getActivityIcon(activity.type)}
-        </ListItemIcon>
-        <ListItemText
-          primary={activity.message}
-          secondary={`${activity.time} • ${activity.user}`}
-        />
-      </ListItem>
-    );
+    switch (widgetId) {
+      case 'communicationsCenter':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <CommunicationsCenter />
+          </WidgetContainer>
+        );
+      case 'financialOverview':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <FinancialOverview />
+          </WidgetContainer>
+        );
+      case 'quickActions':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <QuickActions />
+          </WidgetContainer>
+        );
+      case 'performanceMetrics':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <PerformanceMetrics />
+          </WidgetContainer>
+        );
+      case 'salesAnalytics':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <SalesAnalytics />
+          </WidgetContainer>
+        );
+      case 'customerInsights':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <CustomerInsights />
+          </WidgetContainer>
+        );
+      case 'inventoryAlerts':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <InventoryAlerts />
+          </WidgetContainer>
+        );
+      case 'recentActivity':
+        return (
+          <WidgetContainer {...widgetProps}>
+            <RecentActivity />
+          </WidgetContainer>
+        );
+      default:
+        return null;
+    }
   };
 
-  const AlertItem = ({ alert }) => {
-    const getAlertIcon = (type) => {
-      switch (type) {
-        case 'warning': return <Warning color="warning" />;
-        case 'error': return <Error color="error" />;
-        case 'info': return <CheckCircle color="info" />;
-        default: return <Notifications color="primary" />;
-      }
+  const getWidgetTitle = (widgetId) => {
+    const titles = {
+      communicationsCenter: '📊 Centro de Comunicaciones',
+      financialOverview: '💰 Resumen Financiero',
+      quickActions: '⚡ Acciones Rápidas',
+      performanceMetrics: '📈 Métricas de Rendimiento',
+      salesAnalytics: '🛒 Análisis de Ventas',
+      customerInsights: '👥 Información de Clientes',
+      inventoryAlerts: '📦 Alertas de Inventario',
+      recentActivity: '🔄 Actividad Reciente'
     };
-
-    return (
-      <ListItem sx={{ px: 0 }}>
-        <ListItemIcon>
-          {getAlertIcon(alert.type)}
-        </ListItemIcon>
-        <ListItemText
-          primary={alert.message}
-          secondary={alert.action}
-        />
-        <Button size="small" variant="outlined">
-          Acción
-        </Button>
-      </ListItem>
-    );
+    return titles[widgetId] || widgetId;
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ pb: 3 }}>
-        {/* Header Principal */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box>
-              <Typography variant="h3" fontWeight={700} gutterBottom>
-                Bienvenido, {user?.first_name} {user?.last_name} 👋
-              </Typography>
-              <Typography variant="h6" color="text.secondary">
-                Resumen ejecutivo de tu negocio - {new Date().toLocaleDateString('es-ES', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CalendarToday sx={{ color: 'text.secondary' }} />
-              <Typography variant="body2" color="text.secondary">
-                Hoy
-              </Typography>
+    <Container maxWidth="xl" sx={{ pb: 4 }}>
+      {/* Header Principal Mejorado */}
+      <Box sx={{ mb: 4, pt: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 2
+        }}>
+          <Box>
+            <Typography variant="h3" fontWeight={700} gutterBottom>
+              ¡Bienvenido, {user?.business?.name || user?.first_name || 'Usuario'}!
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+              Resumen completo de tu negocio - {new Date().toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Typography>
+            
+            {/* Estadísticas rápidas del header */}
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+              <Chip 
+                icon={<TrendingUp />} 
+                label="Ventas del día: $2,340" 
+                color="success" 
+                variant="outlined" 
+              />
+              <Chip 
+                icon={<People />} 
+                label="12 nuevos clientes" 
+                color="primary" 
+                variant="outlined" 
+              />
+              <Chip 
+                icon={<Chat />} 
+                label="45 mensajes pendientes" 
+                color="warning" 
+                variant="outlined" 
+              />
             </Box>
           </Box>
+          
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <UBButton
+              variant="outlined"
+              startIcon={<Settings />}
+              onClick={() => setSettingsOpen(true)}
+            >
+              Personalizar
+            </UBButton>
+            <UBButton
+              variant="contained"
+              startIcon={<DashboardIcon />}
+            >
+              Vista Completa
+            </UBButton>
+          </Box>
         </Box>
+      </Box>
 
-        {/* MÓDULOS PRINCIPALES */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {moduleStats.map((stat, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <ModuleStatCard stat={stat} />
-            </Grid>
-          ))}
-        </Grid>
+      {/* Grid de Widgets */}
+      <Grid container spacing={3}>
+        {getEnabledWidgets().map(([widgetId, config]) => (
+          <Grid item xs={12} md={getGridSize(config.size)} key={widgetId}>
+            {renderWidget(widgetId, config)}
+          </Grid>
+        ))}
+      </Grid>
 
-        {/* RESUMEN EJECUTIVO MEJORADO */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Ingresos Mensuales"
-              value={`$${metrics.business.revenue.current.toLocaleString('es-ES')}`}
-              subtitle={`${metrics.business.revenue.progress}% del objetivo`}
-              icon={<AttachMoney />}
-              color="primary"
-              progress={metrics.business.revenue.progress}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Clientes Activos"
-              value={metrics.business.clients.active.toLocaleString('es-ES')}
-              subtitle={`+${metrics.business.clients.new} nuevos este mes`}
-              icon={<People />}
-              color="success"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Utilidad Neta"
-              value={`$${metrics.business.profit.toLocaleString('es-ES')}`}
-              subtitle={`${((metrics.business.profit / metrics.business.revenue.current) * 100).toFixed(1)}% de margen`}
-              icon={<TrendingUp />}
-              color="warning"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Valor Inventario"
-              value={`$${metrics.inventory.totalValue.toLocaleString('es-ES')}`}
-              subtitle={`${metrics.inventory.totalProducts} productos`}
-              icon={<Inventory />}
-              color="info"
-            />
-          </Grid>
-        </Grid>
-
-        {/* CENTRO DE COMUNICACIONES (MANTENIDO) */}
-        <UBCard
-          title="📊 Centro de Comunicaciones"
-          subtitle="Desempeño de todos tus canales de mensajería"
-          sx={{ mb: 4 }}
-        >
-          <Grid container spacing={3}>
-            {channelStats.map((channel, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <ChannelCard channel={channel} />
+      {/* Diálogo de Configuración */}
+      <Dialog 
+        open={settingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Settings />
+            Personalizar Dashboard
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Selecciona qué widgets quieres mostrar en tu dashboard
+          </Typography>
+          
+          <Grid container spacing={2}>
+            {Object.entries(widgetsConfig).map(([widgetId, config]) => (
+              <Grid item xs={12} md={6} key={widgetId}>
+                <Card 
+                  variant="outlined"
+                  sx={{
+                    border: `2px solid ${
+                      config.enabled 
+                        ? alpha(theme.palette.primary.main, 0.3)
+                        : theme.palette.divider
+                    }`,
+                    background: config.enabled 
+                      ? alpha(theme.palette.primary.main, 0.05)
+                      : 'transparent'
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h6" gutterBottom>
+                          {getWidgetTitle(widgetId)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
+                        </Typography>
+                      </Box>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={config.enabled}
+                            onChange={() => toggleWidget(widgetId)}
+                            color="primary"
+                          />
+                        }
+                        label=""
+                      />
+                    </Box>
+                  </CardContent>
+                </Card>
               </Grid>
             ))}
           </Grid>
-        </UBCard>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsOpen(false)}>
+            Cancelar
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setSettingsOpen(false);
+            }}
+          >
+            Guardar Cambios
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        {/* SEGUNDA FILA: ACCIONES RÁPIDAS, ACTIVIDAD Y ALERTAS */}
-        <Grid container spacing={3}>
-          {/* Acciones Rápidas */}
-          <Grid item xs={12} md={6}>
-            <UBCard 
-              title="⚡ Acciones Inmediatas"
-              action={
-                <IconButton size="small">
-                  <MoreVert />
-                </IconButton>
-              }
-            >
-              <Grid container spacing={2}>
-                {quickActions.map((action, index) => (
-                  <Grid item xs={12} sm={6} key={index}>
-                    <QuickActionCard action={action} />
-                  </Grid>
-                ))}
-              </Grid>
-            </UBCard>
-          </Grid>
-
-          {/* Columna derecha: Actividad y Alertas */}
-          <Grid item xs={12} md={6}>
-            <Grid container spacing={3}>
-              {/* Actividad Reciente */}
-              <Grid item xs={12}>
-                <UBCard 
-                  title="📝 Actividad Reciente"
-                  action={
-                    <Button size="small" color="primary">
-                      Ver todo
-                    </Button>
-                  }
-                >
-                  <List sx={{ maxHeight: 300, overflow: 'auto' }}>
-                    {recentActivities.map((activity) => (
-                      <ActivityItem key={activity.id} activity={activity} />
-                    ))}
-                  </List>
-                </UBCard>
-              </Grid>
-
-              {/* Alertas del Sistema */}
-              <Grid item xs={12}>
-                <UBCard 
-                  title="🚨 Alertas del Sistema"
-                  action={
-                    <Badge badgeContent={alerts.length} color="error">
-                      <Notifications color="action" />
-                    </Badge>
-                  }
-                >
-                  <List>
-                    {alerts.map((alert) => (
-                      <AlertItem key={alert.id} alert={alert} />
-                    ))}
-                  </List>
-                </UBCard>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-
-        {/* TERCERA FILA: RENDIMIENTO Y ESTADO DEL SISTEMA */}
-        <Grid container spacing={3} sx={{ mt: 1 }}>
-          {/* Métricas de Rendimiento */}
-          <Grid item xs={12} md={8}>
-            <UBCard title="📈 Rendimiento del Sistema">
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ textAlign: 'center', p: 2 }}>
-                    <Schedule sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-                    <Typography variant="h4" fontWeight={700}>
-                      {metrics.performance.responseTime}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Tiempo de respuesta promedio
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ textAlign: 'center', p: 2 }}>
-                    <AutoAwesome sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
-                    <Typography variant="h4" fontWeight={700}>
-                      {metrics.performance.automation}%
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Mensajes automatizados
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ textAlign: 'center', p: 2 }}>
-                    <TrendingUp sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} />
-                    <Typography variant="h4" fontWeight={700}>
-                      {metrics.performance.uptime}%
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Uptime del sistema
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </UBCard>
-          </Grid>
-
-          {/* Estado de Inventario */}
-          <Grid item xs={12} md={4}>
-            <UBCard title="📦 Estado de Inventario">
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Productos con stock bajo:</Typography>
-                  <Typography variant="body2" fontWeight={700} color="warning.main">
-                    {metrics.inventory.lowStock}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Productos agotados:</Typography>
-                  <Typography variant="body2" fontWeight={700} color="error.main">
-                    {metrics.inventory.outOfStock}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Total productos:</Typography>
-                  <Typography variant="body2" fontWeight={700}>
-                    {metrics.inventory.totalProducts}
-                  </Typography>
-                </Box>
-              </Box>
-              <Button variant="contained" fullWidth startIcon={<Inventory />}>
-                Gestionar Inventario
-              </Button>
-            </UBCard>
-          </Grid>
-        </Grid>
-
-        {/* LÍNEA FINAL: PROMOCIONES O ESTADÍSTICAS RÁPIDAS */}
-        <Grid container spacing={3} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={6}>
-            <UBCard
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white'
-              }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h5" fontWeight={700} gutterBottom>
-                  💰 Flujo de Caja
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
-                  Balance actual: <strong>${metrics.financial.cashFlow}</strong>
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Por cobrar: ${metrics.financial.accountsReceivable}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Por pagar: ${metrics.financial.accountsPayable}
-                  </Typography>
-                </Box>
-              </Box>
-            </UBCard>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <UBCard
-              sx={{
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                color: 'white'
-              }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h5" fontWeight={700} gutterBottom>
-                  🎯 Objetivos del Mes
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
-                  {metrics.business.revenue.progress}% completado
-                </Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={metrics.business.revenue.progress} 
-                  sx={{ 
-                    height: 8, 
-                    borderRadius: 4,
-                    backgroundColor: 'rgba(255,255,255,0.3)',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: 'white'
-                    }
-                  }}
-                />
-              </Box>
-            </UBCard>
-          </Grid>
-        </Grid>
-      </Box>
+      {/* Mensaje si no hay widgets activos */}
+      {getEnabledWidgets().length === 0 && (
+        <Box sx={{ 
+          textAlign: 'center', 
+          py: 8,
+          border: `2px dashed ${theme.palette.divider}`,
+          borderRadius: 3
+        }}>
+          <DashboardIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h5" gutterBottom color="text.secondary">
+            No hay widgets activos
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Personaliza tu dashboard activando algunos widgets
+          </Typography>
+          <UBButton
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setSettingsOpen(true)}
+          >
+            Personalizar Dashboard
+          </UBButton>
+        </Box>
+      )}
     </Container>
   );
 };
