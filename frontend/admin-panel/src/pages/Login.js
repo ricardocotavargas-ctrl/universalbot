@@ -81,6 +81,11 @@ const Login = () => {
     }
   };
 
+  // Función para navegar al home
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -98,22 +103,31 @@ const Login = () => {
             background: '#ffffff',
             border: '1px solid #e2e8f0'
           }}>
-            {/* Logo/Header profesional */}
+            {/* Logo/Header profesional con navegación */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Box sx={{
-                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                borderRadius: '10px',
-                width: 60,
-                height: 60,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '1.25rem',
-                margin: '0 auto 16px',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
-              }}>
+              <Box 
+                onClick={handleLogoClick}
+                sx={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  borderRadius: '10px',
+                  width: 60,
+                  height: 60,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '1.25rem',
+                  margin: '0 auto 16px',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 6px 20px rgba(37, 99, 235, 0.3)'
+                  }
+                }}
+              >
                 UB
               </Box>
               <Typography variant="h4" component="h1" gutterBottom fontWeight="700" color="#1e293b">
