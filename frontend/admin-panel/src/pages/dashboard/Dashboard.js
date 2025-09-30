@@ -18,8 +18,7 @@ import {
   Switch,
   Card,
   CardContent,
-  Tooltip,
-  Zoom
+  Tooltip
 } from '@mui/material';
 import {
   WhatsApp,
@@ -45,13 +44,14 @@ import {
   Reorder,
   GridView,
   ViewModule,
-  Preview
+  Preview,
+  DragHandle
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Componentes de Widgets
+// Componentes de Widgets Mejorados
 import CommunicationsCenter from './widgets/CommunicationsCenter';
 import FinancialOverview from './widgets/FinancialOverview';
 import QuickActions from './widgets/QuickActions';
@@ -68,30 +68,90 @@ const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [organizeOpen, setOrganizeOpen] = useState(false);
   const [draggedWidget, setDraggedWidget] = useState(null);
+  const [previewWidgets, setPreviewWidgets] = useState([]);
 
-  // Configuración inicial de widgets
+  // Configuración inicial de widgets mejorados
   const defaultWidgets = {
-    communicationsCenter: { enabled: true, size: 'large', position: 1, title: '📊 Centro de Comunicaciones' },
-    financialOverview: { enabled: true, size: 'medium', position: 2, title: '💰 Resumen Financiero' },
-    quickActions: { enabled: true, size: 'medium', position: 3, title: '⚡ Acciones Rápidas' },
-    performanceMetrics: { enabled: true, size: 'small', position: 4, title: '📈 Métricas de Rendimiento' },
-    salesAnalytics: { enabled: true, size: 'medium', position: 5, title: '🛒 Análisis de Ventas' },
-    customerInsights: { enabled: true, size: 'medium', position: 6, title: '👥 Información de Clientes' },
-    inventoryAlerts: { enabled: true, size: 'small', position: 7, title: '📦 Alertas de Inventario' },
-    recentActivity: { enabled: true, size: 'small', position: 8, title: '🔄 Actividad Reciente' }
+    communicationsCenter: { 
+      enabled: true, 
+      size: 'large', 
+      position: 1, 
+      title: '📊 Centro de Comunicaciones',
+      description: 'Gestión unificada de todos tus canales'
+    },
+    financialOverview: { 
+      enabled: true, 
+      size: 'medium', 
+      position: 2, 
+      title: '💰 Resumen Financiero',
+      description: 'Estado de ingresos, gastos y utilidades'
+    },
+    quickActions: { 
+      enabled: true, 
+      size: 'medium', 
+      position: 3, 
+      title: '⚡ Acciones Rápidas',
+      description: 'Tareas frecuentes y acceso directo'
+    },
+    performanceMetrics: { 
+      enabled: true, 
+      size: 'small', 
+      position: 4, 
+      title: '📈 Métricas Clave',
+      description: 'Rendimiento del sistema y servicios'
+    },
+    salesAnalytics: { 
+      enabled: true, 
+      size: 'medium', 
+      position: 5, 
+      title: '🛒 Análisis de Ventas',
+      description: 'Tendencias y canales de venta'
+    },
+    customerInsights: { 
+      enabled: true, 
+      size: 'medium', 
+      position: 6, 
+      title: '👥 Clientes',
+      description: 'Segmentación y satisfacción'
+    },
+    inventoryAlerts: { 
+      enabled: true, 
+      size: 'small', 
+      position: 7, 
+      title: '📦 Inventario',
+      description: 'Stock y alertas importantes'
+    },
+    recentActivity: { 
+      enabled: true, 
+      size: 'small', 
+      position: 8, 
+      title: '🔄 Actividad',
+      description: 'Eventos recientes del sistema'
+    }
   };
 
   useEffect(() => {
     const savedConfig = localStorage.getItem('dashboardWidgets');
     if (savedConfig) {
-      setWidgetsConfig(JSON.parse(savedConfig));
+      const config = JSON.parse(savedConfig);
+      setWidgetsConfig(config);
+      updatePreviewWidgets(config);
     } else {
       setWidgetsConfig(defaultWidgets);
+      updatePreviewWidgets(defaultWidgets);
     }
   }, []);
 
+  const updatePreviewWidgets = (config) => {
+    const enabled = Object.entries(config)
+      .filter(([_, widget]) => widget.enabled)
+      .sort((a, b) => a[1].position - b[1].position);
+    setPreviewWidgets(enabled);
+  };
+
   const saveWidgetsConfig = (newConfig) => {
     setWidgetsConfig(newConfig);
+    updatePreviewWidgets(newConfig);
     localStorage.setItem('dashboardWidgets', JSON.stringify(newConfig));
   };
 
@@ -121,111 +181,235 @@ const Dashboard = () => {
     }
   };
 
-  // Funciones para reorganizar widgets
+  // Sistema de arrastre mejorado
   const moveWidget = (fromIndex, toIndex) => {
-    const enabledWidgets = getEnabledWidgets();
     if (fromIndex === toIndex) return;
 
     const newConfig = { ...widgetsConfig };
-    const movedWidget = enabledWidgets[fromIndex];
+    const enabledWidgets = getEnabledWidgets();
     
+    // Reasignar todas las posiciones
     enabledWidgets.forEach(([widgetId], index) => {
+      let newPosition;
       if (index === fromIndex) {
-        newConfig[widgetId].position = toIndex + 1;
-      } else if (index >= toIndex && index < fromIndex) {
-        newConfig[widgetId].position = index + 2;
-      } else if (index <= toIndex && index > fromIndex) {
-        newConfig[widgetId].position = index;
+        newPosition = toIndex + 1;
+      } else if (fromIndex < toIndex) {
+        // Moviendo hacia abajo
+        if (index > fromIndex && index <= toIndex) {
+          newPosition = index;
+        } else if (index < fromIndex) {
+          newPosition = index + 1;
+        } else {
+          newPosition = index + 1;
+        }
       } else {
-        newConfig[widgetId].position = index + 1;
+        // Moviendo hacia arriba
+        if (index >= toIndex && index < fromIndex) {
+          newPosition = index + 2;
+        } else if (index > fromIndex) {
+          newPosition = index + 1;
+        } else {
+          newPosition = index + 1;
+        }
       }
+      newConfig[widgetId].position = newPosition;
     });
 
     saveWidgetsConfig(newConfig);
   };
 
-  const handleDragStart = (e, widgetId) => {
+  const handleDragStart = (e, widgetId, fromPreview = false) => {
     setDraggedWidget(widgetId);
-    e.dataTransfer.setData('text/plain', widgetId);
+    e.dataTransfer.setData('text/plain', JSON.stringify({ widgetId, fromPreview }));
   };
 
-  const handleDragOver = (e, targetIndex) => {
+  const handleDragOver = (e) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e, targetIndex) => {
+  const handleDrop = (e, targetIndex, inPreview = false) => {
     e.preventDefault();
-    if (!draggedWidget) return;
+    const data = e.dataTransfer.getData('text/plain');
+    if (!data) return;
 
-    const enabledWidgets = getEnabledWidgets();
-    const fromIndex = enabledWidgets.findIndex(([widgetId]) => widgetId === draggedWidget);
+    const { widgetId, fromPreview } = JSON.parse(data);
     
-    if (fromIndex !== -1 && fromIndex !== targetIndex) {
-      moveWidget(fromIndex, targetIndex);
+    if (fromPreview !== inPreview) {
+      // Movimiento entre vista previa y lista
+      if (inPreview) {
+        // Soltando en la vista previa
+        const enabledWidgets = getEnabledWidgets();
+        const currentIndex = enabledWidgets.findIndex(([id]) => id === widgetId);
+        if (currentIndex !== -1) {
+          moveWidget(currentIndex, targetIndex);
+        }
+      }
+    } else {
+      // Movimiento dentro del mismo panel
+      const enabledWidgets = inPreview ? previewWidgets : getEnabledWidgets();
+      const currentIndex = enabledWidgets.findIndex(([id]) => id === widgetId);
+      if (currentIndex !== -1 && currentIndex !== targetIndex) {
+        moveWidget(currentIndex, targetIndex);
+      }
     }
     
     setDraggedWidget(null);
   };
 
-  // Componente de Vista Previa Miniatura
-  const DashboardPreview = () => (
-    <Box sx={{ 
-      p: 2, 
-      border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-      borderRadius: 2,
-      background: alpha(theme.palette.background.paper, 0.5),
-      transform: 'scale(0.7)',
-      transformOrigin: 'top center',
-      maxHeight: 400,
-      overflow: 'hidden'
-    }}>
-      <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-        Vista Previa del Dashboard
-      </Typography>
-      
-      <Grid container spacing={1}>
-        {getEnabledWidgets().map(([widgetId, config]) => (
-          <Grid item xs={getGridSize(config.size)} key={widgetId}>
-            <Paper
-              sx={{
-                height: config.size === 'large' ? 80 : config.size === 'medium' ? 60 : 40,
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                p: 1
-              }}
+  // Componente de Vista Previa Interactiva Mejorada
+  const InteractiveDashboardPreview = () => {
+    const [localWidgets, setLocalWidgets] = useState(previewWidgets);
+
+    useEffect(() => {
+      setLocalWidgets(previewWidgets);
+    }, [previewWidgets]);
+
+    const handlePreviewDragStart = (e, widgetId, index) => {
+      handleDragStart(e, widgetId, true);
+    };
+
+    const handlePreviewDrop = (e, targetIndex) => {
+      handleDrop(e, targetIndex, true);
+    };
+
+    const getPreviewGridSize = (size) => {
+      switch (size) {
+        case 'large': return 12;
+        case 'medium': return 6;
+        case 'small': return 4;
+        default: return 6;
+      }
+    };
+
+    const getPreviewHeight = (size) => {
+      switch (size) {
+        case 'large': return 120;
+        case 'medium': return 100;
+        case 'small': return 80;
+        default: return 100;
+      }
+    };
+
+    return (
+      <Box sx={{ 
+        p: 3, 
+        border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+        borderRadius: 3,
+        background: alpha(theme.palette.background.paper, 0.8),
+        minHeight: 400,
+        transform: 'scale(0.85)',
+        transformOrigin: 'top center'
+      }}>
+        <Typography variant="h6" fontWeight={600} color="primary.main" sx={{ mb: 2, textAlign: 'center' }}>
+          Vista Previa Interactiva
+        </Typography>
+        
+        <Grid container spacing={1.5}>
+          {localWidgets.map(([widgetId, config], index) => (
+            <Grid 
+              item 
+              xs={getPreviewGridSize(config.size)} 
+              key={widgetId}
             >
-              <Typography 
-                variant="caption" 
-                fontWeight={500} 
-                color="primary.main"
-                sx={{ 
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                  fontSize: config.size === 'large' ? '0.7rem' : '0.6rem'
+              <Paper
+                draggable
+                onDragStart={(e) => handlePreviewDragStart(e, widgetId, index)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handlePreviewDrop(e, index)}
+                sx={{
+                  height: getPreviewHeight(config.size),
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.main, 0.08)} 100%)`,
+                  border: `2px solid ${alpha(theme.palette.primary.main, draggedWidget === widgetId ? 0.6 : 0.3)}`,
+                  borderRadius: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  p: 1.5,
+                  cursor: 'grab',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.main, 0.6),
+                    boxShadow: theme.shadows[2],
+                    transform: 'translateY(-2px)'
+                  },
+                  '&:active': {
+                    cursor: 'grabbing'
+                  },
+                  opacity: draggedWidget === widgetId ? 0.7 : 1
                 }}
               >
-                {config.title.split(' ')[0]}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-      
-      {getEnabledWidgets().length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 3 }}>
-          <Typography variant="caption" color="text.secondary">
-            Sin widgets activos
-          </Typography>
-        </Box>
-      )}
-    </Box>
-  );
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography 
+                      variant="subtitle2" 
+                      fontWeight={600}
+                      sx={{ fontSize: config.size === 'small' ? '0.75rem' : '0.8rem' }}
+                    >
+                      {config.title}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ 
+                        fontSize: '0.65rem',
+                        display: config.size === 'small' ? 'none' : 'block'
+                      }}
+                    >
+                      {config.description}
+                    </Typography>
+                  </Box>
+                  <DragHandle 
+                    sx={{ 
+                      fontSize: 16, 
+                      color: 'text.secondary',
+                      opacity: 0.7
+                    }} 
+                  />
+                </Box>
+                
+                {/* Contenido de preview según el tipo de widget */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end'
+                }}>
+                  <Chip 
+                    label={config.size === 'large' ? 'L' : config.size === 'medium' ? 'M' : 'S'} 
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '0.6rem' }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    #{index + 1}
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+        
+        {localWidgets.length === 0 && (
+          <Box sx={{ 
+            textAlign: 'center', 
+            py: 6,
+            border: `2px dashed ${theme.palette.divider}`,
+            borderRadius: 2
+          }}>
+            <GridView sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              Arrastra widgets aquí
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Suelta widgets desde la lista para ver la vista previa
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    );
+  };
 
-  const WidgetContainer = ({ children, widgetId, title, onToggle }) => (
+  const WidgetContainer = ({ children, widgetId, title, description, onToggle }) => (
     <Paper
       sx={{
         height: '100%',
@@ -258,9 +442,14 @@ const Dashboard = () => {
               '&:active': { cursor: 'grabbing' }
             }} 
           />
-          <Typography variant="h6" fontWeight={600}>
-            {title}
-          </Typography>
+          <Box>
+            <Typography variant="h6" fontWeight={600}>
+              {title}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {description}
+            </Typography>
+          </Box>
         </Box>
         <Tooltip title={widgetsConfig[widgetId]?.enabled ? "Ocultar widget" : "Mostrar widget"}>
           <IconButton
@@ -281,12 +470,12 @@ const Dashboard = () => {
     </Paper>
   );
 
-  const WidgetPreview = ({ widgetId, config, index, onDragStart, onDragOver, onDrop }) => (
+  const WidgetListItem = ({ widgetId, config, index, onDragStart, onDragOver, onDrop }) => (
     <Card
       draggable
-      onDragStart={(e) => onDragStart(e, widgetId)}
-      onDragOver={(e) => onDragOver(e, index)}
-      onDrop={(e) => onDrop(e, index)}
+      onDragStart={(e) => onDragStart(e, widgetId, false)}
+      onDragOver={onDragOver}
+      onDrop={(e) => onDrop(e, index, false)}
       sx={{
         cursor: 'grab',
         border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -307,8 +496,8 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               borderRadius: 2,
               display: 'flex',
               alignItems: 'center',
@@ -320,22 +509,30 @@ const Dashboard = () => {
             <GridView fontSize="small" />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle1" fontWeight={600} noWrap>
+            <Typography variant="subtitle1" fontWeight={600}>
               {config.title}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Posición: {index + 1} • Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
+            <Typography variant="body2" color="text.secondary">
+              {config.description}
             </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+              <Chip 
+                label={`Posición: ${index + 1}`} 
+                size="small" 
+                variant="outlined"
+                sx={{ height: 20, fontSize: '0.6rem' }}
+              />
+              <Chip 
+                label={config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'} 
+                size="small" 
+                color="primary"
+                variant="outlined"
+                sx={{ height: 20, fontSize: '0.6rem' }}
+              />
+            </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Chip 
-              label={index + 1} 
-              size="small" 
-              color="primary" 
-              variant="outlined"
-              sx={{ minWidth: 30 }}
-            />
-            <Reorder sx={{ color: 'text.secondary', fontSize: 20 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DragHandle sx={{ color: 'text.secondary' }} />
           </Box>
         </Box>
       </CardContent>
@@ -347,6 +544,7 @@ const Dashboard = () => {
       key: widgetId,
       widgetId,
       title: config.title,
+      description: config.description,
       onToggle: toggleWidget
     };
 
@@ -406,7 +604,7 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth="xl" sx={{ pb: 4 }}>
-      {/* Header Principal */}
+      {/* Header Principal Mejorado */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -484,80 +682,98 @@ const Dashboard = () => {
         ))}
       </Grid>
 
-      {/* Diálogo de Organización con Vista Previa */}
+      {/* Diálogo de Organización con Vista Previa Interactiva */}
       <Dialog 
         open={organizeOpen} 
         onClose={() => setOrganizeOpen(false)} 
         maxWidth="lg" 
         fullWidth
+        sx={{ '& .MuiDialog-paper': { minHeight: '80vh' } }}
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Preview />
-            Organizar Dashboard - Vista Previa
+            Organizar Dashboard - Vista Previa Interactiva
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={3}>
-            {/* Panel de Vista Previa */}
-            <Grid item xs={12} md={5}>
+          <Grid container spacing={3} sx={{ height: '100%' }}>
+            {/* Panel de Vista Previa Interactiva */}
+            <Grid item xs={12} lg={6}>
               <Box sx={{ position: 'sticky', top: 0 }}>
-                <DashboardPreview />
+                <InteractiveDashboardPreview />
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
-                  📱 Vista previa en tiempo real
+                  🎯 Arrastra widgets directamente en la vista previa
                 </Typography>
               </Box>
             </Grid>
 
-            {/* Panel de Organización */}
-            <Grid item xs={12} md={7}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Lista de Widgets Activos
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Arrastra y suelta para reorganizar el orden
-              </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {getEnabledWidgets().map(([widgetId, config], index) => (
-                  <WidgetPreview
-                    key={widgetId}
-                    widgetId={widgetId}
-                    config={config}
-                    index={index}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  />
-                ))}
-              </Box>
-
-              {getEnabledWidgets().length === 0 && (
+            {/* Panel de Lista de Widgets */}
+            <Grid item xs={12} lg={6}>
+              <Box sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                  Widgets Disponibles ({previewWidgets.length})
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Arrastra para reorganizar o soltar en la vista previa
+                </Typography>
+                
                 <Box sx={{ 
-                  textAlign: 'center', 
-                  py: 4,
-                  border: `2px dashed ${theme.palette.divider}`,
-                  borderRadius: 2
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: 2,
+                  flex: 1,
+                  overflow: 'auto',
+                  maxHeight: 500
                 }}>
-                  <ViewModule sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="body1" color="text.secondary" gutterBottom>
-                    No hay widgets activos
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Activa algunos widgets primero para poder organizarlos
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<Settings />}
-                    onClick={() => {
-                      setOrganizeOpen(false);
-                      setSettingsOpen(true);
-                    }}
-                  >
-                    Activar Widgets
-                  </Button>
+                  {previewWidgets.map(([widgetId, config], index) => (
+                    <WidgetListItem
+                      key={widgetId}
+                      widgetId={widgetId}
+                      config={config}
+                      index={index}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    />
+                  ))}
                 </Box>
-              )}
+
+                {previewWidgets.length === 0 && (
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 4,
+                    border: `2px dashed ${theme.palette.divider}`,
+                    borderRadius: 2,
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center'
+                  }}>
+                    <ViewModule sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                      No hay widgets activos
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Activa algunos widgets para comenzar a organizar
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Settings />}
+                      onClick={() => {
+                        setOrganizeOpen(false);
+                        setSettingsOpen(true);
+                      }}
+                    >
+                      Activar Widgets
+                    </Button>
+                  </Box>
+                )}
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>
@@ -569,7 +785,7 @@ const Dashboard = () => {
             variant="contained" 
             onClick={() => setOrganizeOpen(false)}
           >
-            Aplicar Cambios
+            Aplicar Organización
           </Button>
         </DialogActions>
       </Dialog>
@@ -615,13 +831,18 @@ const Dashboard = () => {
                 >
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Box>
+                      <Box sx={{ flex: 1 }}>
                         <Typography variant="h6" gutterBottom>
                           {config.title}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {config.description}
                         </Typography>
+                        <Chip 
+                          label={`Tamaño: ${config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}`} 
+                          size="small" 
+                          variant="outlined"
+                        />
                       </Box>
                       <FormControlLabel
                         control={
@@ -667,17 +888,17 @@ const Dashboard = () => {
         }}>
           <DashboardIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h5" gutterBottom color="text.secondary">
-            No hay widgets activos
+            Dashboard Personalizable
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Personaliza tu dashboard activando algunos widgets
+            Activa los widgets que necesitas para comenzar
           </Typography>
           <UBButton
             variant="contained"
             startIcon={<Add />}
             onClick={() => setSettingsOpen(true)}
           >
-            Personalizar Dashboard
+            Configurar Mi Dashboard
           </UBButton>
         </Box>
       )}
