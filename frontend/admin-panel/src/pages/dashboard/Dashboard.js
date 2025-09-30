@@ -19,23 +19,15 @@ import {
   Card,
   CardContent,
   Tooltip,
-  useMediaQuery
+  useMediaQuery,
+  Fab,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {
-  WhatsApp,
-  Facebook,
-  Instagram,
-  Email,
-  Chat,
-  People,
-  TrendingUp,
-  Schedule,
-  Business,
-  AttachMoney,
-  Analytics,
-  Rocket,
-  NotificationsActive,
-  AutoAwesome,
   Settings,
   DragIndicator,
   Add,
@@ -45,7 +37,20 @@ import {
   Reorder,
   AspectRatio,
   Phone,
-  Computer
+  Computer,
+  ViewModule,
+  GridView,
+  ViewCompact,
+  Save,
+  Restore,
+  Delete,
+  Expand,
+  Compress,
+  Star,
+  StarBorder,
+  Palette,
+  Widgets,
+  AutoFixHigh
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
@@ -61,312 +66,465 @@ import CustomerInsights from './widgets/CustomerInsights';
 import InventoryAlerts from './widgets/InventoryAlerts';
 import RecentActivity from './widgets/RecentActivity';
 
-// Componente de Widget Draggable y Redimensionable
-const DraggableWidget = ({ widgetId, title, children, onToggle, onMoveWidget, onResizeWidget, size, index }) => {
+// Sistema de Grid Personalizable
+const CustomGridWidget = ({ 
+  widgetId, 
+  title, 
+  children, 
+  onToggle, 
+  onResize, 
+  onMove,
+  onRemove,
+  onFavorite,
+  size = 'medium',
+  position = { x: 0, y: 0 },
+  isFavorite = false,
+  isEditing = false
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const widgetRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isOver, setIsOver] = useState(false);
-  const [showSizeOptions, setShowSizeOptions] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
 
-  const handleDragStart = (e) => {
-    if (isMobile) {
-      // En móvil, usamos un sistema diferente
-      e.preventDefault();
-      return;
-    }
-    e.dataTransfer.setData('text/plain', index.toString());
+  const sizeConfig = {
+    small: { grid: 4, minHeight: 200 },
+    medium: { grid: 6, minHeight: 300 },
+    large: { grid: 12, minHeight: 400 },
+    custom: { grid: 8, minHeight: 350 }
+  };
+
+  const handleMouseDown = (e) => {
+    if (!isEditing) return;
     setIsDragging(true);
-  };
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startPos = { ...position };
 
-  const handleDragOver = (e) => {
-    if (isMobile) return;
-    e.preventDefault();
-    setIsOver(true);
-  };
+    const handleMouseMove = (moveEvent) => {
+      if (!isDragging) return;
+      
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+      
+      onMove(widgetId, {
+        x: Math.max(0, startPos.x + deltaX),
+        y: Math.max(0, startPos.y + deltaY)
+      });
+    };
 
-  const handleDragLeave = (e) => {
-    if (isMobile) return;
-    if (!widgetRef.current?.contains(e.relatedTarget)) {
-      setIsOver(false);
-    }
-  };
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
 
-  const handleDrop = (e) => {
-    if (isMobile) return;
-    e.preventDefault();
-    setIsOver(false);
-    
-    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
-    if (draggedIndex !== index) {
-      onMoveWidget(draggedIndex, index);
-    }
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   const handleTouchStart = (e) => {
-    // En móvil, mostramos opciones en lugar de arrastrar
+    if (!isEditing) return;
+    setShowControls(true);
+  };
+
+  const handleContextMenu = (e) => {
     e.preventDefault();
-    setShowSizeOptions(true);
+    setContextMenu(
+      contextMenu === null
+        ? { mouseX: e.clientX - 2, mouseY: e.clientY - 4 }
+        : null
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
   };
 
   const handleResize = (newSize) => {
-    onResizeWidget(widgetId, newSize);
-    setShowSizeOptions(false);
+    onResize(widgetId, newSize);
+    handleCloseContextMenu();
   };
 
   const getSizeIcon = (size) => {
-    switch (size) {
-      case 'small': return 'S';
-      case 'medium': return 'M';
-      case 'large': return 'L';
-      default: return 'M';
-    }
+    const icons = {
+      small: <Compress sx={{ fontSize: 16 }} />,
+      medium: <ViewCompact sx={{ fontSize: 16 }} />,
+      large: <Expand sx={{ fontSize: 16 }} />,
+      custom: <AspectRatio sx={{ fontSize: 16 }} />
+    };
+    return icons[size] || icons.medium;
   };
 
   const getSizeLabel = (size) => {
-    switch (size) {
-      case 'small': return 'Pequeño';
-      case 'medium': return 'Mediano';
-      case 'large': return 'Grande';
-      default: return 'Mediano';
-    }
+    const labels = {
+      small: 'Pequeño',
+      medium: 'Mediano', 
+      large: 'Grande',
+      custom: 'Personalizado'
+    };
+    return labels[size] || labels.medium;
   };
 
   return (
     <Paper
       ref={widgetRef}
-      draggable={!isMobile}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => !isEditing && setShowControls(false)}
+      onContextMenu={handleContextMenu}
       onTouchStart={handleTouchStart}
       sx={{
         height: '100%',
+        minHeight: sizeConfig[size].minHeight,
         position: 'relative',
-        border: `2px solid ${
-          isOver 
-            ? alpha(theme.palette.primary.main, 0.5)
-            : isDragging
-            ? alpha(theme.palette.primary.main, 0.3)
+        border: `3px solid ${
+          isEditing 
+            ? alpha(theme.palette.primary.main, 0.4)
             : alpha(theme.palette.primary.main, 0.1)
         }`,
         borderRadius: 3,
         overflow: 'hidden',
         transition: 'all 0.3s ease',
-        cursor: isMobile ? 'pointer' : isDragging ? 'grabbing' : 'grab',
+        cursor: isEditing ? (isDragging ? 'grabbing' : 'grab') : 'default',
+        transform: isDragging ? 'scale(1.02) rotate(1deg)' : 'scale(1)',
+        boxShadow: isEditing ? theme.shadows[8] : theme.shadows[2],
+        background: `linear-gradient(135deg, 
+          ${alpha(theme.palette.background.paper, 0.9)} 0%,
+          ${alpha(theme.palette.background.paper, 0.7)} 100%
+        )`,
         '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.3),
-          boxShadow: theme.shadows[4]
-        },
-        // Mejoras específicas para móvil
-        ...(isMobile && {
-          minHeight: 200,
-          marginBottom: 2
-        })
+          borderColor: alpha(theme.palette.primary.main, 0.6),
+          boxShadow: theme.shadows[12],
+          transform: isEditing ? 'scale(1.02)' : 'scale(1.01)'
+        }
       }}
     >
-      {/* Header del Widget Mejorado */}
+      {/* Header del Widget con Controles */}
       <Box
+        onMouseDown={handleMouseDown}
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           p: isMobile ? 1.5 : 2,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          background: alpha(theme.palette.primary.main, 0.02),
-          minHeight: isMobile ? 60 : 'auto'
+          borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+          background: `linear-gradient(135deg, 
+            ${alpha(theme.palette.primary.main, 0.05)} 0%,
+            ${alpha(theme.palette.primary.main, 0.02)} 100%
+          )`,
+          cursor: isEditing ? 'grab' : 'default',
+          userSelect: 'none'
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-          {!isMobile && (
+          {isEditing && (
             <DragIndicator 
               sx={{ 
-                color: 'text.secondary',
-                cursor: isDragging ? 'grabbing' : 'grab',
+                color: 'primary.main',
+                cursor: 'grab'
               }} 
             />
           )}
           <Typography 
             variant={isMobile ? "subtitle1" : "h6"} 
-            fontWeight={600}
+            fontWeight={700}
             sx={{
-              fontSize: isMobile ? '0.9rem' : '1.1rem'
+              fontSize: isMobile ? '0.9rem' : '1.1rem',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
             }}
           >
             {title}
           </Typography>
+          
+          {isFavorite && (
+            <Star sx={{ fontSize: 16, color: 'gold' }} />
+          )}
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0.5 : 1 }}>
-          {/* Selector de Tamaño */}
-          <Tooltip title={`Cambiar tamaño (Actual: ${getSizeLabel(size)})`}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSizeOptions(!showSizeOptions);
-              }}
-              sx={{
-                color: 'primary.main',
-                background: alpha(theme.palette.primary.main, 0.1),
-                '&:hover': {
-                  background: alpha(theme.palette.primary.main, 0.2),
-                }
-              }}
-            >
-              <AspectRatio fontSize={isMobile ? "small" : "medium"} />
-            </IconButton>
-          </Tooltip>
+        {/* Controles del Widget */}
+        {(showControls || isEditing) && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {/* Botón Favorito */}
+            <Tooltip title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFavorite(widgetId, !isFavorite);
+                }}
+                sx={{
+                  color: isFavorite ? 'gold' : 'text.secondary',
+                  background: alpha(isFavorite ? 'gold' : theme.palette.primary.main, 0.1)
+                }}
+              >
+                {isFavorite ? <Star /> : <StarBorder />}
+              </IconButton>
+            </Tooltip>
 
-          {/* Botón Ocultar/Mostrar */}
-          <Tooltip title={isMobile ? "Toque largo para opciones" : "Arrastra para reordenar"}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle(widgetId);
-              }}
-              sx={{
-                color: 'text.secondary'
-              }}
-            >
-              {isMobile ? <Reorder /> : <Visibility />}
-            </IconButton>
-          </Tooltip>
-        </Box>
+            {/* Selector de Tamaño */}
+            <Tooltip title={`Cambiar tamaño (${getSizeLabel(size)})`}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowControls(true);
+                }}
+                sx={{
+                  color: 'primary.main',
+                  background: alpha(theme.palette.primary.main, 0.1)
+                }}
+              >
+                <AspectRatio />
+              </IconButton>
+            </Tooltip>
+
+            {/* Botón Ocultar/Mostrar */}
+            <Tooltip title="Ocultar widget">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle(widgetId);
+                }}
+                sx={{
+                  color: 'text.secondary'
+                }}
+              >
+                <VisibilityOff />
+              </IconButton>
+            </Tooltip>
+
+            {isEditing && (
+              <Tooltip title="Eliminar widget">
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(widgetId);
+                  }}
+                  sx={{
+                    color: 'error.main',
+                    background: alpha(theme.palette.error.main, 0.1)
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        )}
       </Box>
 
-      {/* Menú de Opciones de Tamaño */}
-      {showSizeOptions && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            zIndex: 1000,
-            background: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            boxShadow: theme.shadows[8],
-            p: 1,
-            minWidth: 120
-          }}
-        >
-          <Typography variant="caption" fontWeight={600} sx={{ px: 1, py: 0.5 }}>
-            Tamaño del Widget:
-          </Typography>
-          {['small', 'medium', 'large'].map((sizeOption) => (
-            <Button
-              key={sizeOption}
-              fullWidth
-              size="small"
-              startIcon={<span style={{ fontWeight: 'bold' }}>{getSizeIcon(sizeOption)}</span>}
-              onClick={() => handleResize(sizeOption)}
-              sx={{
-                justifyContent: 'flex-start',
-                background: size === sizeOption ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                color: size === sizeOption ? 'primary.main' : 'text.primary',
-                fontWeight: size === sizeOption ? 600 : 400,
-                mb: 0.5
-              }}
-            >
-              {getSizeLabel(sizeOption)}
-            </Button>
-          ))}
-        </Box>
-      )}
-
-      {/* Contenido del Widget Adaptativo */}
+      {/* Contenido del Widget */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 3,
-        height: isMobile ? 'calc(100% - 60px)' : 'calc(100% - 80px)',
+        height: `calc(100% - ${isMobile ? 60 : 80}px)`,
         overflow: 'auto'
       }}>
         {children}
       </Box>
 
-      {/* Indicador de Tamaño Actual */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 8,
-          right: 8,
-          background: alpha(theme.palette.primary.main, 0.8),
-          color: 'white',
-          borderRadius: '50%',
-          width: 24,
-          height: 24,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '0.7rem',
-          fontWeight: 'bold'
-        }}
-      >
-        {getSizeIcon(size)}
+      {/* Indicadores de Estado */}
+      <Box sx={{ 
+        position: 'absolute', 
+        bottom: 8, 
+        right: 8,
+        display: 'flex',
+        gap: 1
+      }}>
+        {/* Indicador de Tamaño */}
+        <Chip
+          icon={getSizeIcon(size)}
+          label={getSizeLabel(size)}
+          size="small"
+          variant="filled"
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '0.6rem'
+          }}
+        />
+        
+        {/* Indicador de Favorito */}
+        {isFavorite && (
+          <Star sx={{ fontSize: 16, color: 'gold' }} />
+        )}
       </Box>
 
-      {/* Indicador de arrastre para desktop */}
-      {isOver && !isMobile && (
+      {/* Menú Contextual */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={() => handleResize('small')}>
+          <ListItemIcon><Compress fontSize="small" /></ListItemIcon>
+          Tamaño Pequeño
+        </MenuItem>
+        <MenuItem onClick={() => handleResize('medium')}>
+          <ListItemIcon><ViewCompact fontSize="small" /></ListItemIcon>
+          Tamaño Mediano
+        </MenuItem>
+        <MenuItem onClick={() => handleResize('large')}>
+          <ListItemIcon><Expand fontSize="small" /></ListItemIcon>
+          Tamaño Grande
+        </MenuItem>
+        <MenuItem onClick={() => onFavorite(widgetId, !isFavorite)}>
+          <ListItemIcon>
+            {isFavorite ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
+          </ListItemIcon>
+          {isFavorite ? 'Quitar Favorito' : 'Marcar Favorito'}
+        </MenuItem>
+        <MenuItem onClick={() => onToggle(widgetId)}>
+          <ListItemIcon><VisibilityOff fontSize="small" /></ListItemIcon>
+          Ocultar Widget
+        </MenuItem>
+      </Menu>
+
+      {/* Menú de Tamaños Flotante */}
+      {showControls && isEditing && (
         <Box
           sx={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            border: `3px dashed ${theme.palette.primary.main}`,
-            borderRadius: 3,
-            background: alpha(theme.palette.primary.main, 0.05),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1
+            top: '50%',
+            right: 8,
+            transform: 'translateY(-50%)',
+            background: theme.palette.background.paper,
+            border: `2px solid ${theme.palette.primary.main}`,
+            borderRadius: 2,
+            boxShadow: theme.shadows[8],
+            p: 1,
+            zIndex: 1000
           }}
         >
-          <Typography variant="body2" color="primary.main" fontWeight={600}>
-            Soltar aquí
+          <Typography variant="caption" fontWeight={600} sx={{ mb: 1, display: 'block' }}>
+            Tamaño:
           </Typography>
+          {['small', 'medium', 'large', 'custom'].map((sizeOption) => (
+            <Tooltip key={sizeOption} title={getSizeLabel(sizeOption)}>
+              <IconButton
+                size="small"
+                onClick={() => handleResize(sizeOption)}
+                sx={{
+                  background: size === sizeOption ? 
+                    `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)` : 
+                    'transparent',
+                  color: size === sizeOption ? 'white' : 'text.primary',
+                  mb: 0.5,
+                  '&:hover': {
+                    background: size === sizeOption ? 
+                      `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)` : 
+                      alpha(theme.palette.primary.main, 0.1)
+                  }
+                }}
+              >
+                {getSizeIcon(sizeOption)}
+              </IconButton>
+            </Tooltip>
+          ))}
         </Box>
       )}
     </Paper>
   );
 };
 
-// Componente principal del Dashboard
+// Componente principal del Dashboard Premium
 const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [widgetsConfig, setWidgetsConfig] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid', 'free', 'compact'
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [layoutPresets, setLayoutPresets] = useState({});
 
-  // Configuración inicial de widgets optimizada para móvil
+  // Configuración premium de widgets
   const defaultWidgets = {
-    communicationsCenter: { enabled: true, size: isMobile ? 'medium' : 'large', position: 1 },
-    financialOverview: { enabled: true, size: isMobile ? 'medium' : 'medium', position: 2 },
-    quickActions: { enabled: true, size: isMobile ? 'large' : 'medium', position: 3 },
-    performanceMetrics: { enabled: true, size: 'small', position: 4 },
-    salesAnalytics: { enabled: true, size: isMobile ? 'large' : 'medium', position: 5 },
-    customerInsights: { enabled: true, size: isMobile ? 'large' : 'medium', position: 6 },
-    inventoryAlerts: { enabled: true, size: 'small', position: 7 },
-    recentActivity: { enabled: true, size: 'small', position: 8 }
+    communicationsCenter: { 
+      enabled: true, 
+      size: 'large', 
+      position: { x: 0, y: 0 },
+      isFavorite: true 
+    },
+    financialOverview: { 
+      enabled: true, 
+      size: 'medium', 
+      position: { x: 6, y: 0 },
+      isFavorite: false 
+    },
+    quickActions: { 
+      enabled: true, 
+      size: 'medium', 
+      position: { x: 0, y: 1 },
+      isFavorite: true 
+    },
+    performanceMetrics: { 
+      enabled: true, 
+      size: 'small', 
+      position: { x: 6, y: 1 },
+      isFavorite: false 
+    },
+    salesAnalytics: { 
+      enabled: true, 
+      size: 'medium', 
+      position: { x: 0, y: 2 },
+      isFavorite: false 
+    },
+    customerInsights: { 
+      enabled: true, 
+      size: 'medium', 
+      position: { x: 6, y: 2 },
+      isFavorite: true 
+    },
+    inventoryAlerts: { 
+      enabled: true, 
+      size: 'small', 
+      position: { x: 0, y: 3 },
+      isFavorite: false 
+    },
+    recentActivity: { 
+      enabled: true, 
+      size: 'small', 
+      position: { x: 3, y: 3 },
+      isFavorite: false 
+    }
   };
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('dashboardWidgets');
+    const savedConfig = localStorage.getItem('dashboardWidgetsPremium');
+    const savedPresets = localStorage.getItem('dashboardPresets');
+    
     if (savedConfig) {
       setWidgetsConfig(JSON.parse(savedConfig));
     } else {
       setWidgetsConfig(defaultWidgets);
     }
-  }, [isMobile]);
+
+    if (savedPresets) {
+      setLayoutPresets(JSON.parse(savedPresets));
+    }
+  }, []);
 
   const saveWidgetsConfig = (newConfig) => {
     setWidgetsConfig(newConfig);
-    localStorage.setItem('dashboardWidgets', JSON.stringify(newConfig));
+    localStorage.setItem('dashboardWidgetsPremium', JSON.stringify(newConfig));
+  };
+
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
   };
 
   const toggleWidget = (widgetId) => {
@@ -378,6 +536,7 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
+    showSnackbar(`Widget ${widgetsConfig[widgetId]?.enabled ? 'oculto' : 'mostrado'}`, 'info');
   };
 
   const resizeWidget = (widgetId, newSize) => {
@@ -389,73 +548,79 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
+    showSnackbar(`Tamaño cambiado a ${newSize}`, 'success');
   };
 
-  const moveWidget = (fromIndex, toIndex) => {
-    if (isMobile) return; // Deshabilitar reordenamiento en móvil por ahora
-    
-    const enabledWidgets = getEnabledWidgets();
-    if (fromIndex === toIndex) return;
-
-    const updatedWidgets = { ...widgetsConfig };
-    const movedWidgetId = enabledWidgets[fromIndex][0];
-    
-    enabledWidgets.forEach(([widgetId], index) => {
-      if (index === fromIndex) return;
-      
-      let newPosition;
-      if (index < toIndex && index < fromIndex) {
-        newPosition = index + 1;
-      } else if (index >= toIndex && index > fromIndex) {
-        newPosition = index - 1;
-      } else {
-        newPosition = index + 1;
-      }
-      
-      updatedWidgets[widgetId] = {
-        ...updatedWidgets[widgetId],
+  const moveWidget = (widgetId, newPosition) => {
+    const newConfig = {
+      ...widgetsConfig,
+      [widgetId]: {
+        ...widgetsConfig[widgetId],
         position: newPosition
-      };
-    });
-
-    updatedWidgets[movedWidgetId] = {
-      ...updatedWidgets[movedWidgetId],
-      position: toIndex + 1
+      }
     };
+    saveWidgetsConfig(newConfig);
+  };
 
-    saveWidgetsConfig(updatedWidgets);
+  const removeWidget = (widgetId) => {
+    const newConfig = {
+      ...widgetsConfig,
+      [widgetId]: {
+        ...widgetsConfig[widgetId],
+        enabled: false
+      }
+    };
+    saveWidgetsConfig(newConfig);
+    showSnackbar('Widget removido', 'warning');
+  };
+
+  const toggleFavorite = (widgetId, isFavorite) => {
+    const newConfig = {
+      ...widgetsConfig,
+      [widgetId]: {
+        ...widgetsConfig[widgetId],
+        isFavorite
+      }
+    };
+    saveWidgetsConfig(newConfig);
+    showSnackbar(isFavorite ? 'Agregado a favoritos' : 'Removido de favoritos', 'success');
   };
 
   const getEnabledWidgets = () => {
     return Object.entries(widgetsConfig)
       .filter(([_, config]) => config.enabled)
-      .sort((a, b) => a[1].position - b[1].position);
+      .sort((a, b) => {
+        // Ordenar por favoritos primero, luego por posición
+        if (a[1].isFavorite && !b[1].isFavorite) return -1;
+        if (!a[1].isFavorite && b[1].isFavorite) return 1;
+        return a[1].position.y - b[1].position.y || a[1].position.x - b[1].position.x;
+      });
   };
 
   const getGridSize = (size) => {
-    if (isMobile) {
-      // En móvil, todos los widgets ocupan todo el ancho
-      return 12;
-    }
-    
-    switch (size) {
-      case 'large': return 12;
-      case 'medium': return 6;
-      case 'small': return 4;
-      default: return 6;
-    }
+    const sizes = {
+      small: 4,
+      medium: 6,
+      large: 12,
+      custom: 8
+    };
+    return sizes[size] || 6;
   };
 
-  const renderWidget = (widgetId, config, index) => {
+  const renderWidget = (widgetId, config) => {
     const widgetProps = {
       key: widgetId,
       widgetId,
       title: getWidgetTitle(widgetId),
       onToggle: toggleWidget,
-      onMoveWidget: moveWidget,
-      onResizeWidget: resizeWidget,
+      onResize: resizeWidget,
+      onMove: moveWidget,
+      onRemove: removeWidget,
+      onFavorite: toggleFavorite,
       size: config.size,
-      index: index
+      position: config.position,
+      isFavorite: config.isFavorite,
+      isEditing: isEditing
     };
 
     const widgetComponents = {
@@ -470,24 +635,14 @@ const Dashboard = () => {
     };
 
     return (
-      <DraggableWidget {...widgetProps}>
+      <CustomGridWidget {...widgetProps}>
         {widgetComponents[widgetId]}
-      </DraggableWidget>
+      </CustomGridWidget>
     );
   };
 
   const getWidgetTitle = (widgetId) => {
     const titles = {
-      communicationsCenter: '📊 Comunicaciones',
-      financialOverview: '💰 Finanzas',
-      quickActions: '⚡ Acciones',
-      performanceMetrics: '📈 Rendimiento',
-      salesAnalytics: '🛒 Ventas',
-      customerInsights: '👥 Clientes',
-      inventoryAlerts: '📦 Inventario',
-      recentActivity: '🔄 Actividad'
-    };
-    return isMobile ? titles[widgetId] : {
       communicationsCenter: '📊 Centro de Comunicaciones',
       financialOverview: '💰 Resumen Financiero',
       quickActions: '⚡ Acciones Rápidas',
@@ -496,39 +651,43 @@ const Dashboard = () => {
       customerInsights: '👥 Información de Clientes',
       inventoryAlerts: '📦 Alertas de Inventario',
       recentActivity: '🔄 Actividad Reciente'
-    }[widgetId];
+    };
+    return titles[widgetId];
   };
 
   const resetLayout = () => {
     saveWidgetsConfig(defaultWidgets);
+    showSnackbar('Layout restablecido', 'info');
   };
 
-  const optimizeForMobile = () => {
-    const mobileOptimized = Object.keys(widgetsConfig).reduce((acc, widgetId) => {
-      acc[widgetId] = {
-        ...widgetsConfig[widgetId],
-        size: defaultWidgets[widgetId].size
-      };
-      return acc;
-    }, {});
-    saveWidgetsConfig(mobileOptimized);
+  const saveCurrentLayout = (presetName = 'Mi Layout') => {
+    const newPresets = {
+      ...layoutPresets,
+      [presetName]: widgetsConfig
+    };
+    setLayoutPresets(newPresets);
+    localStorage.setItem('dashboardPresets', JSON.stringify(newPresets));
+    showSnackbar(`Layout "${presetName}" guardado`, 'success');
   };
 
-  const optimizeForDesktop = () => {
-    const desktopOptimized = Object.keys(widgetsConfig).reduce((acc, widgetId) => {
-      acc[widgetId] = {
-        ...widgetsConfig[widgetId],
-        size: widgetId === 'communicationsCenter' ? 'large' : 
-              ['quickActions', 'salesAnalytics', 'customerInsights'].includes(widgetId) ? 'medium' : 'small'
-      };
-      return acc;
-    }, {});
-    saveWidgetsConfig(desktopOptimized);
+  const loadLayout = (presetName) => {
+    if (layoutPresets[presetName]) {
+      saveWidgetsConfig(layoutPresets[presetName]);
+      showSnackbar(`Layout "${presetName}" cargado`, 'success');
+    }
+  };
+
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
+    showSnackbar(
+      isEditing ? 'Modo visualización activado' : 'Modo edición activado - Arrastra y redimensiona',
+      'info'
+    );
   };
 
   return (
-    <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3 }}>
-      {/* Header Principal Adaptativo */}
+    <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3, position: 'relative' }}>
+      {/* Header Premium */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -542,7 +701,13 @@ const Dashboard = () => {
               variant={isMobile ? "h4" : "h3"} 
               fontWeight={700} 
               gutterBottom
-              sx={{ fontSize: isMobile ? '1.75rem' : '2.5rem' }}
+              sx={{ 
+                fontSize: isMobile ? '1.75rem' : '2.5rem',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
             >
               ¡Bienvenido, {user?.business?.name || user?.first_name || 'Usuario'}!
             </Typography>
@@ -551,40 +716,11 @@ const Dashboard = () => {
               color="text.secondary" 
               sx={{ mb: 2 }}
             >
-              {new Date().toLocaleDateString('es-ES', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+              Tu dashboard personalizado - Organiza todo como prefieras
             </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Chip 
-                icon={<TrendingUp />} 
-                label={isMobile ? "$2,340" : "Ventas: $2,340"} 
-                color="success" 
-                variant="outlined" 
-                size={isMobile ? "small" : "medium"}
-              />
-              <Chip 
-                icon={<People />} 
-                label={isMobile ? "12 nuevos" : "12 clientes"} 
-                color="primary" 
-                variant="outlined" 
-                size={isMobile ? "small" : "medium"}
-              />
-              {!isMobile && (
-                <Chip 
-                  icon={<Chat />} 
-                  label="45 mensajes" 
-                  color="warning" 
-                  variant="outlined" 
-                />
-              )}
-            </Box>
           </Box>
           
+          {/* Controles Premium */}
           <Box sx={{ 
             display: 'flex', 
             gap: 1, 
@@ -593,142 +729,171 @@ const Dashboard = () => {
             width: isMobile ? '100%' : 'auto',
             justifyContent: isMobile ? 'space-between' : 'flex-end'
           }}>
-            {!isMobile && (
-              <>
-                <UBButton
-                  variant="outlined"
-                  startIcon={<Phone />}
-                  onClick={optimizeForMobile}
-                  size="small"
-                >
-                  Móvil
-                </UBButton>
-                <UBButton
-                  variant="outlined"
-                  startIcon={<Computer />}
-                  onClick={optimizeForDesktop}
-                  size="small"
-                >
-                  Escritorio
-                </UBButton>
-              </>
-            )}
+            {/* Modo Edición */}
+            <UBButton
+              variant={isEditing ? "contained" : "outlined"}
+              startIcon={<AutoFixHigh />}
+              onClick={toggleEditMode}
+              color={isEditing ? "secondary" : "primary"}
+            >
+              {isEditing ? 'Guardar' : 'Editar'}
+            </UBButton>
+
+            {/* Vistas */}
+            <UBButton
+              variant="outlined"
+              startIcon={<GridView />}
+              onClick={() => setViewMode(viewMode === 'grid' ? 'free' : 'grid')}
+            >
+              {viewMode === 'grid' ? 'Libre' : 'Grid'}
+            </UBButton>
+
             <UBButton
               variant="outlined"
               startIcon={<Settings />}
               onClick={() => setSettingsOpen(true)}
-              size={isMobile ? "small" : "medium"}
             >
-              {isMobile ? "Config" : "Personalizar"}
-            </UBButton>
-            <UBButton
-              variant="contained"
-              startIcon={<DashboardIcon />}
-              size={isMobile ? "small" : "medium"}
-            >
-              {isMobile ? "Vista" : "Completa"}
+              Config
             </UBButton>
           </Box>
         </Box>
 
-        {/* Instrucciones Adaptativas */}
-        <Box sx={{ 
-          mt: 2,
-          p: isMobile ? 1 : 2,
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-          borderRadius: 2,
-          background: alpha(theme.palette.primary.main, 0.03),
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          flexWrap: 'wrap'
-        }}>
-          <DragIndicator sx={{ 
-            color: 'primary.main',
-            fontSize: isMobile ? '1rem' : '1.25rem'
-          }} />
-          <Typography 
-            variant="body2" 
-            color="text.secondary"
-            sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}
-          >
-            <strong>Tip:</strong> {isMobile 
-              ? "Toque largo en un widget para cambiar su tamaño" 
-              : "Arrastra los widgets para reordenarlos. Haz clic en el ícono de tamaño para redimensionar."
-            }
-          </Typography>
-        </Box>
+        {/* Indicador de Estado */}
+        {isEditing && (
+          <Box sx={{ 
+            mt: 2,
+            p: 2,
+            border: `2px solid ${theme.palette.warning.main}`,
+            borderRadius: 2,
+            background: alpha(theme.palette.warning.main, 0.05),
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap'
+          }}>
+            <AutoFixHigh sx={{ color: 'warning.main' }} />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" fontWeight={600} color="warning.main">
+                Modo Edición Activo
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                • Arrastra los widgets para moverlos • Usa el menú contextual para más opciones
+                • Cambia tamaños con los controles • Marca tus favoritos con la estrella
+              </Typography>
+            </Box>
+          </Box>
+        )}
       </Box>
 
-      {/* Grid de Widgets Adaptativo */}
-      <Grid container spacing={isMobile ? 1 : 3}>
-        {getEnabledWidgets().map(([widgetId, config], index) => (
+      {/* Grid de Widgets Premium */}
+      <Grid container spacing={3}>
+        {getEnabledWidgets().map(([widgetId, config]) => (
           <Grid item xs={12} md={getGridSize(config.size)} key={widgetId}>
-            {renderWidget(widgetId, config, index)}
+            {renderWidget(widgetId, config)}
           </Grid>
         ))}
       </Grid>
 
-      {/* Diálogo de Configuración Mejorado */}
+      {/* Botón Flotante para Acciones Rápidas */}
+      {isEditing && (
+        <Fab
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+          }}
+          onClick={() => setSettingsOpen(true)}
+        >
+          <Widgets />
+        </Fab>
+      )}
+
+      {/* Diálogo de Configuración Premium */}
       <Dialog 
         open={settingsOpen} 
         onClose={() => setSettingsOpen(false)} 
-        maxWidth="md" 
+        maxWidth="lg" 
         fullWidth
         fullScreen={isMobile}
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Settings />
-            Personalizar Dashboard
+            <Palette />
+            Centro de Personalización
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Configura los widgets y sus tamaños para optimizar tu experiencia
-            {isMobile && " en móvil."}
-          </Typography>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Widgets Disponibles
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button 
-                variant="outlined" 
-                size="small" 
-                onClick={optimizeForMobile}
-                startIcon={<Phone />}
-              >
-                Móvil
-              </Button>
-              <Button 
-                variant="outlined" 
-                size="small" 
-                onClick={optimizeForDesktop}
-                startIcon={<Computer />}
-              >
-                Escritorio
-              </Button>
+          {/* Presets Guardados */}
+          {Object.keys(layoutPresets).length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Tus Layouts Guardados
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {Object.keys(layoutPresets).map((presetName) => (
+                  <Chip
+                    key={presetName}
+                    label={presetName}
+                    onClick={() => loadLayout(presetName)}
+                    onDelete={() => {
+                      const newPresets = { ...layoutPresets };
+                      delete newPresets[presetName];
+                      setLayoutPresets(newPresets);
+                      localStorage.setItem('dashboardPresets', JSON.stringify(newPresets));
+                    }}
+                    color="primary"
+                    variant="outlined"
+                  />
+                ))}
+              </Box>
             </Box>
-          </Box>
+          )}
+
+          <Typography variant="h6" gutterBottom>
+            Widgets Disponibles
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Personaliza completamente tu experiencia. Activa/desactiva widgets y ajusta su configuración.
+          </Typography>
 
           <Grid container spacing={2}>
             {Object.entries(widgetsConfig).map(([widgetId, config]) => (
-              <Grid item xs={12} md={6} key={widgetId}>
+              <Grid item xs={12} md={6} lg={4} key={widgetId}>
                 <Card 
                   variant="outlined"
                   sx={{
-                    border: `2px solid ${
+                    border: `3px solid ${
                       config.enabled 
-                        ? alpha(theme.palette.primary.main, 0.3)
+                        ? config.isFavorite
+                          ? alpha(theme.palette.warning.main, 0.5)
+                          : alpha(theme.palette.primary.main, 0.3)
                         : theme.palette.divider
                     }`,
                     background: config.enabled 
-                      ? alpha(theme.palette.primary.main, 0.05)
-                      : 'transparent'
+                      ? config.isFavorite
+                        ? alpha(theme.palette.warning.main, 0.05)
+                        : alpha(theme.palette.primary.main, 0.05)
+                      : 'transparent',
+                    position: 'relative',
+                    overflow: 'visible'
                   }}
                 >
+                  {config.isFavorite && (
+                    <Star 
+                      sx={{ 
+                        position: 'absolute', 
+                        top: -8, 
+                        right: -8, 
+                        color: 'gold',
+                        fontSize: 24,
+                        background: theme.palette.background.paper,
+                        borderRadius: '50%'
+                      }} 
+                    />
+                  )}
+                  
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <Box>
@@ -736,7 +901,7 @@ const Dashboard = () => {
                           {getWidgetTitle(widgetId)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
+                          Tamaño: {config.size} • {config.enabled ? 'Activado' : 'Desactivado'}
                         </Typography>
                       </Box>
                       <FormControlLabel
@@ -751,18 +916,27 @@ const Dashboard = () => {
                       />
                     </Box>
                     
-                    {/* Selector de tamaño en el diálogo */}
+                    {/* Controles Avanzados */}
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {['small', 'medium', 'large'].map((sizeOption) => (
+                      {['small', 'medium', 'large', 'custom'].map((sizeOption) => (
                         <Chip
                           key={sizeOption}
-                          label={sizeOption === 'small' ? 'S' : sizeOption === 'medium' ? 'M' : 'L'}
+                          label={sizeOption}
                           onClick={() => resizeWidget(widgetId, sizeOption)}
                           color={config.size === sizeOption ? 'primary' : 'default'}
                           variant={config.size === sizeOption ? 'filled' : 'outlined'}
                           size="small"
                         />
                       ))}
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleFavorite(widgetId, !config.isFavorite)}
+                        sx={{
+                          color: config.isFavorite ? 'gold' : 'text.secondary'
+                        }}
+                      >
+                        {config.isFavorite ? <Star /> : <StarBorder />}
+                      </IconButton>
                     </Box>
                   </CardContent>
                 </Card>
@@ -770,45 +944,64 @@ const Dashboard = () => {
             ))}
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSettingsOpen(false)}>
-            Cancelar
-          </Button>
+        <DialogActions sx={{ justifyContent: 'space-between' }}>
+          <Box>
+            <Button onClick={resetLayout} startIcon={<Restore />}>
+              Resetear
+            </Button>
+            <Button onClick={() => saveCurrentLayout()} startIcon={<Save />}>
+              Guardar Layout
+            </Button>
+          </Box>
           <Button 
             variant="contained" 
             onClick={() => setSettingsOpen(false)}
+            startIcon={<DashboardIcon />}
           >
-            Guardar
+            Aplicar Cambios
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Mensaje si no hay widgets activos */}
+      {/* Snackbar para Notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Mensaje para Dashboard Vacío */}
       {getEnabledWidgets().length === 0 && (
         <Box sx={{ 
           textAlign: 'center', 
           py: 8,
-          border: `2px dashed ${theme.palette.divider}`,
+          border: `3px dashed ${theme.palette.primary.main}`,
           borderRadius: 3,
-          mx: isMobile ? 1 : 0
+          mx: isMobile ? 1 : 0,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`
         }}>
-          <DashboardIcon sx={{ 
-            fontSize: isMobile ? 48 : 64, 
-            color: 'text.secondary', 
-            mb: 2 
-          }} />
-          <Typography 
-            variant={isMobile ? "h6" : "h5"} 
-            gutterBottom 
-            color="text.secondary"
-          >
-            No hay widgets activos
+          <Widgets sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+          <Typography variant="h5" gutterBottom color="primary.main">
+            Tu Canvas Vacío
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Comienza agregando widgets para crear tu dashboard perfecto
           </Typography>
           <UBButton
             variant="contained"
             startIcon={<Add />}
             onClick={() => setSettingsOpen(true)}
-            size={isMobile ? "small" : "medium"}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+            }}
           >
             Personalizar Dashboard
           </UBButton>
