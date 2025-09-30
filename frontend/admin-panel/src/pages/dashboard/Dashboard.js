@@ -1,3 +1,4 @@
+// src/pages/dashboard/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -34,7 +35,7 @@ import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Componentes de Widgets (TUS VERSIONES ORIGINALES)
+// Componentes de Widgets - TUS VERSIONES ORIGINALES
 import CommunicationsCenter from './widgets/CommunicationsCenter';
 import FinancialOverview from './widgets/FinancialOverview';
 import QuickActions from './widgets/QuickActions';
