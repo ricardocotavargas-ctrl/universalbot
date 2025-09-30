@@ -28,16 +28,13 @@ import {
   Visibility,
   VisibilityOff,
   Dashboard as DashboardIcon,
-  Expand,
-  Compress,
-  AutoFixHigh,
-  Widgets
+  AutoFixHigh
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Componentes de Widgets
+// Componentes de Widgets (TUS VERSIONES ORIGINALES)
 import CommunicationsCenter from './widgets/CommunicationsCenter';
 import FinancialOverview from './widgets/FinancialOverview';
 import QuickActions from './widgets/QuickActions';
@@ -60,27 +57,8 @@ const ResizableWidget = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const sizeConfig = {
-    small: { grid: 4, cols: 1, rows: 1 },
-    medium: { grid: 6, cols: 2, rows: 1 },
-    large: { grid: 12, cols: 3, rows: 2 },
-    xlarge: { grid: 12, cols: 4, rows: 2 }
-  };
-
-  const currentSize = sizeConfig[size] || sizeConfig.medium;
-
   const handleResize = (newSize) => {
     onResize(widgetId, newSize);
-  };
-
-  const getSizeIcon = (size) => {
-    switch (size) {
-      case 'small': return <Compress sx={{ fontSize: 16 }} />;
-      case 'medium': return <DragIndicator sx={{ fontSize: 16 }} />;
-      case 'large': return <Expand sx={{ fontSize: 16 }} />;
-      case 'xlarge': return <Widgets sx={{ fontSize: 16 }} />;
-      default: return <DragIndicator sx={{ fontSize: 16 }} />;
-    }
   };
 
   const getSizeLabel = (size) => {
@@ -97,7 +75,6 @@ const ResizableWidget = ({
     <Paper
       sx={{
         height: '100%',
-        minHeight: 200,
         position: 'relative',
         border: `2px solid ${
           isEditing 
@@ -144,15 +121,15 @@ const ResizableWidget = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           {/* Selector de Tamaño */}
           {isEditing && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
               {['small', 'medium', 'large', 'xlarge'].map((sizeOption) => (
                 <Tooltip key={sizeOption} title={`Tamaño ${getSizeLabel(sizeOption)}`}>
                   <IconButton
                     size="small"
                     onClick={() => handleResize(sizeOption)}
                     sx={{
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       background: size === sizeOption ? 
                         alpha(theme.palette.primary.main, 0.2) : 'transparent',
                       color: size === sizeOption ? 'primary.main' : 'text.secondary',
@@ -183,16 +160,13 @@ const ResizableWidget = ({
         </Box>
       </Box>
 
-      {/* Contenido del Widget */}
+      {/* Contenido del Widget - SIN MODIFICACIONES */}
       <Box sx={{ 
-        p: isMobile ? 1.5 : 2,
+        p: isMobile ? 1.5 : 3,
         height: `calc(100% - ${isMobile ? 60 : 80}px)`,
         overflow: 'auto'
       }}>
-        {React.cloneElement(children, { 
-          size: size,
-          isMobile: isMobile 
-        })}
+        {children}
       </Box>
 
       {/* Indicador de Tamaño */}
@@ -227,7 +201,7 @@ const Dashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Configuración inicial simple y funcional
+  // Configuración inicial
   const defaultWidgets = {
     communicationsCenter: { enabled: true, size: 'large' },
     financialOverview: { enabled: true, size: 'medium' },
@@ -240,7 +214,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // Cargar configuración desde localStorage
     const savedConfig = localStorage.getItem('dashboardWidgets');
     if (savedConfig) {
       setWidgetsConfig(JSON.parse(savedConfig));
@@ -283,7 +256,7 @@ const Dashboard = () => {
 
   const getGridSize = (size) => {
     if (isMobile) {
-      return 12; // En móvil, todo ocupa el ancho completo
+      return 12;
     }
     
     switch (size) {
@@ -344,7 +317,7 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3 }}>
-      {/* Header Simple */}
+      {/* Header */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -387,7 +360,6 @@ const Dashboard = () => {
           </Box>
         </Box>
 
-        {/* Instrucciones cuando está editando */}
         {isEditing && (
           <Box sx={{ 
             mt: 2,
@@ -397,8 +369,7 @@ const Dashboard = () => {
             background: alpha(theme.palette.primary.main, 0.03)
           }}>
             <Typography variant="body2" color="text.secondary">
-              <strong>Modo edición:</strong> Usa los botones S/M/L/XL en cada widget para cambiar su tamaño. 
-              Los widgets se adaptarán automáticamente al contenido.
+              <strong>Modo edición activo:</strong> Usa los botones S/M/L/XL en cada widget para cambiar su tamaño.
             </Typography>
           </Box>
         )}
@@ -448,7 +419,7 @@ const Dashboard = () => {
                           {getWidgetTitle(widgetId)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Tamaño actual: {config.size}
+                          Tamaño: {config.size}
                         </Typography>
                       </Box>
                       <FormControlLabel
@@ -478,7 +449,6 @@ const Dashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Mensaje si no hay widgets */}
       {getEnabledWidgets().length === 0 && (
         <Box sx={{ 
           textAlign: 'center', 
@@ -489,9 +459,6 @@ const Dashboard = () => {
           <DashboardIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h5" gutterBottom color="text.secondary">
             No hay widgets activos
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Activa algunos widgets para comenzar
           </Typography>
           <UBButton
             variant="contained"
