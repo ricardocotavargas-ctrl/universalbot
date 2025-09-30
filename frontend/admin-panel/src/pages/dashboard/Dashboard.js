@@ -242,7 +242,7 @@ const CustomGridWidget = ({
           </Typography>
           
           {isFavorite && (
-            <Star sx={{ fontSize: 16, color: 'gold' }} />
+            <Star sx={{ fontSize: 16, color: 'warning.main' }} />
           )}
         </Box>
 
@@ -258,8 +258,8 @@ const CustomGridWidget = ({
                   onFavorite(widgetId, !isFavorite);
                 }}
                 sx={{
-                  color: isFavorite ? 'gold' : 'text.secondary',
-                  background: alpha(isFavorite ? 'gold' : theme.palette.primary.main, 0.1)
+                  color: isFavorite ? 'warning.main' : 'text.secondary',
+                  background: alpha(isFavorite ? 'warning.main' : theme.palette.primary.main, 0.1)
                 }}
               >
                 {isFavorite ? <Star /> : <StarBorder />}
@@ -353,7 +353,7 @@ const CustomGridWidget = ({
         
         {/* Indicador de Favorito */}
         {isFavorite && (
-          <Star sx={{ fontSize: 16, color: 'gold' }} />
+          <Star sx={{ fontSize: 16, color: 'warning.main' }} />
         )}
       </Box>
 
@@ -921,7 +921,7 @@ const Dashboard = () => {
                         position: 'absolute', 
                         top: -8, 
                         right: -8, 
-                        color: 'gold',
+                        color: 'warning.main',
                         fontSize: 24,
                         background: theme.palette.background.paper,
                         borderRadius: '50%'
@@ -967,7 +967,7 @@ const Dashboard = () => {
                         size="small"
                         onClick={() => toggleFavorite(widgetId, !config.isFavorite)}
                         sx={{
-                          color: config.isFavorite ? 'gold' : 'text.secondary'
+                          color: config.isFavorite ? 'warning.main' : 'text.secondary'
                         }}
                       >
                         {config.isFavorite ? <Star /> : <StarBorder />}
