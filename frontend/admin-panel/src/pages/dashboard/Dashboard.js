@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Grid,
@@ -19,13 +19,7 @@ import {
   Card,
   CardContent,
   Tooltip,
-  useMediaQuery,
-  Fab,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  Snackbar,
-  Alert
+  useMediaQuery
 } from '@mui/material';
 import {
   Settings,
@@ -34,23 +28,9 @@ import {
   Visibility,
   VisibilityOff,
   Dashboard as DashboardIcon,
-  Reorder,
   AspectRatio,
-  Phone,
-  Computer,
-  ViewModule,
-  GridView,
-  ViewCompact,
-  Save,
-  Restore,
-  Delete,
-  Expand,
-  Compress,
   Star,
-  StarBorder,
-  Palette,
-  Widgets,
-  AutoFixHigh
+  StarBorder
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
@@ -66,495 +46,182 @@ import CustomerInsights from './widgets/CustomerInsights';
 import InventoryAlerts from './widgets/InventoryAlerts';
 import RecentActivity from './widgets/RecentActivity';
 
-// Sistema de Grid Personalizable
-const CustomGridWidget = ({ 
-  widgetId, 
-  title, 
-  children, 
-  onToggle, 
-  onResize, 
-  onMove,
-  onRemove,
-  onFavorite,
-  size = 'medium',
-  position = { x: 0, y: 0 },
-  isFavorite = false,
-  isEditing = false
-}) => {
+// Componente de Widget Simple
+const Widget = ({ widgetId, title, children, onToggle, onResize, size, isFavorite, onFavorite }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const widgetRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const [showControls, setShowControls] = useState(false);
-  const [contextMenu, setContextMenu] = useState(null);
-
-  const sizeConfig = {
-    small: { grid: 4, minHeight: 200 },
-    medium: { grid: 6, minHeight: 300 },
-    large: { grid: 12, minHeight: 400 },
-    custom: { grid: 8, minHeight: 350 }
-  };
-
-  const handleMouseDown = (e) => {
-    if (!isEditing) return;
-    setIsDragging(true);
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startPos = { ...position };
-
-    const handleMouseMove = (moveEvent) => {
-      if (!isDragging) return;
-      
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
-      
-      onMove(widgetId, {
-        x: Math.max(0, startPos.x + deltaX),
-        y: Math.max(0, startPos.y + deltaY)
-      });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleTouchStart = (e) => {
-    if (!isEditing) return;
-    setShowControls(true);
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    setContextMenu(
-      contextMenu === null
-        ? { mouseX: e.clientX - 2, mouseY: e.clientY - 4 }
-        : null
-    );
-  };
-
-  const handleCloseContextMenu = () => {
-    setContextMenu(null);
-  };
-
-  const handleResize = (newSize) => {
-    onResize(widgetId, newSize);
-    handleCloseContextMenu();
-  };
-
-  const getSizeIcon = (size) => {
-    const icons = {
-      small: <Compress sx={{ fontSize: 16 }} />,
-      medium: <ViewCompact sx={{ fontSize: 16 }} />,
-      large: <Expand sx={{ fontSize: 16 }} />,
-      custom: <AspectRatio sx={{ fontSize: 16 }} />
-    };
-    return icons[size] || icons.medium;
-  };
-
-  const getSizeLabel = (size) => {
-    const labels = {
-      small: 'Pequeño',
-      medium: 'Mediano', 
-      large: 'Grande',
-      custom: 'Personalizado'
-    };
-    return labels[size] || labels.medium;
-  };
 
   return (
     <Paper
-      ref={widgetRef}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => !isEditing && setShowControls(false)}
-      onContextMenu={handleContextMenu}
-      onTouchStart={handleTouchStart}
       sx={{
         height: '100%',
-        minHeight: sizeConfig[size].minHeight,
         position: 'relative',
-        border: `3px solid ${
-          isEditing 
-            ? alpha(theme.palette.primary.main, 0.4)
-            : alpha(theme.palette.primary.main, 0.1)
-        }`,
+        border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
         borderRadius: 3,
         overflow: 'hidden',
         transition: 'all 0.3s ease',
-        cursor: isEditing ? (isDragging ? 'grabbing' : 'grab') : 'default',
-        transform: isDragging ? 'scale(1.02) rotate(1deg)' : 'scale(1)',
-        boxShadow: isEditing ? theme.shadows[8] : theme.shadows[2],
-        background: `linear-gradient(135deg, 
-          ${alpha(theme.palette.background.paper, 0.9)} 0%,
-          ${alpha(theme.palette.background.paper, 0.7)} 100%
-        )`,
         '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.6),
-          boxShadow: theme.shadows[12],
-          transform: isEditing ? 'scale(1.02)' : 'scale(1.01)'
+          borderColor: alpha(theme.palette.primary.main, 0.3),
+          boxShadow: theme.shadows[4]
         }
       }}
     >
-      {/* Header del Widget con Controles */}
+      {/* Header del Widget */}
       <Box
-        onMouseDown={handleMouseDown}
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           p: isMobile ? 1.5 : 2,
-          borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-          background: `linear-gradient(135deg, 
-            ${alpha(theme.palette.primary.main, 0.05)} 0%,
-            ${alpha(theme.palette.primary.main, 0.02)} 100%
-          )`,
-          cursor: isEditing ? 'grab' : 'default',
-          userSelect: 'none'
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          background: alpha(theme.palette.primary.main, 0.02)
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-          {isEditing && (
-            <DragIndicator 
-              sx={{ 
-                color: 'primary.main',
-                cursor: 'grab'
-              }} 
-            />
-          )}
-          <Typography 
-            variant={isMobile ? "subtitle1" : "h6"} 
-            fontWeight={700}
-            sx={{
-              fontSize: isMobile ? '0.9rem' : '1.1rem',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}
-          >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={600}>
             {title}
           </Typography>
-          
           {isFavorite && (
-            <Star sx={{ fontSize: 16, color: 'warning.main' }} />
+            <Star sx={{ fontSize: 16, color: 'gold' }} />
           )}
         </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {/* Botón Favorito */}
+          <Tooltip title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}>
+            <IconButton
+              size="small"
+              onClick={() => onFavorite(widgetId, !isFavorite)}
+              sx={{
+                color: isFavorite ? 'gold' : 'text.secondary'
+              }}
+            >
+              {isFavorite ? <Star /> : <StarBorder />}
+            </IconButton>
+          </Tooltip>
 
-        {/* Controles del Widget */}
-        {(showControls || isEditing) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {/* Botón Favorito */}
-            <Tooltip title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onFavorite(widgetId, !isFavorite);
-                }}
-                sx={{
-                  color: isFavorite ? 'warning.main' : 'text.secondary',
-                  background: alpha(isFavorite ? 'warning.main' : theme.palette.primary.main, 0.1)
-                }}
-              >
-                {isFavorite ? <Star /> : <StarBorder />}
-              </IconButton>
-            </Tooltip>
+          {/* Selector de Tamaño */}
+          <Tooltip title="Cambiar tamaño">
+            <IconButton
+              size="small"
+              onClick={() => {
+                const sizes = ['small', 'medium', 'large'];
+                const currentIndex = sizes.indexOf(size);
+                const nextSize = sizes[(currentIndex + 1) % sizes.length];
+                onResize(widgetId, nextSize);
+              }}
+              sx={{
+                color: 'primary.main'
+              }}
+            >
+              <AspectRatio />
+            </IconButton>
+          </Tooltip>
 
-            {/* Selector de Tamaño */}
-            <Tooltip title={`Cambiar tamaño (${getSizeLabel(size)})`}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowControls(true);
-                }}
-                sx={{
-                  color: 'primary.main',
-                  background: alpha(theme.palette.primary.main, 0.1)
-                }}
-              >
-                <AspectRatio />
-              </IconButton>
-            </Tooltip>
-
-            {/* Botón Ocultar/Mostrar */}
-            <Tooltip title="Ocultar widget">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle(widgetId);
-                }}
-                sx={{
-                  color: 'text.secondary'
-                }}
-              >
-                <VisibilityOff />
-              </IconButton>
-            </Tooltip>
-
-            {isEditing && (
-              <Tooltip title="Eliminar widget">
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(widgetId);
-                  }}
-                  sx={{
-                    color: 'error.main',
-                    background: alpha(theme.palette.error.main, 0.1)
-                  }}
-                >
-                  <Delete />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        )}
+          {/* Botón Ocultar/Mostrar */}
+          <Tooltip title="Ocultar widget">
+            <IconButton
+              size="small"
+              onClick={() => onToggle(widgetId)}
+              sx={{
+                color: 'text.secondary'
+              }}
+            >
+              <VisibilityOff />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Contenido del Widget */}
-      <Box sx={{ 
-        p: isMobile ? 1.5 : 3,
-        height: `calc(100% - ${isMobile ? 60 : 80}px)`,
-        overflow: 'auto'
-      }}>
+      <Box sx={{ p: isMobile ? 1.5 : 3 }}>
         {children}
       </Box>
 
-      {/* Indicadores de Estado */}
-      <Box sx={{ 
-        position: 'absolute', 
-        bottom: 8, 
-        right: 8,
-        display: 'flex',
-        gap: 1
-      }}>
-        {/* Indicador de Tamaño */}
-        <Chip
-          icon={getSizeIcon(size)}
-          label={getSizeLabel(size)}
-          size="small"
-          variant="filled"
-          sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            color: 'white',
-            fontWeight: 'bold',
-            fontSize: '0.6rem'
-          }}
-        />
-        
-        {/* Indicador de Favorito */}
-        {isFavorite && (
-          <Star sx={{ fontSize: 16, color: 'warning.main' }} />
-        )}
-      </Box>
-
-      {/* Menú Contextual */}
-      <Menu
-        open={contextMenu !== null}
-        onClose={handleCloseContextMenu}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : null
-        }
+      {/* Indicador de Tamaño */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 8,
+          right: 8,
+        }}
       >
-        <MenuItem onClick={() => handleResize('small')}>
-          <ListItemIcon><Compress fontSize="small" /></ListItemIcon>
-          Tamaño Pequeño
-        </MenuItem>
-        <MenuItem onClick={() => handleResize('medium')}>
-          <ListItemIcon><ViewCompact fontSize="small" /></ListItemIcon>
-          Tamaño Mediano
-        </MenuItem>
-        <MenuItem onClick={() => handleResize('large')}>
-          <ListItemIcon><Expand fontSize="small" /></ListItemIcon>
-          Tamaño Grande
-        </MenuItem>
-        <MenuItem onClick={() => onFavorite(widgetId, !isFavorite)}>
-          <ListItemIcon>
-            {isFavorite ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
-          </ListItemIcon>
-          {isFavorite ? 'Quitar Favorito' : 'Marcar Favorito'}
-        </MenuItem>
-        <MenuItem onClick={() => onToggle(widgetId)}>
-          <ListItemIcon><VisibilityOff fontSize="small" /></ListItemIcon>
-          Ocultar Widget
-        </MenuItem>
-      </Menu>
-
-      {/* Menú de Tamaños Flotante */}
-      {showControls && isEditing && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            right: 8,
-            transform: 'translateY(-50%)',
-            background: theme.palette.background.paper,
-            border: `2px solid ${theme.palette.primary.main}`,
-            borderRadius: 2,
-            boxShadow: theme.shadows[8],
-            p: 1,
-            zIndex: 1000
-          }}
-        >
-          <Typography variant="caption" fontWeight={600} sx={{ mb: 1, display: 'block' }}>
-            Tamaño:
-          </Typography>
-          {['small', 'medium', 'large', 'custom'].map((sizeOption) => (
-            <Tooltip key={sizeOption} title={getSizeLabel(sizeOption)}>
-              <IconButton
-                size="small"
-                onClick={() => handleResize(sizeOption)}
-                sx={{
-                  background: size === sizeOption ? 
-                    `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)` : 
-                    'transparent',
-                  color: size === sizeOption ? 'white' : 'text.primary',
-                  mb: 0.5,
-                  '&:hover': {
-                    background: size === sizeOption ? 
-                      `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)` : 
-                      alpha(theme.palette.primary.main, 0.1)
-                  }
-                }}
-              >
-                {getSizeIcon(sizeOption)}
-              </IconButton>
-            </Tooltip>
-          ))}
-        </Box>
-      )}
+        <Chip
+          label={size === 'small' ? 'S' : size === 'medium' ? 'M' : 'L'}
+          size="small"
+          variant="outlined"
+          sx={{ fontSize: '0.6rem', fontWeight: 'bold' }}
+        />
+      </Box>
     </Paper>
   );
 };
 
-// Componente principal del Dashboard Premium
+// Componente principal del Dashboard
 const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [widgetsConfig, setWidgetsConfig] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [widgetsConfig, setWidgetsConfig] = useState({});
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [layoutPresets, setLayoutPresets] = useState({});
 
-  // Configuración premium de widgets
+  // Configuración inicial de widgets
   const defaultWidgets = {
     communicationsCenter: { 
       enabled: true, 
-      size: 'large', 
-      position: { x: 0, y: 0 },
+      size: isMobile ? 'medium' : 'large', 
       isFavorite: true 
     },
     financialOverview: { 
       enabled: true, 
       size: 'medium', 
-      position: { x: 6, y: 0 },
       isFavorite: false 
     },
     quickActions: { 
       enabled: true, 
       size: 'medium', 
-      position: { x: 0, y: 1 },
       isFavorite: true 
     },
     performanceMetrics: { 
       enabled: true, 
       size: 'small', 
-      position: { x: 6, y: 1 },
       isFavorite: false 
     },
     salesAnalytics: { 
       enabled: true, 
       size: 'medium', 
-      position: { x: 0, y: 2 },
       isFavorite: false 
     },
     customerInsights: { 
       enabled: true, 
       size: 'medium', 
-      position: { x: 6, y: 2 },
-      isFavorite: true 
+      isFavorite: false 
     },
     inventoryAlerts: { 
       enabled: true, 
       size: 'small', 
-      position: { x: 0, y: 3 },
       isFavorite: false 
     },
     recentActivity: { 
       enabled: true, 
       size: 'small', 
-      position: { x: 3, y: 3 },
       isFavorite: false 
     }
   };
 
   useEffect(() => {
-    const loadConfig = () => {
-      try {
-        const savedConfig = localStorage.getItem('dashboardWidgetsPremium');
-        const savedPresets = localStorage.getItem('dashboardPresets');
-        
-        if (savedConfig) {
-          const parsedConfig = JSON.parse(savedConfig);
-          setWidgetsConfig(parsedConfig);
-        } else {
-          setWidgetsConfig(defaultWidgets);
-          localStorage.setItem('dashboardWidgetsPremium', JSON.stringify(defaultWidgets));
-        }
-
-        if (savedPresets) {
-          setLayoutPresets(JSON.parse(savedPresets));
-        }
-      } catch (error) {
-        console.error('Error loading dashboard config:', error);
-        setWidgetsConfig(defaultWidgets);
-      }
-    };
-
-    loadConfig();
+    // Cargar configuración desde localStorage o usar defaults
+    const savedConfig = localStorage.getItem('dashboardWidgets');
+    if (savedConfig) {
+      setWidgetsConfig(JSON.parse(savedConfig));
+    } else {
+      setWidgetsConfig(defaultWidgets);
+    }
   }, []);
-
-  if (widgetsConfig === null) {
-    return (
-      <Container maxWidth="xl" sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="h4" gutterBottom>
-            Cargando tu Dashboard...
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Preparando tu experiencia personalizada
-          </Typography>
-        </Box>
-      </Container>
-    );
-  }
 
   const saveWidgetsConfig = (newConfig) => {
     setWidgetsConfig(newConfig);
-    localStorage.setItem('dashboardWidgetsPremium', JSON.stringify(newConfig));
-  };
-
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
+    localStorage.setItem('dashboardWidgets', JSON.stringify(newConfig));
   };
 
   const toggleWidget = (widgetId) => {
@@ -566,7 +233,6 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
-    showSnackbar(`Widget ${widgetsConfig[widgetId]?.enabled ? 'oculto' : 'mostrado'}`, 'info');
   };
 
   const resizeWidget = (widgetId, newSize) => {
@@ -578,30 +244,6 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
-    showSnackbar(`Tamaño cambiado a ${newSize}`, 'success');
-  };
-
-  const moveWidget = (widgetId, newPosition) => {
-    const newConfig = {
-      ...widgetsConfig,
-      [widgetId]: {
-        ...widgetsConfig[widgetId],
-        position: newPosition
-      }
-    };
-    saveWidgetsConfig(newConfig);
-  };
-
-  const removeWidget = (widgetId) => {
-    const newConfig = {
-      ...widgetsConfig,
-      [widgetId]: {
-        ...widgetsConfig[widgetId],
-        enabled: false
-      }
-    };
-    saveWidgetsConfig(newConfig);
-    showSnackbar('Widget removido', 'warning');
   };
 
   const toggleFavorite = (widgetId, isFavorite) => {
@@ -613,27 +255,30 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
-    showSnackbar(isFavorite ? 'Agregado a favoritos' : 'Removido de favoritos', 'success');
   };
 
   const getEnabledWidgets = () => {
     return Object.entries(widgetsConfig)
       .filter(([_, config]) => config.enabled)
       .sort((a, b) => {
+        // Ordenar por favoritos primero
         if (a[1].isFavorite && !b[1].isFavorite) return -1;
         if (!a[1].isFavorite && b[1].isFavorite) return 1;
-        return a[1].position.y - b[1].position.y || a[1].position.x - b[1].position.x;
+        return 0;
       });
   };
 
   const getGridSize = (size) => {
-    const sizes = {
-      small: 4,
-      medium: 6,
-      large: 12,
-      custom: 8
-    };
-    return sizes[size] || 6;
+    if (isMobile) {
+      return 12; // En móvil, todos ocupan todo el ancho
+    }
+    
+    switch (size) {
+      case 'large': return 12;
+      case 'medium': return 6;
+      case 'small': return 4;
+      default: return 6;
+    }
   };
 
   const renderWidget = (widgetId, config) => {
@@ -643,13 +288,9 @@ const Dashboard = () => {
       title: getWidgetTitle(widgetId),
       onToggle: toggleWidget,
       onResize: resizeWidget,
-      onMove: moveWidget,
-      onRemove: removeWidget,
       onFavorite: toggleFavorite,
       size: config.size,
-      position: config.position,
-      isFavorite: config.isFavorite,
-      isEditing: isEditing
+      isFavorite: config.isFavorite
     };
 
     const widgetComponents = {
@@ -664,14 +305,24 @@ const Dashboard = () => {
     };
 
     return (
-      <CustomGridWidget {...widgetProps}>
+      <Widget {...widgetProps}>
         {widgetComponents[widgetId]}
-      </CustomGridWidget>
+      </Widget>
     );
   };
 
   const getWidgetTitle = (widgetId) => {
     const titles = {
+      communicationsCenter: '📊 Comunicaciones',
+      financialOverview: '💰 Finanzas',
+      quickActions: '⚡ Acciones',
+      performanceMetrics: '📈 Rendimiento',
+      salesAnalytics: '🛒 Ventas',
+      customerInsights: '👥 Clientes',
+      inventoryAlerts: '📦 Inventario',
+      recentActivity: '🔄 Actividad'
+    };
+    return isMobile ? titles[widgetId] : {
       communicationsCenter: '📊 Centro de Comunicaciones',
       financialOverview: '💰 Resumen Financiero',
       quickActions: '⚡ Acciones Rápidas',
@@ -680,45 +331,16 @@ const Dashboard = () => {
       customerInsights: '👥 Información de Clientes',
       inventoryAlerts: '📦 Alertas de Inventario',
       recentActivity: '🔄 Actividad Reciente'
-    };
-    return titles[widgetId];
+    }[widgetId];
   };
 
   const resetLayout = () => {
     saveWidgetsConfig(defaultWidgets);
-    showSnackbar('Layout restablecido', 'info');
   };
-
-  const saveCurrentLayout = (presetName = 'Mi Layout') => {
-    const newPresets = {
-      ...layoutPresets,
-      [presetName]: widgetsConfig
-    };
-    setLayoutPresets(newPresets);
-    localStorage.setItem('dashboardPresets', JSON.stringify(newPresets));
-    showSnackbar(`Layout "${presetName}" guardado`, 'success');
-  };
-
-  const loadLayout = (presetName) => {
-    if (layoutPresets[presetName]) {
-      saveWidgetsConfig(layoutPresets[presetName]);
-      showSnackbar(`Layout "${presetName}" cargado`, 'success');
-    }
-  };
-
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-    showSnackbar(
-      isEditing ? 'Modo visualización activado' : 'Modo edición activado',
-      'info'
-    );
-  };
-
-  const enabledWidgets = getEnabledWidgets();
 
   return (
-    <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3, position: 'relative' }}>
-      {/* Header Premium */}
+    <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3 }}>
+      {/* Header */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -727,18 +349,11 @@ const Dashboard = () => {
           flexWrap: 'wrap',
           gap: 2
         }}>
-          <Box sx={{ flex: 1, minWidth: isMobile ? '100%' : 'auto' }}>
+          <Box>
             <Typography 
               variant={isMobile ? "h4" : "h3"} 
               fontWeight={700} 
               gutterBottom
-              sx={{ 
-                fontSize: isMobile ? '1.75rem' : '2.5rem',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}
             >
               ¡Bienvenido, {user?.business?.name || user?.first_name || 'Usuario'}!
             </Typography>
@@ -747,175 +362,89 @@ const Dashboard = () => {
               color="text.secondary" 
               sx={{ mb: 2 }}
             >
-              Tu dashboard personalizado - Organiza todo como prefieras
+              Tu dashboard personalizado - {new Date().toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
             </Typography>
           </Box>
           
-          {/* Controles Premium */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1, 
-            alignItems: 'center', 
-            flexWrap: 'wrap',
-            width: isMobile ? '100%' : 'auto',
-            justifyContent: isMobile ? 'space-between' : 'flex-end'
-          }}>
-            {/* Modo Edición */}
-            <UBButton
-              variant={isEditing ? "contained" : "outlined"}
-              startIcon={<AutoFixHigh />}
-              onClick={toggleEditMode}
-              color={isEditing ? "secondary" : "primary"}
-            >
-              {isEditing ? 'Guardar' : 'Editar'}
-            </UBButton>
-
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <UBButton
               variant="outlined"
               startIcon={<Settings />}
               onClick={() => setSettingsOpen(true)}
+              size={isMobile ? "small" : "medium"}
             >
-              Config
+              Personalizar
+            </UBButton>
+            <UBButton
+              variant="contained"
+              startIcon={<DashboardIcon />}
+              size={isMobile ? "small" : "medium"}
+            >
+              Vista Completa
             </UBButton>
           </Box>
         </Box>
 
-        {/* Indicador de Estado */}
-        {isEditing && (
-          <Box sx={{ 
-            mt: 2,
-            p: 2,
-            border: `2px solid ${theme.palette.warning.main}`,
-            borderRadius: 2,
-            background: alpha(theme.palette.warning.main, 0.05),
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            flexWrap: 'wrap'
-          }}>
-            <AutoFixHigh sx={{ color: 'warning.main' }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" fontWeight={600} color="warning.main">
-                Modo Edición Activo
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                • Arrastra los widgets para moverlos • Usa el menú contextual para más opciones
-                • Cambia tamaños con los controles • Marca tus favoritos con la estrella
-              </Typography>
-            </Box>
-          </Box>
-        )}
+        {/* Instrucciones */}
+        <Box sx={{ 
+          mt: 2,
+          p: isMobile ? 1 : 2,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          borderRadius: 2,
+          background: alpha(theme.palette.primary.main, 0.03)
+        }}>
+          <Typography variant="body2" color="text.secondary">
+            💡 <strong>Personaliza tu espacio:</strong> Cambia tamaños, marca favoritos y organiza como prefieras
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Grid de Widgets Premium */}
-      <Grid container spacing={3}>
-        {enabledWidgets.map(([widgetId, config]) => (
+      {/* Grid de Widgets */}
+      <Grid container spacing={isMobile ? 2 : 3}>
+        {getEnabledWidgets().map(([widgetId, config]) => (
           <Grid item xs={12} md={getGridSize(config.size)} key={widgetId}>
             {renderWidget(widgetId, config)}
           </Grid>
         ))}
       </Grid>
 
-      {/* Botón Flotante para Acciones Rápidas */}
-      {isEditing && (
-        <Fab
-          color="primary"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
-          }}
-          onClick={() => setSettingsOpen(true)}
-        >
-          <Widgets />
-        </Fab>
-      )}
-
-      {/* Diálogo de Configuración Premium */}
+      {/* Diálogo de Configuración */}
       <Dialog 
         open={settingsOpen} 
         onClose={() => setSettingsOpen(false)} 
-        maxWidth="lg" 
+        maxWidth="md" 
         fullWidth
         fullScreen={isMobile}
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Palette />
-            Centro de Personalización
-          </Box>
+          Personalizar Dashboard
         </DialogTitle>
         <DialogContent>
-          {/* Presets Guardados */}
-          {Object.keys(layoutPresets).length > 0 && (
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Tus Layouts Guardados
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {Object.keys(layoutPresets).map((presetName) => (
-                  <Chip
-                    key={presetName}
-                    label={presetName}
-                    onClick={() => loadLayout(presetName)}
-                    onDelete={() => {
-                      const newPresets = { ...layoutPresets };
-                      delete newPresets[presetName];
-                      setLayoutPresets(newPresets);
-                      localStorage.setItem('dashboardPresets', JSON.stringify(newPresets));
-                    }}
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))}
-              </Box>
-            </Box>
-          )}
-
-          <Typography variant="h6" gutterBottom>
-            Widgets Disponibles
-          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Personaliza completamente tu experiencia. Activa/desactiva widgets y ajusta su configuración.
+            Configura los widgets y su disposición
           </Typography>
 
           <Grid container spacing={2}>
             {Object.entries(widgetsConfig).map(([widgetId, config]) => (
-              <Grid item xs={12} md={6} lg={4} key={widgetId}>
+              <Grid item xs={12} md={6} key={widgetId}>
                 <Card 
                   variant="outlined"
                   sx={{
-                    border: `3px solid ${
+                    border: `2px solid ${
                       config.enabled 
-                        ? config.isFavorite
-                          ? alpha(theme.palette.warning.main, 0.5)
-                          : alpha(theme.palette.primary.main, 0.3)
+                        ? alpha(theme.palette.primary.main, 0.3)
                         : theme.palette.divider
                     }`,
                     background: config.enabled 
-                      ? config.isFavorite
-                        ? alpha(theme.palette.warning.main, 0.05)
-                        : alpha(theme.palette.primary.main, 0.05)
-                      : 'transparent',
-                    position: 'relative',
-                    overflow: 'visible'
+                      ? alpha(theme.palette.primary.main, 0.05)
+                      : 'transparent'
                   }}
                 >
-                  {config.isFavorite && (
-                    <Star 
-                      sx={{ 
-                        position: 'absolute', 
-                        top: -8, 
-                        right: -8, 
-                        color: 'warning.main',
-                        fontSize: 24,
-                        background: theme.palette.background.paper,
-                        borderRadius: '50%'
-                      }} 
-                    />
-                  )}
-                  
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <Box>
@@ -923,7 +452,7 @@ const Dashboard = () => {
                           {getWidgetTitle(widgetId)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Tamaño: {config.size} • {config.enabled ? 'Activado' : 'Desactivado'}
+                          Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
                         </Typography>
                       </Box>
                       <FormControlLabel
@@ -938,12 +467,12 @@ const Dashboard = () => {
                       />
                     </Box>
                     
-                    {/* Controles Avanzados */}
+                    {/* Controles de Widget */}
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {['small', 'medium', 'large', 'custom'].map((sizeOption) => (
+                      {['small', 'medium', 'large'].map((sizeOption) => (
                         <Chip
                           key={sizeOption}
-                          label={sizeOption}
+                          label={sizeOption === 'small' ? 'S' : sizeOption === 'medium' ? 'M' : 'L'}
                           onClick={() => resizeWidget(widgetId, sizeOption)}
                           color={config.size === sizeOption ? 'primary' : 'default'}
                           variant={config.size === sizeOption ? 'filled' : 'outlined'}
@@ -954,7 +483,7 @@ const Dashboard = () => {
                         size="small"
                         onClick={() => toggleFavorite(widgetId, !config.isFavorite)}
                         sx={{
-                          color: config.isFavorite ? 'warning.main' : 'text.secondary'
+                          color: config.isFavorite ? 'gold' : 'text.secondary'
                         }}
                       >
                         {config.isFavorite ? <Star /> : <StarBorder />}
@@ -966,64 +495,39 @@ const Dashboard = () => {
             ))}
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Button onClick={resetLayout} startIcon={<Restore />}>
-              Resetear
-            </Button>
-            <Button onClick={() => saveCurrentLayout()} startIcon={<Save />}>
-              Guardar Layout
-            </Button>
-          </Box>
+        <DialogActions>
+          <Button onClick={resetLayout}>
+            Resetear
+          </Button>
           <Button 
             variant="contained" 
             onClick={() => setSettingsOpen(false)}
-            startIcon={<DashboardIcon />}
           >
-            Aplicar Cambios
+            Guardar
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar para Notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      >
-        <Alert 
-          severity={snackbar.severity} 
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-
-      {/* Mensaje para Dashboard Vacío */}
-      {enabledWidgets.length === 0 && (
+      {/* Mensaje si no hay widgets activos */}
+      {getEnabledWidgets().length === 0 && (
         <Box sx={{ 
           textAlign: 'center', 
           py: 8,
-          border: `3px dashed ${theme.palette.primary.main}`,
+          border: `2px dashed ${theme.palette.divider}`,
           borderRadius: 3,
-          mx: isMobile ? 1 : 0,
-          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`
+          mx: isMobile ? 1 : 0
         }}>
-          <Widgets sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-          <Typography variant="h5" gutterBottom color="primary.main">
-            Tu Canvas Vacío
+          <DashboardIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h5" gutterBottom color="text.secondary">
+            No hay widgets activos
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Comienza agregando widgets para crear tu dashboard perfecto
+            Personaliza tu dashboard activando algunos widgets
           </Typography>
           <UBButton
             variant="contained"
             startIcon={<Add />}
             onClick={() => setSettingsOpen(true)}
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
-            }}
           >
             Personalizar Dashboard
           </UBButton>
