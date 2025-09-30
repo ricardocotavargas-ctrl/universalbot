@@ -19,24 +19,38 @@ import {
   Card,
   CardContent,
   Tooltip,
-  useMediaQuery
+  useMediaQuery,
+  Fab,
+  Snackbar,
+  Alert,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Settings,
-  DragIndicator,
   Add,
   Visibility,
   VisibilityOff,
   Dashboard as DashboardIcon,
   AspectRatio,
   Star,
-  StarBorder
+  StarBorder,
+  Save,
+  Restore,
+  Palette,
+  AutoAwesome,
+  AdminPanelSettings,
+  Campaign,
+  PointOfSale,
+  AccountBalance,
+  Inventory,
+  Groups
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Componentes de Widgets
+// Importar todos los widgets
 import CommunicationsCenter from './widgets/CommunicationsCenter';
 import FinancialOverview from './widgets/FinancialOverview';
 import QuickActions from './widgets/QuickActions';
@@ -46,62 +60,161 @@ import CustomerInsights from './widgets/CustomerInsights';
 import InventoryAlerts from './widgets/InventoryAlerts';
 import RecentActivity from './widgets/RecentActivity';
 
-// Componente de Widget Simple
-const Widget = ({ widgetId, title, children, onToggle, onResize, size, isFavorite, onFavorite }) => {
+// Configuración de widgets por rol de usuario
+const WIDGETS_BY_ROLE = {
+  admin: {
+    communicationsCenter: { enabled: true, size: 'large', category: 'marketing', essential: true },
+    financialOverview: { enabled: true, size: 'medium', category: 'finance', essential: true },
+    quickActions: { enabled: true, size: 'medium', category: 'general', essential: true },
+    performanceMetrics: { enabled: true, size: 'small', category: 'general', essential: true },
+    salesAnalytics: { enabled: true, size: 'medium', category: 'sales', essential: true },
+    customerInsights: { enabled: true, size: 'medium', category: 'marketing', essential: false },
+    inventoryAlerts: { enabled: true, size: 'small', category: 'operations', essential: false },
+    recentActivity: { enabled: true, size: 'small', category: 'general', essential: false }
+  },
+  marketing: {
+    communicationsCenter: { enabled: true, size: 'large', category: 'marketing', essential: true },
+    customerInsights: { enabled: true, size: 'large', category: 'marketing', essential: true },
+    salesAnalytics: { enabled: true, size: 'medium', category: 'sales', essential: false },
+    quickActions: { enabled: true, size: 'medium', category: 'general', essential: true },
+    recentActivity: { enabled: true, size: 'small', category: 'general', essential: false },
+    performanceMetrics: { enabled: false, size: 'small', category: 'general', essential: false },
+    financialOverview: { enabled: false, size: 'medium', category: 'finance', essential: false },
+    inventoryAlerts: { enabled: false, size: 'small', category: 'operations', essential: false }
+  },
+  sales: {
+    salesAnalytics: { enabled: true, size: 'large', category: 'sales', essential: true },
+    customerInsights: { enabled: true, size: 'medium', category: 'marketing', essential: true },
+    communicationsCenter: { enabled: true, size: 'medium', category: 'marketing', essential: true },
+    quickActions: { enabled: true, size: 'medium', category: 'general', essential: true },
+    recentActivity: { enabled: true, size: 'small', category: 'general', essential: false },
+    performanceMetrics: { enabled: false, size: 'small', category: 'general', essential: false },
+    financialOverview: { enabled: false, size: 'medium', category: 'finance', essential: false },
+    inventoryAlerts: { enabled: false, size: 'small', category: 'operations', essential: false }
+  },
+  finance: {
+    financialOverview: { enabled: true, size: 'large', category: 'finance', essential: true },
+    salesAnalytics: { enabled: true, size: 'medium', category: 'sales', essential: true },
+    performanceMetrics: { enabled: true, size: 'small', category: 'general', essential: false },
+    quickActions: { enabled: true, size: 'medium', category: 'general', essential: true },
+    recentActivity: { enabled: true, size: 'small', category: 'general', essential: false },
+    communicationsCenter: { enabled: false, size: 'large', category: 'marketing', essential: false },
+    customerInsights: { enabled: false, size: 'medium', category: 'marketing', essential: false },
+    inventoryAlerts: { enabled: false, size: 'small', category: 'operations', essential: false }
+  },
+  operations: {
+    inventoryAlerts: { enabled: true, size: 'large', category: 'operations', essential: true },
+    performanceMetrics: { enabled: true, size: 'medium', category: 'general', essential: true },
+    quickActions: { enabled: true, size: 'medium', category: 'general', essential: true },
+    recentActivity: { enabled: true, size: 'small', category: 'general', essential: false },
+    salesAnalytics: { enabled: false, size: 'medium', category: 'sales', essential: false },
+    financialOverview: { enabled: false, size: 'medium', category: 'finance', essential: false },
+    communicationsCenter: { enabled: false, size: 'large', category: 'marketing', essential: false },
+    customerInsights: { enabled: false, size: 'medium', category: 'marketing', essential: false }
+  }
+};
+
+// Componente de Widget Premium
+const PremiumWidget = ({ widgetId, title, children, onToggle, onResize, size, isFavorite, onFavorite, category }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const categoryColors = {
+    marketing: '#E4405F',
+    sales: '#25D366',
+    finance: '#FF6B35',
+    operations: '#4A6CF7',
+    general: '#6B7280'
+  };
+
+  const getCategoryIcon = (cat) => {
+    const icons = {
+      marketing: <Campaign sx={{ fontSize: 16 }} />,
+      sales: <PointOfSale sx={{ fontSize: 16 }} />,
+      finance: <AccountBalance sx={{ fontSize: 16 }} />,
+      operations: <Inventory sx={{ fontSize: 16 }} />,
+      general: <Groups sx={{ fontSize: 16 }} />
+    };
+    return icons[cat] || icons.general;
+  };
 
   return (
     <Paper
       sx={{
         height: '100%',
+        minHeight: 280,
         position: 'relative',
-        border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+        border: `3px solid ${alpha(categoryColors[category] || theme.palette.primary.main, 0.2)}`,
         borderRadius: 3,
         overflow: 'hidden',
         transition: 'all 0.3s ease',
+        background: `linear-gradient(135deg, 
+          ${alpha(categoryColors[category] || theme.palette.primary.main, 0.05)} 0%,
+          ${alpha(theme.palette.background.paper, 0.8)} 100%
+        )`,
         '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.3),
-          boxShadow: theme.shadows[4]
+          borderColor: alpha(categoryColors[category] || theme.palette.primary.main, 0.4),
+          boxShadow: `0 8px 32px ${alpha(categoryColors[category] || theme.palette.primary.main, 0.15)}`,
+          transform: 'translateY(-2px)'
         }
       }}
     >
-      {/* Header del Widget */}
+      {/* Header Premium */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           p: isMobile ? 1.5 : 2,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          background: alpha(theme.palette.primary.main, 0.02)
+          borderBottom: `2px solid ${alpha(categoryColors[category] || theme.palette.primary.main, 0.1)}`,
+          background: `linear-gradient(135deg, 
+            ${alpha(categoryColors[category] || theme.palette.primary.main, 0.08)} 0%,
+            ${alpha(categoryColors[category] || theme.palette.primary.main, 0.03)} 100%
+          )`
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={600}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            color: categoryColors[category] || theme.palette.primary.main
+          }}>
+            {getCategoryIcon(category)}
+            <Chip
+              label={category}
+              size="small"
+              sx={{
+                background: alpha(categoryColors[category] || theme.palette.primary.main, 0.1),
+                color: categoryColors[category] || theme.palette.primary.main,
+                fontWeight: 600,
+                fontSize: '0.6rem',
+                height: 20
+              }}
+            />
+          </Box>
+          <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={700}>
             {title}
           </Typography>
-          {isFavorite && (
-            <Star sx={{ fontSize: 16, color: 'gold' }} />
-          )}
         </Box>
         
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {/* Botón Favorito */}
+          {/* Favorito */}
           <Tooltip title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}>
             <IconButton
               size="small"
               onClick={() => onFavorite(widgetId, !isFavorite)}
               sx={{
-                color: isFavorite ? 'gold' : 'text.secondary'
+                color: isFavorite ? 'gold' : alpha(categoryColors[category] || theme.palette.primary.main, 0.6),
+                background: alpha(isFavorite ? 'gold' : categoryColors[category] || theme.palette.primary.main, 0.1)
               }}
             >
               {isFavorite ? <Star /> : <StarBorder />}
             </IconButton>
           </Tooltip>
 
-          {/* Selector de Tamaño */}
-          <Tooltip title="Cambiar tamaño">
+          {/* Tamaño */}
+          <Tooltip title={`Cambiar tamaño (${size})`}>
             <IconButton
               size="small"
               onClick={() => {
@@ -111,14 +224,15 @@ const Widget = ({ widgetId, title, children, onToggle, onResize, size, isFavorit
                 onResize(widgetId, nextSize);
               }}
               sx={{
-                color: 'primary.main'
+                color: categoryColors[category] || theme.palette.primary.main,
+                background: alpha(categoryColors[category] || theme.palette.primary.main, 0.1)
               }}
             >
               <AspectRatio />
             </IconButton>
           </Tooltip>
 
-          {/* Botón Ocultar/Mostrar */}
+          {/* Ocultar */}
           <Tooltip title="Ocultar widget">
             <IconButton
               size="small"
@@ -133,95 +247,89 @@ const Widget = ({ widgetId, title, children, onToggle, onResize, size, isFavorit
         </Box>
       </Box>
 
-      {/* Contenido del Widget */}
-      <Box sx={{ p: isMobile ? 1.5 : 3 }}>
+      {/* Contenido */}
+      <Box sx={{ 
+        p: isMobile ? 1.5 : 3,
+        height: `calc(100% - ${isMobile ? 60 : 80}px)`,
+        overflow: 'auto'
+      }}>
         {children}
       </Box>
 
-      {/* Indicador de Tamaño */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 8,
-          right: 8,
-        }}
-      >
+      {/* Footer con Info */}
+      <Box sx={{ 
+        position: 'absolute', 
+        bottom: 8, 
+        left: 8,
+        right: 8,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
         <Chip
-          label={size === 'small' ? 'S' : size === 'medium' ? 'M' : 'L'}
+          icon={getCategoryIcon(category)}
+          label={size}
           size="small"
           variant="outlined"
-          sx={{ fontSize: '0.6rem', fontWeight: 'bold' }}
+          sx={{
+            fontSize: '0.6rem',
+            fontWeight: 'bold',
+            background: alpha(categoryColors[category] || theme.palette.primary.main, 0.1)
+          }}
         />
+        
+        {isFavorite && (
+          <Star sx={{ fontSize: 16, color: 'gold' }} />
+        )}
       </Box>
     </Paper>
   );
 };
 
-// Componente principal del Dashboard
+// Componente principal del Dashboard Premium
 const Dashboard = () => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user, updateUserPreferences } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [widgetsConfig, setWidgetsConfig] = useState({});
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [activeTab, setActiveTab] = useState(0);
 
-  // Configuración inicial de widgets
-  const defaultWidgets = {
-    communicationsCenter: { 
-      enabled: true, 
-      size: isMobile ? 'medium' : 'large', 
-      isFavorite: true 
-    },
-    financialOverview: { 
-      enabled: true, 
-      size: 'medium', 
-      isFavorite: false 
-    },
-    quickActions: { 
-      enabled: true, 
-      size: 'medium', 
-      isFavorite: true 
-    },
-    performanceMetrics: { 
-      enabled: true, 
-      size: 'small', 
-      isFavorite: false 
-    },
-    salesAnalytics: { 
-      enabled: true, 
-      size: 'medium', 
-      isFavorite: false 
-    },
-    customerInsights: { 
-      enabled: true, 
-      size: 'medium', 
-      isFavorite: false 
-    },
-    inventoryAlerts: { 
-      enabled: true, 
-      size: 'small', 
-      isFavorite: false 
-    },
-    recentActivity: { 
-      enabled: true, 
-      size: 'small', 
-      isFavorite: false 
-    }
+  // Obtener configuración inicial basada en el rol del usuario
+  const getInitialConfig = () => {
+    const userRole = user?.role || 'admin';
+    const roleConfig = WIDGETS_BY_ROLE[userRole] || WIDGETS_BY_ROLE.admin;
+    
+    // Convertir a formato interno agregando propiedades de estado
+    const configWithState = {};
+    Object.keys(roleConfig).forEach(widgetId => {
+      configWithState[widgetId] = {
+        ...roleConfig[widgetId],
+        isFavorite: roleConfig[widgetId].essential || false,
+        enabled: roleConfig[widgetId].enabled
+      };
+    });
+    
+    return configWithState;
   };
 
   useEffect(() => {
-    // Cargar configuración desde localStorage o usar defaults
-    const savedConfig = localStorage.getItem('dashboardWidgets');
+    const savedConfig = localStorage.getItem(`dashboardConfig_${user?.id}`);
     if (savedConfig) {
       setWidgetsConfig(JSON.parse(savedConfig));
     } else {
-      setWidgetsConfig(defaultWidgets);
+      setWidgetsConfig(getInitialConfig());
     }
-  }, []);
+  }, [user]);
 
   const saveWidgetsConfig = (newConfig) => {
     setWidgetsConfig(newConfig);
-    localStorage.setItem('dashboardWidgets', JSON.stringify(newConfig));
+    localStorage.setItem(`dashboardConfig_${user?.id}`, JSON.stringify(newConfig));
+  };
+
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
   };
 
   const toggleWidget = (widgetId) => {
@@ -233,6 +341,7 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
+    showSnackbar(`Widget ${widgetsConfig[widgetId]?.enabled ? 'oculto' : 'mostrado'}`, 'info');
   };
 
   const resizeWidget = (widgetId, newSize) => {
@@ -244,6 +353,7 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
+    showSnackbar(`Tamaño cambiado a ${newSize}`, 'success');
   };
 
   const toggleFavorite = (widgetId, isFavorite) => {
@@ -255,30 +365,63 @@ const Dashboard = () => {
       }
     };
     saveWidgetsConfig(newConfig);
+    showSnackbar(isFavorite ? 'Agregado a favoritos' : 'Removido de favoritos', 'success');
   };
 
   const getEnabledWidgets = () => {
     return Object.entries(widgetsConfig)
       .filter(([_, config]) => config.enabled)
       .sort((a, b) => {
-        // Ordenar por favoritos primero
+        // Ordenar por favoritos primero, luego por categoría
         if (a[1].isFavorite && !b[1].isFavorite) return -1;
         if (!a[1].isFavorite && b[1].isFavorite) return 1;
-        return 0;
+        return a[1].category.localeCompare(b[1].category);
       });
   };
 
   const getGridSize = (size) => {
-    if (isMobile) {
-      return 12; // En móvil, todos ocupan todo el ancho
-    }
-    
+    if (isMobile) return 12;
     switch (size) {
       case 'large': return 12;
       case 'medium': return 6;
       case 'small': return 4;
       default: return 6;
     }
+  };
+
+  const getWidgetTitle = (widgetId) => {
+    const titles = {
+      communicationsCenter: '📊 Centro de Comunicaciones',
+      financialOverview: '💰 Resumen Financiero',
+      quickActions: '⚡ Acciones Rápidas',
+      performanceMetrics: '📈 Métricas de Rendimiento',
+      salesAnalytics: '🛒 Análisis de Ventas',
+      customerInsights: '👥 Información de Clientes',
+      inventoryAlerts: '📦 Alertas de Inventario',
+      recentActivity: '🔄 Actividad Reciente'
+    };
+    return titles[widgetId];
+  };
+
+  const getRoleDisplayName = (role) => {
+    const names = {
+      admin: 'Administrador',
+      marketing: 'Marketing',
+      sales: 'Ventas',
+      finance: 'Finanzas',
+      operations: 'Operaciones'
+    };
+    return names[role] || 'Usuario';
+  };
+
+  const resetToRoleDefault = () => {
+    saveWidgetsConfig(getInitialConfig());
+    showSnackbar(`Configuración restablecida para ${getRoleDisplayName(user?.role)}`, 'info');
+  };
+
+  const saveAsDefault = () => {
+    updateUserPreferences({ dashboard_layout: 'custom' });
+    showSnackbar('Configuración guardada como predeterminada', 'success');
   };
 
   const renderWidget = (widgetId, config) => {
@@ -290,7 +433,8 @@ const Dashboard = () => {
       onResize: resizeWidget,
       onFavorite: toggleFavorite,
       size: config.size,
-      isFavorite: config.isFavorite
+      isFavorite: config.isFavorite,
+      category: config.category
     };
 
     const widgetComponents = {
@@ -305,42 +449,26 @@ const Dashboard = () => {
     };
 
     return (
-      <Widget {...widgetProps}>
+      <PremiumWidget {...widgetProps}>
         {widgetComponents[widgetId]}
-      </Widget>
+      </PremiumWidget>
     );
   };
 
-  const getWidgetTitle = (widgetId) => {
-    const titles = {
-      communicationsCenter: '📊 Comunicaciones',
-      financialOverview: '💰 Finanzas',
-      quickActions: '⚡ Acciones',
-      performanceMetrics: '📈 Rendimiento',
-      salesAnalytics: '🛒 Ventas',
-      customerInsights: '👥 Clientes',
-      inventoryAlerts: '📦 Inventario',
-      recentActivity: '🔄 Actividad'
-    };
-    return isMobile ? titles[widgetId] : {
-      communicationsCenter: '📊 Centro de Comunicaciones',
-      financialOverview: '💰 Resumen Financiero',
-      quickActions: '⚡ Acciones Rápidas',
-      performanceMetrics: '📈 Métricas de Rendimiento',
-      salesAnalytics: '🛒 Análisis de Ventas',
-      customerInsights: '👥 Información de Clientes',
-      inventoryAlerts: '📦 Alertas de Inventario',
-      recentActivity: '🔄 Actividad Reciente'
-    }[widgetId];
-  };
-
-  const resetLayout = () => {
-    saveWidgetsConfig(defaultWidgets);
+  const getWidgetsByCategory = () => {
+    const categories = {};
+    Object.entries(widgetsConfig).forEach(([widgetId, config]) => {
+      if (!categories[config.category]) {
+        categories[config.category] = [];
+      }
+      categories[config.category].push({ widgetId, ...config });
+    });
+    return categories;
   };
 
   return (
     <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3 }}>
-      {/* Header */}
+      {/* Header Premium */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -349,32 +477,67 @@ const Dashboard = () => {
           flexWrap: 'wrap',
           gap: 2
         }}>
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Typography 
               variant={isMobile ? "h4" : "h3"} 
               fontWeight={700} 
               gutterBottom
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
             >
-              ¡Bienvenido, {user?.business?.name || user?.first_name || 'Usuario'}!
+              ¡Bienvenido, {user?.first_name || 'Usuario'}!
             </Typography>
             <Typography 
               variant={isMobile ? "body1" : "h6"} 
               color="text.secondary" 
               sx={{ mb: 2 }}
             >
-              Tu dashboard personalizado - {new Date().toLocaleDateString('es-ES', { 
+              Dashboard {getRoleDisplayName(user?.role)} • {new Date().toLocaleDateString('es-ES', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               })}
             </Typography>
+
+            {/* Info del Rol */}
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Chip 
+                icon={<AdminPanelSettings />}
+                label={`Rol: ${getRoleDisplayName(user?.role)}`}
+                color="primary"
+                variant="outlined"
+                size={isMobile ? "small" : "medium"}
+              />
+              <Chip 
+                label={`${getEnabledWidgets().length} widgets activos`}
+                color="success"
+                variant="outlined"
+                size={isMobile ? "small" : "medium"}
+              />
+              <Chip 
+                label="Experiencia Premium"
+                color="secondary"
+                variant="filled"
+                size={isMobile ? "small" : "medium"}
+              />
+            </Box>
           </Box>
           
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Controles Premium */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1, 
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}>
             <UBButton
               variant="outlined"
-              startIcon={<Settings />}
+              startIcon={<Palette />}
               onClick={() => setSettingsOpen(true)}
               size={isMobile ? "small" : "medium"}
             >
@@ -382,29 +545,19 @@ const Dashboard = () => {
             </UBButton>
             <UBButton
               variant="contained"
-              startIcon={<DashboardIcon />}
+              startIcon={<AutoAwesome />}
               size={isMobile ? "small" : "medium"}
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+              }}
             >
-              Vista Completa
+              Vista Premium
             </UBButton>
           </Box>
         </Box>
-
-        {/* Instrucciones */}
-        <Box sx={{ 
-          mt: 2,
-          p: isMobile ? 1 : 2,
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-          borderRadius: 2,
-          background: alpha(theme.palette.primary.main, 0.03)
-        }}>
-          <Typography variant="body2" color="text.secondary">
-            💡 <strong>Personaliza tu espacio:</strong> Cambia tamaños, marca favoritos y organiza como prefieras
-          </Typography>
-        </Box>
       </Box>
 
-      {/* Grid de Widgets */}
+      {/* Grid de Widgets Premium */}
       <Grid container spacing={isMobile ? 2 : 3}>
         {getEnabledWidgets().map(([widgetId, config]) => (
           <Grid item xs={12} md={getGridSize(config.size)} key={widgetId}>
@@ -413,123 +566,244 @@ const Dashboard = () => {
         ))}
       </Grid>
 
-      {/* Diálogo de Configuración */}
+      {/* Botón Flotante */}
+      <Fab
+        color="primary"
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+        }}
+        onClick={() => setSettingsOpen(true)}
+      >
+        <Settings />
+      </Fab>
+
+      {/* Diálogo de Personalización Premium */}
       <Dialog 
         open={settingsOpen} 
         onClose={() => setSettingsOpen(false)} 
-        maxWidth="md" 
+        maxWidth="lg" 
         fullWidth
         fullScreen={isMobile}
       >
         <DialogTitle>
-          Personalizar Dashboard
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Palette />
+            Centro de Personalización - {getRoleDisplayName(user?.role)}
+          </Box>
         </DialogTitle>
+        
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Configura los widgets y su disposición
-          </Typography>
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ mb: 3 }}>
+            <Tab label="Todos los Widgets" />
+            <Tab label="Por Categoría" />
+            <Tab label="Configuración" />
+          </Tabs>
 
-          <Grid container spacing={2}>
-            {Object.entries(widgetsConfig).map(([widgetId, config]) => (
-              <Grid item xs={12} md={6} key={widgetId}>
-                <Card 
-                  variant="outlined"
-                  sx={{
-                    border: `2px solid ${
-                      config.enabled 
-                        ? alpha(theme.palette.primary.main, 0.3)
-                        : theme.palette.divider
-                    }`,
-                    background: config.enabled 
-                      ? alpha(theme.palette.primary.main, 0.05)
-                      : 'transparent'
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Box>
-                        <Typography variant="h6" gutterBottom>
-                          {getWidgetTitle(widgetId)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
-                        </Typography>
-                      </Box>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={config.enabled}
-                            onChange={() => toggleWidget(widgetId)}
-                            color="primary"
-                          />
-                        }
-                        label=""
-                      />
-                    </Box>
-                    
-                    {/* Controles de Widget */}
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {['small', 'medium', 'large'].map((sizeOption) => (
-                        <Chip
-                          key={sizeOption}
-                          label={sizeOption === 'small' ? 'S' : sizeOption === 'medium' ? 'M' : 'L'}
-                          onClick={() => resizeWidget(widgetId, sizeOption)}
-                          color={config.size === sizeOption ? 'primary' : 'default'}
-                          variant={config.size === sizeOption ? 'filled' : 'outlined'}
-                          size="small"
+          {activeTab === 0 && (
+            <Grid container spacing={2}>
+              {Object.entries(widgetsConfig).map(([widgetId, config]) => (
+                <Grid item xs={12} md={6} key={widgetId}>
+                  <Card 
+                    variant="outlined"
+                    sx={{
+                      border: `3px solid ${
+                        config.enabled 
+                          ? alpha(theme.palette.primary.main, 0.3)
+                          : theme.palette.divider
+                      }`,
+                      background: config.enabled 
+                        ? alpha(theme.palette.primary.main, 0.05)
+                        : 'transparent'
+                    }}
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                        <Box>
+                          <Typography variant="h6" gutterBottom>
+                            {getWidgetTitle(widgetId)}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <Chip
+                              label={config.category}
+                              size="small"
+                              variant="outlined"
+                            />
+                            <Chip
+                              label={config.size}
+                              size="small"
+                              color="primary"
+                            />
+                            {config.essential && (
+                              <Chip
+                                label="Esencial"
+                                size="small"
+                                color="success"
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={config.enabled}
+                              onChange={() => toggleWidget(widgetId)}
+                              color="primary"
+                            />
+                          }
+                          label=""
                         />
-                      ))}
-                      <IconButton
-                        size="small"
-                        onClick={() => toggleFavorite(widgetId, !config.isFavorite)}
-                        sx={{
-                          color: config.isFavorite ? 'gold' : 'text.secondary'
-                        }}
-                      >
-                        {config.isFavorite ? <Star /> : <StarBorder />}
-                      </IconButton>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {['small', 'medium', 'large'].map((sizeOption) => (
+                          <Chip
+                            key={sizeOption}
+                            label={sizeOption}
+                            onClick={() => resizeWidget(widgetId, sizeOption)}
+                            color={config.size === sizeOption ? 'primary' : 'default'}
+                            variant={config.size === sizeOption ? 'filled' : 'outlined'}
+                            size="small"
+                          />
+                        ))}
+                        <IconButton
+                          size="small"
+                          onClick={() => toggleFavorite(widgetId, !config.isFavorite)}
+                          sx={{
+                            color: config.isFavorite ? 'gold' : 'text.secondary'
+                          }}
+                        >
+                          {config.isFavorite ? <Star /> : <StarBorder />}
+                        </IconButton>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+
+          {activeTab === 1 && (
+            <Box>
+              {Object.entries(getWidgetsByCategory()).map(([category, widgets]) => (
+                <Box key={category} sx={{ mb: 4 }}>
+                  <Typography variant="h6" gutterBottom sx={{ 
+                    textTransform: 'capitalize',
+                    color: theme.palette.primary.main
+                  }}>
+                    {category}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {widgets.map(({ widgetId, ...config }) => (
+                      <Grid item xs={12} md={6} key={widgetId}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Typography variant="subtitle1">
+                                {getWidgetTitle(widgetId)}
+                              </Typography>
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={config.enabled}
+                                    onChange={() => toggleWidget(widgetId)}
+                                    color="primary"
+                                  />
+                                }
+                                label=""
+                              />
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {activeTab === 2 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Configuración del Dashboard
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<Restore />}
+                  onClick={resetToRoleDefault}
+                  fullWidth
+                >
+                  Restablecer para Rol {getRoleDisplayName(user?.role)}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Save />}
+                  onClick={saveAsDefault}
+                  fullWidth
+                >
+                  Guardar como Mi Configuración Predeterminada
+                </Button>
+              </Box>
+            </Box>
+          )}
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={resetLayout}>
-            Resetear
+          <Button onClick={() => setSettingsOpen(false)}>
+            Cerrar
           </Button>
           <Button 
             variant="contained" 
             onClick={() => setSettingsOpen(false)}
           >
-            Guardar
+            Aplicar Cambios
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Mensaje si no hay widgets activos */}
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert 
+          severity={snackbar.severity}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Estado Vacío */}
       {getEnabledWidgets().length === 0 && (
         <Box sx={{ 
           textAlign: 'center', 
           py: 8,
-          border: `2px dashed ${theme.palette.divider}`,
+          border: `3px dashed ${theme.palette.primary.main}`,
           borderRadius: 3,
-          mx: isMobile ? 1 : 0
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 100%)`
         }}>
-          <DashboardIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h5" gutterBottom color="text.secondary">
-            No hay widgets activos
+          <AutoAwesome sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+          <Typography variant="h5" gutterBottom color="primary.main">
+            Personaliza tu Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Personaliza tu dashboard activando algunos widgets
+            Comienza activando algunos widgets para crear tu espacio de trabajo ideal
           </Typography>
           <UBButton
             variant="contained"
             startIcon={<Add />}
             onClick={() => setSettingsOpen(true)}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+            }}
           >
-            Personalizar Dashboard
+            Configurar Widgets
           </UBButton>
         </Box>
       )}
