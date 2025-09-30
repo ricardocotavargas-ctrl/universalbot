@@ -35,7 +35,7 @@ import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Componentes de Widgets - TUS VERSIONES ORIGINALES
+// Componentes de Widgets - TUS VERSIONES EXACTAS
 import CommunicationsCenter from './widgets/CommunicationsCenter';
 import FinancialOverview from './widgets/FinancialOverview';
 import QuickActions from './widgets/QuickActions';
@@ -161,13 +161,13 @@ const ResizableWidget = ({
         </Box>
       </Box>
 
-      {/* Contenido del Widget - SIN MODIFICACIONES */}
+      {/* Contenido del Widget - SIN MODIFICACIONES, se pasa isMobile automáticamente */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 3,
         height: `calc(100% - ${isMobile ? 60 : 80}px)`,
         overflow: 'auto'
       }}>
-        {children}
+        {React.cloneElement(children, { isMobile })}
       </Box>
 
       {/* Indicador de Tamaño */}
