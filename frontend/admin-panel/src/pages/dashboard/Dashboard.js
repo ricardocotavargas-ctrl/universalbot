@@ -18,7 +18,8 @@ import {
   Switch,
   Card,
   CardContent,
-  Tooltip
+  Tooltip,
+  Zoom
 } from '@mui/material';
 import {
   WhatsApp,
@@ -43,7 +44,8 @@ import {
   Dashboard as DashboardIcon,
   Reorder,
   GridView,
-  ViewModule
+  ViewModule,
+  Preview
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
@@ -80,7 +82,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // Cargar configuración desde localStorage o usar defaults
     const savedConfig = localStorage.getItem('dashboardWidgets');
     if (savedConfig) {
       setWidgetsConfig(JSON.parse(savedConfig));
@@ -128,7 +129,6 @@ const Dashboard = () => {
     const newConfig = { ...widgetsConfig };
     const movedWidget = enabledWidgets[fromIndex];
     
-    // Reasignar posiciones
     enabledWidgets.forEach(([widgetId], index) => {
       if (index === fromIndex) {
         newConfig[widgetId].position = toIndex + 1;
@@ -167,6 +167,64 @@ const Dashboard = () => {
     setDraggedWidget(null);
   };
 
+  // Componente de Vista Previa Miniatura
+  const DashboardPreview = () => (
+    <Box sx={{ 
+      p: 2, 
+      border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+      borderRadius: 2,
+      background: alpha(theme.palette.background.paper, 0.5),
+      transform: 'scale(0.7)',
+      transformOrigin: 'top center',
+      maxHeight: 400,
+      overflow: 'hidden'
+    }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+        Vista Previa del Dashboard
+      </Typography>
+      
+      <Grid container spacing={1}>
+        {getEnabledWidgets().map(([widgetId, config]) => (
+          <Grid item xs={getGridSize(config.size)} key={widgetId}>
+            <Paper
+              sx={{
+                height: config.size === 'large' ? 80 : config.size === 'medium' ? 60 : 40,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 1
+              }}
+            >
+              <Typography 
+                variant="caption" 
+                fontWeight={500} 
+                color="primary.main"
+                sx={{ 
+                  textAlign: 'center',
+                  lineHeight: 1.2,
+                  fontSize: config.size === 'large' ? '0.7rem' : '0.6rem'
+                }}
+              >
+                {config.title.split(' ')[0]}
+              </Typography>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+      
+      {getEnabledWidgets().length === 0 && (
+        <Box sx={{ textAlign: 'center', py: 3 }}>
+          <Typography variant="caption" color="text.secondary">
+            Sin widgets activos
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+
   const WidgetContainer = ({ children, widgetId, title, onToggle }) => (
     <Paper
       sx={{
@@ -182,7 +240,6 @@ const Dashboard = () => {
         }
       }}
     >
-      {/* Header del Widget */}
       <Box
         sx={{
           display: 'flex',
@@ -218,7 +275,6 @@ const Dashboard = () => {
         </Tooltip>
       </Box>
 
-      {/* Contenido del Widget */}
       <Box sx={{ p: 3 }}>
         {children}
       </Box>
@@ -233,10 +289,8 @@ const Dashboard = () => {
       onDrop={(e) => onDrop(e, index)}
       sx={{
         cursor: 'grab',
-        border: `2px solid ${alpha(theme.palette.primary.main, config.enabled ? 0.3 : 0.1)}`,
-        background: config.enabled 
-          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`
-          : alpha(theme.palette.action.disabled, 0.05),
+        border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
         transition: 'all 0.2s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -352,7 +406,7 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth="xl" sx={{ pb: 4 }}>
-      {/* Header Principal Mejorado */}
+      {/* Header Principal */}
       <Box sx={{ mb: 4, pt: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -374,7 +428,6 @@ const Dashboard = () => {
               })}
             </Typography>
             
-            {/* Estadísticas rápidas del header */}
             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
               <Chip 
                 icon={<TrendingUp />} 
@@ -431,74 +484,92 @@ const Dashboard = () => {
         ))}
       </Grid>
 
-      {/* Diálogo de Organización - NUEVO */}
+      {/* Diálogo de Organización con Vista Previa */}
       <Dialog 
         open={organizeOpen} 
         onClose={() => setOrganizeOpen(false)} 
-        maxWidth="sm" 
+        maxWidth="lg" 
         fullWidth
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Reorder />
-            Organizar Widgets
+            <Preview />
+            Organizar Dashboard - Vista Previa
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Arrastra y suelta para reorganizar el orden de los widgets en tu dashboard
-          </Typography>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {getEnabledWidgets().map(([widgetId, config], index) => (
-              <WidgetPreview
-                key={widgetId}
-                widgetId={widgetId}
-                config={config}
-                index={index}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-              />
-            ))}
-          </Box>
+          <Grid container spacing={3}>
+            {/* Panel de Vista Previa */}
+            <Grid item xs={12} md={5}>
+              <Box sx={{ position: 'sticky', top: 0 }}>
+                <DashboardPreview />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+                  📱 Vista previa en tiempo real
+                </Typography>
+              </Box>
+            </Grid>
 
-          {getEnabledWidgets().length === 0 && (
-            <Box sx={{ 
-              textAlign: 'center', 
-              py: 4,
-              border: `2px dashed ${theme.palette.divider}`,
-              borderRadius: 2
-            }}>
-              <ViewModule sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                No hay widgets activos
+            {/* Panel de Organización */}
+            <Grid item xs={12} md={7}>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Lista de Widgets Activos
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Activa algunos widgets primero para poder organizarlos
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Arrastra y suelta para reorganizar el orden
               </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Settings />}
-                onClick={() => {
-                  setOrganizeOpen(false);
-                  setSettingsOpen(true);
-                }}
-              >
-                Activar Widgets
-              </Button>
-            </Box>
-          )}
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {getEnabledWidgets().map(([widgetId, config], index) => (
+                  <WidgetPreview
+                    key={widgetId}
+                    widgetId={widgetId}
+                    config={config}
+                    index={index}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  />
+                ))}
+              </Box>
+
+              {getEnabledWidgets().length === 0 && (
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  py: 4,
+                  border: `2px dashed ${theme.palette.divider}`,
+                  borderRadius: 2
+                }}>
+                  <ViewModule sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="body1" color="text.secondary" gutterBottom>
+                    No hay widgets activos
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Activa algunos widgets primero para poder organizarlos
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<Settings />}
+                    onClick={() => {
+                      setOrganizeOpen(false);
+                      setSettingsOpen(true);
+                    }}
+                  >
+                    Activar Widgets
+                  </Button>
+                </Box>
+              )}
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOrganizeOpen(false)}>
-            Cerrar
+            Cancelar
           </Button>
           <Button 
             variant="contained" 
             onClick={() => setOrganizeOpen(false)}
           >
-            Aplicar Orden
+            Aplicar Cambios
           </Button>
         </DialogActions>
       </Dialog>
@@ -575,22 +646,14 @@ const Dashboard = () => {
           </Button>
           <UBButton
             variant="contained"
-            startIcon={<Reorder />}
+            startIcon={<Preview />}
             onClick={() => {
               setSettingsOpen(false);
               setOrganizeOpen(true);
             }}
           >
-            Organizar Orden
+            Organizar Vista
           </UBButton>
-          <Button 
-            variant="contained" 
-            onClick={() => {
-              setSettingsOpen(false);
-            }}
-          >
-            Guardar Cambios
-          </Button>
         </DialogActions>
       </Dialog>
 
