@@ -444,14 +444,14 @@ const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [widgetsConfig, setWidgetsConfig] = useState({});
+  const [widgetsConfig, setWidgetsConfig] = useState(null); // Inicializar como null
   const [isEditing, setIsEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid', 'free', 'compact'
+  const [viewMode, setViewMode] = useState('grid');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [layoutPresets, setLayoutPresets] = useState({});
 
-  // Configuración premium de widgets
+  // Configuración premium de widgets - CORREGIDA
   const defaultWidgets = {
     communicationsCenter: { 
       enabled: true, 
@@ -504,19 +504,52 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('dashboardWidgetsPremium');
-    const savedPresets = localStorage.getItem('dashboardPresets');
-    
-    if (savedConfig) {
-      setWidgetsConfig(JSON.parse(savedConfig));
-    } else {
-      setWidgetsConfig(defaultWidgets);
-    }
+    // Cargar configuración de manera segura
+    const loadConfig = () => {
+      try {
+        const savedConfig = localStorage.getItem('dashboardWidgetsPremium');
+        const savedPresets = localStorage.getItem('dashboardPresets');
+        
+        if (savedConfig) {
+          const parsedConfig = JSON.parse(savedConfig);
+          setWidgetsConfig(parsedConfig);
+        } else {
+          setWidgetsConfig(defaultWidgets);
+          localStorage.setItem('dashboardWidgetsPremium', JSON.stringify(defaultWidgets));
+        }
 
-    if (savedPresets) {
-      setLayoutPresets(JSON.parse(savedPresets));
-    }
+        if (savedPresets) {
+          setLayoutPresets(JSON.parse(savedPresets));
+        }
+      } catch (error) {
+        console.error('Error loading dashboard config:', error);
+        setWidgetsConfig(defaultWidgets);
+      }
+    };
+
+    loadConfig();
   }, []);
+
+  // Esperar a que widgetsConfig esté cargado
+  if (widgetsConfig === null) {
+    return (
+      <Container maxWidth="xl" sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h4" gutterBottom>
+            Cargando tu Dashboard...
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Preparando tu experiencia personalizada
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
 
   const saveWidgetsConfig = (newConfig) => {
     setWidgetsConfig(newConfig);
@@ -685,6 +718,8 @@ const Dashboard = () => {
     );
   };
 
+  const enabledWidgets = getEnabledWidgets();
+
   return (
     <Container maxWidth="xl" sx={{ pb: 4, px: isMobile ? 1 : 3, position: 'relative' }}>
       {/* Header Premium */}
@@ -787,7 +822,7 @@ const Dashboard = () => {
 
       {/* Grid de Widgets Premium */}
       <Grid container spacing={3}>
-        {getEnabledWidgets().map(([widgetId, config]) => (
+        {enabledWidgets.map(([widgetId, config]) => (
           <Grid item xs={12} md={getGridSize(config.size)} key={widgetId}>
             {renderWidget(widgetId, config)}
           </Grid>
@@ -979,7 +1014,7 @@ const Dashboard = () => {
       </Snackbar>
 
       {/* Mensaje para Dashboard Vacío */}
-      {getEnabledWidgets().length === 0 && (
+      {enabledWidgets.length === 0 && (
         <Box sx={{ 
           textAlign: 'center', 
           py: 8,
