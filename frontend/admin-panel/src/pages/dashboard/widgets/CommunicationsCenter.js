@@ -1,4 +1,4 @@
-// CommunicationsCenter.js - Versión adaptativa
+// src/pages/dashboard/widgets/CommunicationsCenter.js
 import React from 'react';
 import {
   Box,
@@ -6,69 +6,23 @@ import {
   Grid,
   Chip,
   alpha,
-  useTheme,
-  useMediaQuery
+  useTheme
 } from '@mui/material';
 import {
   WhatsApp,
   Facebook,
   Instagram,
-  Email,
-  TrendingUp
+  Email
 } from '@mui/icons-material';
 import UBCard from '../../../components/ui/UBCard';
 
-const CommunicationsCenter = ({ size = 'medium', isMobile = false }) => {
+const CommunicationsCenter = () => {
   const theme = useTheme();
-  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  // Configuración adaptativa basada en el tamaño
-  const getConfig = () => {
-    switch (size) {
-      case 'small':
-        return {
-          columns: 1,
-          showMetrics: false,
-          compact: true,
-          fontSize: 'small'
-        };
-      case 'medium':
-        return {
-          columns: 2,
-          showMetrics: true,
-          compact: false,
-          fontSize: 'medium'
-        };
-      case 'large':
-        return {
-          columns: 3,
-          showMetrics: true,
-          compact: false,
-          fontSize: 'large'
-        };
-      case 'xlarge':
-        return {
-          columns: 4,
-          showMetrics: true,
-          compact: false,
-          fontSize: 'large'
-        };
-      default:
-        return {
-          columns: 2,
-          showMetrics: true,
-          compact: false,
-          fontSize: 'medium'
-        };
-    }
-  };
-
-  const config = getConfig();
 
   const channelStats = [
     {
       platform: 'WhatsApp',
-      icon: <WhatsApp sx={{ color: '#25D366' }} />,
+      icon: <WhatsApp sx={{ color: '#25D366', fontSize: 32 }} />,
       connected: true,
       messages: 1240,
       responses: 1180,
@@ -77,7 +31,7 @@ const CommunicationsCenter = ({ size = 'medium', isMobile = false }) => {
     },
     {
       platform: 'Facebook',
-      icon: <Facebook sx={{ color: '#1877F2' }} />,
+      icon: <Facebook sx={{ color: '#1877F2', fontSize: 32 }} />,
       connected: true,
       messages: 890,
       responses: 820,
@@ -86,7 +40,7 @@ const CommunicationsCenter = ({ size = 'medium', isMobile = false }) => {
     },
     {
       platform: 'Instagram',
-      icon: <Instagram sx={{ color: '#E4405F' }} />,
+      icon: <Instagram sx={{ color: '#E4405F', fontSize: 32 }} />,
       connected: true,
       messages: 670,
       responses: 610,
@@ -95,7 +49,7 @@ const CommunicationsCenter = ({ size = 'medium', isMobile = false }) => {
     },
     {
       platform: 'Email',
-      icon: <Email sx={{ color: '#EA4335' }} />,
+      icon: <Email sx={{ color: '#EA4335', fontSize: 32 }} />,
       connected: true,
       messages: 450,
       responses: 430,
@@ -104,106 +58,107 @@ const CommunicationsCenter = ({ size = 'medium', isMobile = false }) => {
     }
   ];
 
-  const ChannelCard = ({ channel }) => {
-    const effectiveness = ((channel.responses / channel.messages) * 100);
-    
-    return (
-      <UBCard sx={{ 
-        height: '100%',
-        p: config.compact ? 1 : 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          {React.cloneElement(channel.icon, { 
-            sx: { fontSize: config.compact ? 20 : 24 } 
-          })}
-          <Box sx={{ flex: 1 }}>
-            <Typography 
-              variant={config.compact ? "body2" : "body1"} 
-              fontWeight={600}
-            >
+  const ChannelCard = ({ channel }) => (
+    <UBCard sx={{ 
+      height: '100%',
+      background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha(channel.color, 0.05)} 100%)`,
+      border: `2px solid ${alpha(channel.color, 0.2)}`,
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        borderColor: alpha(channel.color, 0.4),
+        boxShadow: `0 8px 32px ${alpha(channel.color, 0.15)}`
+      }
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {channel.icon}
+          <Box>
+            <Typography variant="h6" fontWeight={600}>
               {channel.platform}
             </Typography>
             <Chip
               label={channel.connected ? 'Conectado' : 'Desconectado'}
               size="small"
               color={channel.connected ? 'success' : 'error'}
-              sx={{ height: 20, fontSize: '0.6rem' }}
+              sx={{ height: 20, fontSize: '0.7rem' }}
             />
           </Box>
-          <Chip
-            label={channel.trend}
-            size="small"
-            sx={{ 
-              backgroundColor: alpha('#059669', 0.2),
-              color: '#059669',
-              fontWeight: 600
-            }}
-          />
         </Box>
+        <Chip
+          label={channel.trend}
+          size="small"
+          sx={{ 
+            backgroundColor: alpha('#059669', 0.2),
+            color: '#059669',
+            fontWeight: 600
+          }}
+        />
+      </Box>
 
-        <Grid container spacing={1}>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" fontWeight={700} color={channel.color}>
-                {channel.messages}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Mensajes
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" fontWeight={700}>
-                {channel.responses}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Respuestas
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-
-        {!config.compact && (
-          <Box sx={{ mt: 1, textAlign: 'center' }}>
-            <Typography variant="caption" fontWeight={600}>
-              {effectiveness.toFixed(1)}% efectividad
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={6}>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h4" fontWeight={700} color={channel.color}>
+              {channel.messages}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Mensajes
             </Typography>
           </Box>
-        )}
-      </UBCard>
-    );
-  };
+        </Grid>
+        <Grid item xs={6}>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h4" fontWeight={700}>
+              {channel.responses}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Respuestas
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
+
+      <Box sx={{ 
+        background: alpha(theme.palette.background.paper, 0.5),
+        borderRadius: 2,
+        p: 1.5,
+        textAlign: 'center'
+      }}>
+        <Typography variant="body2" fontWeight={600}>
+          {((channel.responses / channel.messages) * 100).toFixed(1)}%
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Tasa de efectividad
+        </Typography>
+      </Box>
+    </UBCard>
+  );
 
   return (
     <Box>
-      {!config.compact && (
-        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-          Centro de Comunicaciones
-        </Typography>
-      )}
-      
-      <Grid container spacing={1}>
-        {channelStats.slice(0, config.columns).map((channel, index) => (
-          <Grid item xs={12} sm={12} md={12} key={index}>
+      <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+        Desempeño de todos tus canales de mensajería
+      </Typography>
+      <Grid container spacing={3}>
+        {channelStats.map((channel, index) => (
+          <Grid item xs={12} sm={6} key={index}>
             <ChannelCard channel={channel} />
           </Grid>
         ))}
       </Grid>
-
-      {config.showMetrics && (
-        <Box sx={{ 
-          mt: 2, 
-          p: 1, 
-          background: alpha(theme.palette.primary.main, 0.05),
-          borderRadius: 1,
-          textAlign: 'center'
-        }}>
-          <Typography variant="caption" color="text.secondary">
-            <strong>3,250 mensajes</strong> • <strong>93.5% efectividad</strong>
-          </Typography>
-        </Box>
-      )}
+      
+      <Box sx={{ 
+        mt: 3, 
+        p: 2, 
+        background: alpha(theme.palette.primary.main, 0.05),
+        borderRadius: 2,
+        textAlign: 'center'
+      }}>
+        <Typography variant="body2" color="text.secondary">
+          <strong>3,250 mensajes totales</strong> • <strong>3,040 respuestas</strong> • <strong>93.5% efectividad</strong>
+        </Typography>
+      </Box>
     </Box>
   );
 };
