@@ -365,7 +365,7 @@ const CustomGridWidget = ({
         anchorPosition={
           contextMenu !== null
             ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : undefined
+            : null
         }
       >
         <MenuItem onClick={() => handleResize('small')}>
@@ -444,14 +444,13 @@ const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [widgetsConfig, setWidgetsConfig] = useState(null); // Inicializar como null
+  const [widgetsConfig, setWidgetsConfig] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [layoutPresets, setLayoutPresets] = useState({});
 
-  // Configuración premium de widgets - CORREGIDA
+  // Configuración premium de widgets
   const defaultWidgets = {
     communicationsCenter: { 
       enabled: true, 
@@ -504,7 +503,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // Cargar configuración de manera segura
     const loadConfig = () => {
       try {
         const savedConfig = localStorage.getItem('dashboardWidgetsPremium');
@@ -530,7 +528,6 @@ const Dashboard = () => {
     loadConfig();
   }, []);
 
-  // Esperar a que widgetsConfig esté cargado
   if (widgetsConfig === null) {
     return (
       <Container maxWidth="xl" sx={{ 
@@ -623,7 +620,6 @@ const Dashboard = () => {
     return Object.entries(widgetsConfig)
       .filter(([_, config]) => config.enabled)
       .sort((a, b) => {
-        // Ordenar por favoritos primero, luego por posición
         if (a[1].isFavorite && !b[1].isFavorite) return -1;
         if (!a[1].isFavorite && b[1].isFavorite) return 1;
         return a[1].position.y - b[1].position.y || a[1].position.x - b[1].position.x;
@@ -713,7 +709,7 @@ const Dashboard = () => {
   const toggleEditMode = () => {
     setIsEditing(!isEditing);
     showSnackbar(
-      isEditing ? 'Modo visualización activado' : 'Modo edición activado - Arrastra y redimensiona',
+      isEditing ? 'Modo visualización activado' : 'Modo edición activado',
       'info'
     );
   };
@@ -772,15 +768,6 @@ const Dashboard = () => {
               color={isEditing ? "secondary" : "primary"}
             >
               {isEditing ? 'Guardar' : 'Editar'}
-            </UBButton>
-
-            {/* Vistas */}
-            <UBButton
-              variant="outlined"
-              startIcon={<GridView />}
-              onClick={() => setViewMode(viewMode === 'grid' ? 'free' : 'grid')}
-            >
-              {viewMode === 'grid' ? 'Libre' : 'Grid'}
             </UBButton>
 
             <UBButton
