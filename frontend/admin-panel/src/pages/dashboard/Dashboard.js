@@ -40,7 +40,10 @@ import {
   Add,
   Visibility,
   VisibilityOff,
-  Dashboard as DashboardIcon
+  Dashboard as DashboardIcon,
+  Reorder,
+  GridView,
+  ViewModule
 } from '@mui/icons-material';
 import UBCard from '../../components/ui/UBCard';
 import UBButton from '../../components/ui/UBButton';
@@ -61,17 +64,19 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [widgetsConfig, setWidgetsConfig] = useState({});
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [organizeOpen, setOrganizeOpen] = useState(false);
+  const [draggedWidget, setDraggedWidget] = useState(null);
 
   // Configuración inicial de widgets
   const defaultWidgets = {
-    communicationsCenter: { enabled: true, size: 'large', position: 1 },
-    financialOverview: { enabled: true, size: 'medium', position: 2 },
-    quickActions: { enabled: true, size: 'medium', position: 3 },
-    performanceMetrics: { enabled: true, size: 'small', position: 4 },
-    salesAnalytics: { enabled: true, size: 'medium', position: 5 },
-    customerInsights: { enabled: true, size: 'medium', position: 6 },
-    inventoryAlerts: { enabled: true, size: 'small', position: 7 },
-    recentActivity: { enabled: true, size: 'small', position: 8 }
+    communicationsCenter: { enabled: true, size: 'large', position: 1, title: '📊 Centro de Comunicaciones' },
+    financialOverview: { enabled: true, size: 'medium', position: 2, title: '💰 Resumen Financiero' },
+    quickActions: { enabled: true, size: 'medium', position: 3, title: '⚡ Acciones Rápidas' },
+    performanceMetrics: { enabled: true, size: 'small', position: 4, title: '📈 Métricas de Rendimiento' },
+    salesAnalytics: { enabled: true, size: 'medium', position: 5, title: '🛒 Análisis de Ventas' },
+    customerInsights: { enabled: true, size: 'medium', position: 6, title: '👥 Información de Clientes' },
+    inventoryAlerts: { enabled: true, size: 'small', position: 7, title: '📦 Alertas de Inventario' },
+    recentActivity: { enabled: true, size: 'small', position: 8, title: '🔄 Actividad Reciente' }
   };
 
   useEffect(() => {
@@ -113,6 +118,53 @@ const Dashboard = () => {
       case 'small': return 4;
       default: return 6;
     }
+  };
+
+  // Funciones para reorganizar widgets
+  const moveWidget = (fromIndex, toIndex) => {
+    const enabledWidgets = getEnabledWidgets();
+    if (fromIndex === toIndex) return;
+
+    const newConfig = { ...widgetsConfig };
+    const movedWidget = enabledWidgets[fromIndex];
+    
+    // Reasignar posiciones
+    enabledWidgets.forEach(([widgetId], index) => {
+      if (index === fromIndex) {
+        newConfig[widgetId].position = toIndex + 1;
+      } else if (index >= toIndex && index < fromIndex) {
+        newConfig[widgetId].position = index + 2;
+      } else if (index <= toIndex && index > fromIndex) {
+        newConfig[widgetId].position = index;
+      } else {
+        newConfig[widgetId].position = index + 1;
+      }
+    });
+
+    saveWidgetsConfig(newConfig);
+  };
+
+  const handleDragStart = (e, widgetId) => {
+    setDraggedWidget(widgetId);
+    e.dataTransfer.setData('text/plain', widgetId);
+  };
+
+  const handleDragOver = (e, targetIndex) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (!draggedWidget) return;
+
+    const enabledWidgets = getEnabledWidgets();
+    const fromIndex = enabledWidgets.findIndex(([widgetId]) => widgetId === draggedWidget);
+    
+    if (fromIndex !== -1 && fromIndex !== targetIndex) {
+      moveWidget(fromIndex, targetIndex);
+    }
+    
+    setDraggedWidget(null);
   };
 
   const WidgetContainer = ({ children, widgetId, title, onToggle }) => (
@@ -173,11 +225,74 @@ const Dashboard = () => {
     </Paper>
   );
 
+  const WidgetPreview = ({ widgetId, config, index, onDragStart, onDragOver, onDrop }) => (
+    <Card
+      draggable
+      onDragStart={(e) => onDragStart(e, widgetId)}
+      onDragOver={(e) => onDragOver(e, index)}
+      onDrop={(e) => onDrop(e, index)}
+      sx={{
+        cursor: 'grab',
+        border: `2px solid ${alpha(theme.palette.primary.main, config.enabled ? 0.3 : 0.1)}`,
+        background: config.enabled 
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`
+          : alpha(theme.palette.action.disabled, 0.05),
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: theme.shadows[4],
+          borderColor: alpha(theme.palette.primary.main, 0.5)
+        },
+        '&:active': {
+          cursor: 'grabbing'
+        },
+        opacity: draggedWidget === widgetId ? 0.5 : 1
+      }}
+    >
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main
+            }}
+          >
+            <GridView fontSize="small" />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="subtitle1" fontWeight={600} noWrap>
+              {config.title}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Posición: {index + 1} • Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Chip 
+              label={index + 1} 
+              size="small" 
+              color="primary" 
+              variant="outlined"
+              sx={{ minWidth: 30 }}
+            />
+            <Reorder sx={{ color: 'text.secondary', fontSize: 20 }} />
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
   const renderWidget = (widgetId, config) => {
     const widgetProps = {
       key: widgetId,
       widgetId,
-      title: getWidgetTitle(widgetId),
+      title: config.title,
       onToggle: toggleWidget
     };
 
@@ -235,20 +350,6 @@ const Dashboard = () => {
     }
   };
 
-  const getWidgetTitle = (widgetId) => {
-    const titles = {
-      communicationsCenter: '📊 Centro de Comunicaciones',
-      financialOverview: '💰 Resumen Financiero',
-      quickActions: '⚡ Acciones Rápidas',
-      performanceMetrics: '📈 Métricas de Rendimiento',
-      salesAnalytics: '🛒 Análisis de Ventas',
-      customerInsights: '👥 Información de Clientes',
-      inventoryAlerts: '📦 Alertas de Inventario',
-      recentActivity: '🔄 Actividad Reciente'
-    };
-    return titles[widgetId] || widgetId;
-  };
-
   return (
     <Container maxWidth="xl" sx={{ pb: 4 }}>
       {/* Header Principal Mejorado */}
@@ -299,6 +400,13 @@ const Dashboard = () => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <UBButton
               variant="outlined"
+              startIcon={<Reorder />}
+              onClick={() => setOrganizeOpen(true)}
+            >
+              Organizar
+            </UBButton>
+            <UBButton
+              variant="outlined"
               startIcon={<Settings />}
               onClick={() => setSettingsOpen(true)}
             >
@@ -322,6 +430,78 @@ const Dashboard = () => {
           </Grid>
         ))}
       </Grid>
+
+      {/* Diálogo de Organización - NUEVO */}
+      <Dialog 
+        open={organizeOpen} 
+        onClose={() => setOrganizeOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Reorder />
+            Organizar Widgets
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Arrastra y suelta para reorganizar el orden de los widgets en tu dashboard
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {getEnabledWidgets().map(([widgetId, config], index) => (
+              <WidgetPreview
+                key={widgetId}
+                widgetId={widgetId}
+                config={config}
+                index={index}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              />
+            ))}
+          </Box>
+
+          {getEnabledWidgets().length === 0 && (
+            <Box sx={{ 
+              textAlign: 'center', 
+              py: 4,
+              border: `2px dashed ${theme.palette.divider}`,
+              borderRadius: 2
+            }}>
+              <ViewModule sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="body1" color="text.secondary" gutterBottom>
+                No hay widgets activos
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Activa algunos widgets primero para poder organizarlos
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Settings />}
+                onClick={() => {
+                  setOrganizeOpen(false);
+                  setSettingsOpen(true);
+                }}
+              >
+                Activar Widgets
+              </Button>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOrganizeOpen(false)}>
+            Cerrar
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={() => setOrganizeOpen(false)}
+          >
+            Aplicar Orden
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Diálogo de Configuración */}
       <Dialog 
@@ -354,14 +534,19 @@ const Dashboard = () => {
                     }`,
                     background: config.enabled 
                       ? alpha(theme.palette.primary.main, 0.05)
-                      : 'transparent'
+                      : 'transparent',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      borderColor: alpha(theme.palette.primary.main, 0.5),
+                      transform: 'translateY(-2px)'
+                    }
                   }}
                 >
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <Box>
                         <Typography variant="h6" gutterBottom>
-                          {getWidgetTitle(widgetId)}
+                          {config.title}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Tamaño: {config.size === 'large' ? 'Grande' : config.size === 'medium' ? 'Mediano' : 'Pequeño'}
@@ -388,6 +573,16 @@ const Dashboard = () => {
           <Button onClick={() => setSettingsOpen(false)}>
             Cancelar
           </Button>
+          <UBButton
+            variant="contained"
+            startIcon={<Reorder />}
+            onClick={() => {
+              setSettingsOpen(false);
+              setOrganizeOpen(true);
+            }}
+          >
+            Organizar Orden
+          </UBButton>
           <Button 
             variant="contained" 
             onClick={() => {
