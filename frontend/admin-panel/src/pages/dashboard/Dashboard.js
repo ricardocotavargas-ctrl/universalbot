@@ -9,7 +9,10 @@ import {
   CardContent,
   useTheme,
   alpha,
-  useMediaQuery
+  useMediaQuery,
+  LinearProgress,
+  Avatar,
+  AvatarGroup
 } from '@mui/material';
 import {
   TrendingUp,
@@ -22,44 +25,18 @@ import {
   Email,
   WhatsApp,
   Facebook,
-  Instagram
+  Instagram,
+  ArrowUpward,
+  ArrowDownward,
+  ShoppingCart,
+  BusinessCenter
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-
-// Componentes de gráficas modernas
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
 
 const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   // Datos modernos y realistas
   const dashboardData = {
@@ -67,102 +44,21 @@ const Dashboard = () => {
       totalSales: 23450,
       newCustomers: 45,
       pendingMessages: 23,
-      conversionRate: 3.2
+      conversionRate: 3.2,
+      monthlyGrowth: 12.5
     },
-    revenueData: {
-      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-      datasets: [
-        {
-          label: 'Ingresos 2024',
-          data: [12000, 19000, 15000, 22000, 18000, 23450],
-          borderColor: theme.palette.primary.main,
-          backgroundColor: alpha(theme.palette.primary.main, 0.1),
-          fill: true,
-          tension: 0.4,
-          borderWidth: 3
-        }
-      ]
-    },
-    salesChannelData: {
-      labels: ['WhatsApp', 'Sitio Web', 'Instagram', 'Facebook'],
-      datasets: [
-        {
-          data: [45, 28, 22, 12],
-          backgroundColor: [
-            '#25D366',
-            theme.palette.primary.main,
-            '#E4405F',
-            '#1877F2'
-          ],
-          borderWidth: 0
-        }
-      ]
-    },
-    performanceData: {
-      labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-      datasets: [
-        {
-          label: 'Ventas Semanales',
-          data: [12, 19, 8, 15, 22, 18, 25],
-          backgroundColor: alpha(theme.palette.success.main, 0.8),
-          borderRadius: 8,
-          borderSkipped: false
-        }
-      ]
-    }
-  };
-
-  // Opciones modernas para las gráficas
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          padding: 15,
-          font: {
-            family: theme.typography.fontFamily
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: alpha(theme.palette.divider, 0.1)
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        }
-      }
-    }
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '70%',
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: {
-            family: theme.typography.fontFamily
-          }
-        }
-      }
-    }
+    revenueTrend: [12000, 19000, 15000, 22000, 18000, 23450],
+    salesChannels: [
+      { platform: 'WhatsApp', percentage: 42, color: '#25D366', icon: WhatsApp },
+      { platform: 'Sitio Web', percentage: 26, color: theme.palette.primary.main },
+      { platform: 'Instagram', percentage: 21, color: '#E4405F', icon: Instagram },
+      { platform: 'Facebook', percentage: 11, color: '#1877F2', icon: Facebook }
+    ],
+    weeklyPerformance: [12, 19, 8, 15, 22, 18, 25]
   };
 
   // Componente de Tarjeta de Métrica Moderna
-  const ModernStatCard = ({ icon: Icon, title, value, change, color = 'primary' }) => (
+  const ModernStatCard = ({ icon: Icon, title, value, change, changeType = 'positive', color = 'primary' }) => (
     <Card 
       sx={{ 
         height: '100%',
@@ -214,22 +110,37 @@ const Dashboard = () => {
         </Box>
         
         {change && (
-          <Chip 
-            label={change} 
-            size="small"
-            sx={{ 
-              background: alpha(theme.palette.success.main, 0.1),
-              color: theme.palette.success.main,
-              fontWeight: 600,
-              border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
-            }}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {changeType === 'positive' ? (
+              <ArrowUpward sx={{ fontSize: 16, color: 'success.main' }} />
+            ) : (
+              <ArrowDownward sx={{ fontSize: 16, color: 'error.main' }} />
+            )}
+            <Chip 
+              label={change} 
+              size="small"
+              sx={{ 
+                background: changeType === 'positive' ? 
+                  alpha(theme.palette.success.main, 0.1) : 
+                  alpha(theme.palette.error.main, 0.1),
+                color: changeType === 'positive' ? 
+                  theme.palette.success.main : 
+                  theme.palette.error.main,
+                fontWeight: 600,
+                border: `1px solid ${
+                  changeType === 'positive' ? 
+                  alpha(theme.palette.success.main, 0.2) : 
+                  alpha(theme.palette.error.main, 0.2)
+                }`
+              }}
+            />
+          </Box>
         )}
       </CardContent>
     </Card>
   );
 
-  // Componente de Gráfica de Ingresos
+  // Componente de Gráfica de Ingresos Minimalista
   const RevenueChart = () => (
     <Card 
       sx={{ 
@@ -253,17 +164,40 @@ const Dashboard = () => {
           />
         </Box>
         
-        <Box sx={{ height: isMobile ? 250 : 300, position: 'relative' }}>
-          <Line 
-            data={dashboardData.revenueData} 
-            options={{
-              ...chartOptions,
-              plugins: {
-                ...chartOptions.plugins,
-                title: { display: false }
-              }
-            }} 
-          />
+        {/* Gráfica minimalista con barras */}
+        <Box sx={{ height: 200, display: 'flex', alignItems: 'end', gap: 1, mb: 3 }}>
+          {dashboardData.revenueTrend.map((value, index) => {
+            const height = (value / 25000) * 100;
+            return (
+              <Box
+                key={index}
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  height: '100%'
+                }}
+              >
+                <Box
+                  sx={{
+                    width: '70%',
+                    height: `${height}%`,
+                    background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.7)} 100%)`,
+                    borderRadius: 2,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.9)} 100%)`
+                    }
+                  }}
+                />
+                <Typography variant="caption" sx={{ mt: 1, fontWeight: 600 }}>
+                  {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'][index]}
+                </Typography>
+              </Box>
+            );
+          })}
         </Box>
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, gap: 1 }}>
@@ -279,6 +213,17 @@ const Dashboard = () => {
               <Typography variant="h6" fontWeight={700}>
                 {item.value}
               </Typography>
+              <LinearProgress 
+                variant="determinate" 
+                value={item.progress > 100 ? 100 : item.progress} 
+                color={item.progress >= 100 ? "success" : "primary"}
+                sx={{ 
+                  height: 4, 
+                  borderRadius: 2,
+                  mt: 1,
+                  background: alpha(theme.palette.primary.main, 0.1)
+                }}
+              />
             </Box>
           ))}
         </Box>
@@ -301,24 +246,12 @@ const Dashboard = () => {
           🛒 Canales de Venta
         </Typography>
         
-        <Box sx={{ height: isMobile ? 200 : 250, position: 'relative', mb: 3 }}>
-          <Doughnut 
-            data={dashboardData.salesChannelData} 
-            options={doughnutOptions}
-          />
-        </Box>
-        
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {[
-            { platform: 'WhatsApp', percentage: 42, color: '#25D366', icon: WhatsApp },
-            { platform: 'Sitio Web', percentage: 26, color: theme.palette.primary.main },
-            { platform: 'Instagram', percentage: 21, color: '#E4405F', icon: Instagram },
-            { platform: 'Facebook', percentage: 11, color: '#1877F2', icon: Facebook }
-          ].map((channel, index) => (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 3 }}>
+          {dashboardData.salesChannels.map((channel, index) => (
             <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                 {channel.icon && (
-                  <channel.icon sx={{ color: channel.color, fontSize: 20 }} />
+                  <channel.icon sx={{ color: channel.color, fontSize: 24 }} />
                 )}
                 <Typography variant="body2" fontWeight={600}>
                   {channel.platform}
@@ -327,28 +260,59 @@ const Dashboard = () => {
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ 
                   width: '100%', 
-                  height: 8, 
+                  height: 12, 
                   backgroundColor: alpha(channel.color, 0.1),
-                  borderRadius: 4,
-                  overflow: 'hidden'
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  position: 'relative'
                 }}>
                   <Box
                     sx={{
                       width: `${channel.percentage}%`,
                       height: '100%',
-                      backgroundColor: channel.color,
-                      borderRadius: 4,
-                      transition: 'width 0.8s ease'
+                      background: `linear-gradient(90deg, ${channel.color} 0%, ${alpha(channel.color, 0.8)} 100%)`,
+                      borderRadius: 6,
+                      transition: 'width 0.8s ease',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: `linear-gradient(90deg, transparent 0%, ${alpha('#fff', 0.2)} 50%, transparent 100%)`,
+                        animation: 'shimmer 2s infinite'
+                      }
                     }}
                   />
                 </Box>
               </Box>
-              <Typography variant="body2" fontWeight={700} sx={{ minWidth: 40 }}>
+              <Typography variant="body2" fontWeight={700} sx={{ minWidth: 40, textAlign: 'right' }}>
                 {channel.percentage}%
               </Typography>
             </Box>
           ))}
         </Box>
+
+        <Box sx={{ 
+          p: 2, 
+          background: alpha(theme.palette.success.main, 0.05),
+          borderRadius: 2,
+          border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`,
+          textAlign: 'center'
+        }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            💡 WhatsApp es tu canal más efectivo
+          </Typography>
+        </Box>
+
+        <style jsx>{`
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        `}</style>
       </CardContent>
     </Card>
   );
@@ -375,11 +339,65 @@ const Dashboard = () => {
           />
         </Box>
         
-        <Box sx={{ height: isMobile ? 200 : 250, position: 'relative' }}>
-          <Bar 
-            data={dashboardData.performanceData} 
-            options={chartOptions}
-          />
+        {/* Gráfica de rendimiento semanal */}
+        <Box sx={{ display: 'flex', alignItems: 'end', gap: 1, height: 150, mb: 3 }}>
+          {dashboardData.weeklyPerformance.map((value, index) => {
+            const height = (value / 25) * 100;
+            const day = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][index];
+            const isPeak = value === Math.max(...dashboardData.weeklyPerformance);
+            
+            return (
+              <Box
+                key={index}
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  height: '100%'
+                }}
+              >
+                <Box
+                  sx={{
+                    width: '60%',
+                    height: `${height}%`,
+                    background: isPeak ? 
+                      `linear-gradient(180deg, ${theme.palette.success.main} 0%, ${alpha(theme.palette.success.main, 0.7)} 100%)` :
+                      `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.7)} 100%)`,
+                    borderRadius: 2,
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                    },
+                    ...(isPeak && {
+                      '&::after': {
+                        content: '"🔥"',
+                        position: 'absolute',
+                        top: -25,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: '1.2rem'
+                      }
+                    })
+                  }}
+                />
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    mt: 1, 
+                    fontWeight: isPeak ? 800 : 600,
+                    color: isPeak ? 'success.main' : 'text.primary'
+                  }}
+                >
+                  {day}
+                </Typography>
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                  {value}
+                </Typography>
+              </Box>
+            );
+          })}
         </Box>
         
         <Box sx={{ 
@@ -389,8 +407,8 @@ const Dashboard = () => {
           borderRadius: 2,
           border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`
         }}>
-          <Typography variant="body2" sx={{ textAlign: 'center' }}>
-            <strong>Domingo</strong> fue tu mejor día con <strong>25 ventas</strong> 🎉
+          <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 600 }}>
+            <strong>Domingo</strong> fue tu mejor día con <strong style={{color: theme.palette.success.main}}>25 ventas</strong> 🎉
           </Typography>
         </Box>
       </CardContent>
@@ -415,10 +433,10 @@ const Dashboard = () => {
         
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
-            { platform: 'WhatsApp', messages: 45, color: '#25D366', icon: WhatsApp },
-            { platform: 'Email', messages: 28, color: '#EA4335', icon: Email },
-            { platform: 'Instagram', messages: 32, color: '#E4405F', icon: Instagram },
-            { platform: 'Facebook', messages: 18, color: '#1877F2', icon: Facebook }
+            { platform: 'WhatsApp', messages: 45, color: '#25D366', icon: WhatsApp, online: true },
+            { platform: 'Email', messages: 28, color: '#EA4335', icon: Email, online: true },
+            { platform: 'Instagram', messages: 32, color: '#E4405F', icon: Instagram, online: true },
+            { platform: 'Facebook', messages: 18, color: '#1877F2', icon: Facebook, online: true }
           ].map((channel, index) => (
             <Grid item xs={6} key={index}>
               <Box
@@ -429,13 +447,31 @@ const Dashboard = () => {
                   border: `2px solid ${alpha(channel.color, 0.2)}`,
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
+                  position: 'relative',
                   '&:hover': {
                     transform: 'scale(1.05)',
-                    borderColor: alpha(channel.color, 0.4)
+                    borderColor: alpha(channel.color, 0.4),
+                    boxShadow: `0 8px 25px ${alpha(channel.color, 0.15)}`
                   }
                 }}
               >
-                <channel.icon sx={{ fontSize: 24, color: channel.color, mb: 1 }} />
+                <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                  <channel.icon sx={{ fontSize: 28, color: channel.color, mb: 1 }} />
+                  {channel.online && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: -2,
+                        right: -2,
+                        width: 12,
+                        height: 12,
+                        backgroundColor: '#4CAF50',
+                        border: `2px solid ${theme.palette.background.paper}`,
+                        borderRadius: '50%'
+                      }}
+                    />
+                  )}
+                </Box>
                 <Typography variant="h6" fontWeight={700} sx={{ color: channel.color }}>
                   {channel.messages}
                 </Typography>
@@ -451,7 +487,8 @@ const Dashboard = () => {
           p: 2, 
           background: alpha(theme.palette.primary.main, 0.05),
           borderRadius: 2,
-          textAlign: 'center'
+          textAlign: 'center',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
         }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             💬 123 mensajes totales • ⚡ 93.5% de efectividad
@@ -483,70 +520,80 @@ const Dashboard = () => {
               details: 'Cliente: María González - $120', 
               time: 'Hace 5 min', 
               type: 'sale',
-              color: theme.palette.success.main
+              color: theme.palette.success.main,
+              icon: ShoppingCart
             },
             { 
               action: 'Mensaje de WhatsApp', 
               details: 'Consulta sobre servicios premium', 
               time: 'Hace 15 min', 
               type: 'message',
-              color: '#25D366'
+              color: '#25D366',
+              icon: WhatsApp
             },
             { 
               action: 'Stock actualizado', 
               details: 'Producto X: +50 unidades', 
               time: 'Hace 2 horas', 
               type: 'inventory',
-              color: theme.palette.warning.main
+              color: theme.palette.warning.main,
+              icon: Inventory
             },
             { 
               action: 'Nuevo cliente registrado', 
               details: 'Carlos Rodríguez - Empresa ABC', 
               time: 'Hace 3 horas', 
               type: 'customer',
-              color: theme.palette.info.main
+              color: theme.palette.info.main,
+              icon: BusinessCenter
             }
-          ].map((activity, index) => (
-            <Box
-              key={index}
-              sx={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 2,
-                p: 2,
-                background: alpha(activity.color, 0.05),
-                border: `1px solid ${alpha(activity.color, 0.1)}`,
-                borderRadius: 2,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateX(4px)',
-                  borderColor: alpha(activity.color, 0.3)
-                }
-              }}
-            >
+          ].map((activity, index) => {
+            const IconComponent = activity.icon;
+            return (
               <Box
+                key={index}
                 sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: activity.color,
-                  mt: 0.5,
-                  flexShrink: 0
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  p: 2,
+                  background: alpha(activity.color, 0.05),
+                  border: `1px solid ${alpha(activity.color, 0.1)}`,
+                  borderRadius: 2,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateX(4px)',
+                    borderColor: alpha(activity.color, 0.3),
+                    boxShadow: `0 4px 12px ${alpha(activity.color, 0.1)}`
+                  }
                 }}
-              />
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="body1" fontWeight={600}>
-                  {activity.action}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  {activity.details}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  {activity.time}
-                </Typography>
+              >
+                <Box
+                  sx={{
+                    p: 1,
+                    background: alpha(activity.color, 0.1),
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <IconComponent sx={{ fontSize: 20, color: activity.color }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body1" fontWeight={600}>
+                    {activity.action}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    {activity.details}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    {activity.time}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          ))}
+            );
+          })}
         </Box>
       </CardContent>
     </Card>
@@ -633,6 +680,7 @@ const Dashboard = () => {
             title="Ingresos Totales"
             value={`$${(dashboardData.stats.totalSales / 1000).toFixed(0)}K`}
             change="+12.5%"
+            changeType="positive"
             color="success"
           />
         </Grid>
@@ -643,6 +691,7 @@ const Dashboard = () => {
             title="Nuevos Clientes"
             value={dashboardData.stats.newCustomers}
             change="+8 esta semana"
+            changeType="positive"
             color="primary"
           />
         </Grid>
@@ -653,6 +702,7 @@ const Dashboard = () => {
             title="Tasa de Conversión"
             value={`${dashboardData.stats.conversionRate}%`}
             change="+0.4%"
+            changeType="positive"
             color="warning"
           />
         </Grid>
@@ -663,6 +713,7 @@ const Dashboard = () => {
             title="Productos Activos"
             value="24"
             change="Todos en stock"
+            changeType="positive"
             color="info"
           />
         </Grid>
