@@ -14,8 +14,6 @@ import {
   IconButton,
   Tab,
   Tabs,
-  Avatar,
-  AvatarGroup,
   Tooltip,
   Button
 } from '@mui/material';
@@ -35,7 +33,6 @@ import {
   Refresh,
   Download,
   Share,
-  MoreVert,
   WhatsApp,
   Instagram,
   Facebook,
@@ -45,7 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
-const AdvancedDashboard = () => {
+const Dashboard = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -54,14 +51,67 @@ const AdvancedDashboard = () => {
   const [timeRange, setTimeRange] = useState('week');
   const [dashboardData, setDashboardData] = useState(null);
   const [aiInsights, setAiInsights] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // 🔥 ESTA ES LA PARTE IMPORTANTE - Conexión a datos reales
   useEffect(() => {
-    loadDashboardData();
+    loadRealData();
   }, [timeRange]);
 
-  const loadDashboardData = async () => {
-    // Simular carga de datos reales
-    const data = {
+  // 🔥 FUNCIÓN PARA CARGAR DATOS REALES DE TUS APIs
+  const loadRealData = async () => {
+    try {
+      setLoading(true);
+      
+      // 📍 AQUÍ VAN TUS ENDPOINTS REALES - Reemplaza con tus URLs
+      const endpoints = {
+        metrics: '/api/business/metrics', // Tus métricas principales
+        channels: '/api/channels/performance', // Performance por canal
+        insights: '/api/ai/insights', // Insights de IA
+        analytics: '/api/analytics/trends' // Datos para gráficas
+      };
+
+      // 📍 EJEMPLO DE CÓMO CONECTAR CON TUS APIS REALES:
+      const [metricsResponse, channelsResponse, insightsResponse, analyticsResponse] = await Promise.all([
+        fetch(endpoints.metrics),
+        fetch(endpoints.channels),
+        fetch(endpoints.insights),
+        fetch(endpoints.analytics)
+      ]);
+
+      // 📍 DATOS REALES DE TU PLATAFORMA
+      const realMetrics = await metricsResponse.json();
+      const realChannels = await channelsResponse.json();
+      const realInsights = await insightsResponse.json();
+      const realAnalytics = await analyticsResponse.json();
+
+      // Estructura los datos reales
+      setDashboardData({
+        overview: {
+          revenue: realMetrics.revenue || { current: 0, previous: 0, growth: 0 },
+          customers: realMetrics.customers || { current: 0, previous: 0, growth: 0 },
+          conversion: realMetrics.conversion || { current: 0, previous: 0, growth: 0 },
+          messages: realMetrics.messages || { current: 0, previous: 0, growth: 0 }
+        },
+        channels: realChannels || [],
+        analytics: realAnalytics || {}
+      });
+
+      setAiInsights(realInsights || []);
+
+    } catch (error) {
+      console.error('Error cargando datos reales:', error);
+      
+      // 📍 EN CASO DE ERROR, USA ESTOS DATOS DE EJEMPLO TEMPORALES
+      loadFallbackData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 📍 DATOS DE FALLBACK (SOLO PARA DESARROLLO)
+  const loadFallbackData = () => {
+    const fallbackData = {
       overview: {
         revenue: { current: 52340, previous: 45680, growth: 14.6 },
         customers: { current: 1245, previous: 1120, growth: 11.2 },
@@ -74,45 +124,25 @@ const AdvancedDashboard = () => {
         { name: 'Facebook', value: 28, growth: -2, color: '#1877F2', icon: Facebook },
         { name: 'Email', value: 18, growth: 5, color: '#EA4335', icon: Email }
       ],
-      performance: {
-        responseTime: 2.4,
-        satisfaction: 4.8,
-        retention: 78.5,
-        efficiency: 92.3
-      },
       analytics: {
-        revenueData: [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 28500, 31000, 29500, 35000],
-        customerData: [25, 30, 28, 35, 40, 45, 48, 52, 49, 55, 58, 62],
-        conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4, 3.2, 3.6, 3.4, 3.8, 4.1]
+        revenueData: [12000, 19000, 15000, 22000, 18000, 23450, 28000],
+        customerData: [25, 30, 28, 35, 40, 45, 48],
+        conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4]
       }
     };
 
-    const insights = [
+    const fallbackInsights = [
       {
         type: 'success',
         title: 'Tendencia Positiva Detectada',
         message: 'El crecimiento de ingresos ha superado las proyecciones en un 15% este mes.',
         confidence: 0.94,
         action: 'Mantener estrategia actual'
-      },
-      {
-        type: 'opportunity',
-        title: 'Oportunidad de Optimización',
-        message: 'Los clientes de Instagram tienen 3x mayor tasa de conversión. Recomiendo incrementar presencia.',
-        confidence: 0.87,
-        action: 'Aumentar presupuesto Instagram'
-      },
-      {
-        type: 'alert',
-        title: 'Atención Requerida',
-        message: 'Tiempo de respuesta aumentó 15% esta semana. Revisar capacidad del equipo.',
-        confidence: 0.76,
-        action: 'Optimizar flujo de trabajo'
       }
     ];
 
-    setDashboardData(data);
-    setAiInsights(insights);
+    setDashboardData(fallbackData);
+    setAiInsights(fallbackInsights);
   };
 
   const StatCard = ({ title, value, change, subtitle, icon: Icon, color = 'primary', chart }) => (
@@ -181,7 +211,6 @@ const AdvancedDashboard = () => {
 
         {chart && (
           <Box sx={{ mt: 3, height: 60 }}>
-            {/* Mini gráfica */}
             <Box sx={{ display: 'flex', alignItems: 'end', gap: 0.5, height: '100%' }}>
               {[30, 45, 60, 75, 65, 80, 90, 85, 95, 88, 92, 100].map((height, index) => (
                 <Box
@@ -203,7 +232,6 @@ const AdvancedDashboard = () => {
         )}
       </CardContent>
 
-      {/* Efecto de fondo */}
       <Box
         sx={{
           position: 'absolute',
@@ -280,18 +308,7 @@ const AdvancedDashboard = () => {
                 width: `${channel.value}%`,
                 height: '100%',
                 background: `linear-gradient(90deg, ${channel.color} 0%, ${alpha(channel.color, 0.7)} 100%)`,
-                borderRadius: 4,
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                  animation: 'shimmer 2s infinite'
-                }
+                borderRadius: 4
               }}
             />
           </Box>
@@ -410,10 +427,10 @@ const AdvancedDashboard = () => {
               />
             ))}
           </Box>
-        </div>
+        </Box>
 
         <Box sx={{ height: 300, display: 'flex', alignItems: 'end', gap: 2, mb: 3 }}>
-          {dashboardData?.analytics.revenueData.slice(-12).map((value, index) => (
+          {dashboardData?.analytics.revenueData?.map((value, index) => (
             <Tooltip key={index} title={`$${value.toLocaleString()}`} arrow>
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Box
@@ -440,12 +457,12 @@ const AdvancedDashboard = () => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Evolución de ingresos últimos 12 períodos
+            Evolución de ingresos
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
             <Typography variant="body2" fontWeight={600} color="success.main">
-              +14.6% crecimiento
+              +{dashboardData?.overview.revenue.growth}% crecimiento
             </Typography>
           </Box>
         </Box>
@@ -453,13 +470,13 @@ const AdvancedDashboard = () => {
     </Card>
   );
 
-  if (!dashboardData) {
+  if (loading) {
     return (
       <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <Box sx={{ textAlign: 'center' }}>
           <Analytics sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
           <Typography variant="h6">
-            Cargando dashboard avanzado...
+            Cargando datos en tiempo real...
           </Typography>
         </Box>
       </Container>
@@ -468,7 +485,7 @@ const AdvancedDashboard = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 3 }}>
-      {/* Header avanzado */}
+      {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -494,7 +511,7 @@ const AdvancedDashboard = () => {
               Dashboard Executive
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-              Análisis inteligente en tiempo real • {user?.business?.name || 'Tu Negocio'}
+              Datos en tiempo real • {user?.business?.name || 'Tu Negocio'}
             </Typography>
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -511,42 +528,21 @@ const AdvancedDashboard = () => {
                 variant="outlined"
                 sx={{ fontWeight: 600 }}
               />
-              <Chip 
-                label="Actualizado ahora" 
-                sx={{ fontWeight: 600 }}
-              />
             </Box>
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Tooltip title="Actualizar datos">
-              <IconButton sx={{ 
+              <IconButton onClick={loadRealData} sx={{ 
                 background: alpha(theme.palette.primary.main, 0.1),
                 '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
               }}>
                 <Refresh />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Exportar reporte">
-              <IconButton sx={{ 
-                background: alpha(theme.palette.success.main, 0.1),
-                '&:hover': { background: alpha(theme.palette.success.main, 0.2) }
-              }}>
-                <Download />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Compartir">
-              <IconButton sx={{ 
-                background: alpha(theme.palette.info.main, 0.1),
-                '&:hover': { background: alpha(theme.palette.info.main, 0.2) }
-              }}>
-                <Share />
-              </IconButton>
-            </Tooltip>
           </Box>
         </Box>
 
-        {/* Tabs de navegación */}
         <Tabs 
           value={activeTab} 
           onChange={(e, newValue) => setActiveTab(newValue)}
@@ -563,7 +559,6 @@ const AdvancedDashboard = () => {
           <Tab icon={<Analytics />} label="Visión General" />
           <Tab icon={<BarChart />} label="Análisis Detallado" />
           <Tab icon={<Timeline />} label="Tendencias" />
-          <Tab icon={<People />} label="Clientes" />
         </Tabs>
       </Box>
 
@@ -574,8 +569,8 @@ const AdvancedDashboard = () => {
           <StatCard
             icon={AttachMoney}
             title="Ingresos Totales"
-            value={dashboardData.overview.revenue.current}
-            change={dashboardData.overview.revenue.growth}
+            value={dashboardData?.overview.revenue.current}
+            change={dashboardData?.overview.revenue.growth}
             subtitle="Este mes"
             color="success"
             chart={true}
@@ -586,8 +581,8 @@ const AdvancedDashboard = () => {
           <StatCard
             icon={People}
             title="Clientes Activos"
-            value={dashboardData.overview.customers.current}
-            change={dashboardData.overview.customers.growth}
+            value={dashboardData?.overview.customers.current}
+            change={dashboardData?.overview.customers.growth}
             subtitle="Base total"
             color="primary"
             chart={true}
@@ -598,8 +593,8 @@ const AdvancedDashboard = () => {
           <StatCard
             icon={TrendingUp}
             title="Tasa Conversión"
-            value={dashboardData.overview.conversion.current}
-            change={dashboardData.overview.conversion.growth}
+            value={dashboardData?.overview.conversion.current}
+            change={dashboardData?.overview.conversion.growth}
             subtitle="Porcentaje"
             color="warning"
             chart={true}
@@ -610,8 +605,8 @@ const AdvancedDashboard = () => {
           <StatCard
             icon={Chat}
             title="Interacciones"
-            value={dashboardData.overview.messages.current}
-            change={dashboardData.overview.messages.growth}
+            value={dashboardData?.overview.messages.current}
+            change={dashboardData?.overview.messages.growth}
             subtitle="Hoy"
             color="info"
             chart={true}
@@ -629,7 +624,7 @@ const AdvancedDashboard = () => {
             📊 Performance por Canal
           </Typography>
           <Grid container spacing={2}>
-            {dashboardData.channels.map((channel, index) => (
+            {dashboardData?.channels.map((channel, index) => (
               <Grid item xs={12} key={index}>
                 <ChannelPerformance channel={channel} />
               </Grid>
@@ -692,13 +687,6 @@ const AdvancedDashboard = () => {
           </Card>
         </Grid>
       </Grid>
-
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </Container>
   );
 };
