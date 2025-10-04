@@ -7,23 +7,17 @@ const Interaction = require('../models/Interaction');
 const inventoryRoutes = require('./inventory');
 const accountsRoutes = require('./accounts'); 
 const financialRoutes = require('./financial');
-// const { auth } = require('../middleware/auth'); // COMENTADO TEMPORALMENTE
-// const { adminOnly } = require('../middleware/admin'); // COMENTADO TEMPORALMENTE
 
-// Importar rutas de auth
+// ✅ CORREGIDO: Importar rutas correctamente
 const authRoutes = require('./auth');
-
-// ✅ CORREGIDO: Importar rutas de sales y customers
 const salesRoutes = require('./sales');
 const customersRoutes = require('./customers');
 
-// ✅ CORREGIDO: Usar router.use() en lugar de app.use()
+// ✅ CORREGIDO: Usar router.use() correctamente
 router.use('/inventory', inventoryRoutes);
 router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
 router.use('/auth', authRoutes);
-
-// ✅ CORREGIDO: Agregar rutas de sales y customers
 router.use('/sales', salesRoutes);
 router.use('/customers', customersRoutes);
 
@@ -220,39 +214,6 @@ router.get('/test-db', async (req, res) => {
   }
 });
 
-// RUTAS COMENTADAS TEMPORALMENTE - Descomentar cuando auth esté implementado
-/*
-router.get('/my-businesses', auth, async (req, res) => {
-  try {
-    const business = new Business();
-    const businesses = await business.findByTenant(req.user.tenant_id);
-    res.json(businesses);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get('/all-businesses', auth, adminOnly, async (req, res) => {
-  try {
-    const business = new Business();
-    const businesses = await business.findAll();
-    res.json(businesses);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get('/clients', auth, adminOnly, async (req, res) => {
-  try {
-    const user = new User();
-    const clients = await user.findAll();
-    res.json(clients);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-*/
-
 // Root API endpoint
 router.get('/', (req, res) => {
   res.json({
@@ -260,6 +221,8 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     status: 'active',
     endpoints: {
+      auth: ['POST /api/auth/login', 'POST /api/auth/register'],
+      sales: ['GET /api/sales/sale-data', 'POST /api/sales/new-sale', 'POST /api/sales/quick-client'],
       businesses: ['GET /api/businesses', 'POST /api/businesses', 'PUT /api/businesses/:id', 'DELETE /api/businesses/:id'],
       users: ['GET /api/users', 'POST /api/users'],
       products: ['GET /api/products', 'POST /api/products'],
