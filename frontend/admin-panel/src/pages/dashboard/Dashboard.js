@@ -869,7 +869,7 @@ const PerformanceChart = ({ data, timeRange, onTimeRangeChange, title = "Rendimi
       </CardContent>
     </Card>
   );
-});
+};
 
 const SystemPerformance = ({ performance, loading = false }) => {
   const metrics = [
