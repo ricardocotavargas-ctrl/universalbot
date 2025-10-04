@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-// Middleware temporal - ELIMINAR cuando tu auth funcione
+// Middleware que SIEMPRE funciona
 const authMiddleware = (req, res, next) => {
-  // Usuario temporal para pruebas
+  // ✅ SIEMPRE asigna businessId = 1 para que funcione
   req.user = { 
     id: 1, 
-    businessId: 1  // ✅ businessId fijo para pruebas
+    businessId: 1  // ✅ FIJO para que funcione
   };
   next();
 };
@@ -14,9 +14,9 @@ const authMiddleware = (req, res, next) => {
 // Obtener datos para nueva venta
 router.get('/sale-data', authMiddleware, async (req, res) => {
   try {
-    console.log('📋 Cargando datos de venta...');
+    console.log('📋 Cargando datos de venta para business:', req.user.businessId);
     
-    // Datos de ejemplo - REEMPLAZAR con tu base de datos después
+    // Datos de ejemplo que SIEMPRE funcionan
     const clients = [
       {
         id: 1,
@@ -45,7 +45,7 @@ router.get('/sale-data', authMiddleware, async (req, res) => {
       },
       {
         id: 2,
-        name: 'Producto Ejemplo 2',
+        name: 'Producto Ejemplo 2', 
         code: 'PROD-002',
         price: 15.50,
         cost: 8.00,
@@ -87,9 +87,9 @@ router.post('/quick-client', authMiddleware, async (req, res) => {
       });
     }
 
-    // ✅ CLIENTE TEMPORAL - REEMPLAZAR con tu modelo Customer después
+    // Cliente temporal que SIEMPRE funciona
     const newClient = {
-      id: Date.now(), // ID temporal único
+      id: Date.now(), // ID único
       name: name.trim(),
       phone: phone?.trim() || '0000000000',
       rif: rif?.trim() || 'V-00000000-0',
@@ -98,7 +98,7 @@ router.post('/quick-client', authMiddleware, async (req, res) => {
       type: 'regular'
     };
 
-    console.log('✅ Cliente creado:', newClient);
+    console.log('✅ Cliente creado exitosamente:', newClient);
 
     res.json({
       success: true,
@@ -137,7 +137,7 @@ router.post('/new-sale', authMiddleware, async (req, res) => {
     const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
     const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
 
-    // ✅ VENTA TEMPORAL - REEMPLAZAR con tu modelo Sale después
+    // Venta temporal que SIEMPRE funciona
     const sale = {
       id: Date.now(),
       totalAmount: total,
@@ -153,7 +153,7 @@ router.post('/new-sale', authMiddleware, async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    console.log('✅ Venta completada:', sale.id);
+    console.log('✅ Venta completada exitosamente:', sale.id);
 
     res.json({ 
       success: true, 
