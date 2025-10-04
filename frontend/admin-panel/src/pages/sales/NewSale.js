@@ -103,6 +103,11 @@ const useSaleData = () => {
 const NewSale = () => {
   const theme = useTheme();
   const { user } = useAuth();
+
+   // ✅ DEBUG: Verificar usuario
+  console.log('🔍 USUARIO ACTUAL:', user);
+  console.log('🔍 businessId:', user?.businessId);
+  console.log('🔍 business:', user?.business);
   
   const [activeStep, setActiveStep] = useState(0);
   const [saleData, setSaleData] = useState({
