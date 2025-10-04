@@ -57,20 +57,24 @@ import {
   Campaign
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '../../services/api';
 
-// 🔥 CONSTANTES Y CONFIGURACIÓN
+// 🔥 CONSTANTES CON TUS ENDPOINTS REALES
 const API_ENDPOINTS = {
-  metrics: '/api/business/metrics',
-  channels: '/api/channels/performance',
+  metrics: '/api/analytics/metrics',
+  channels: '/api/analytics/channels-performance',
   insights: '/api/ai/insights',
-  analytics: '/api/analytics/trends'
+  analytics: '/api/analytics/trends',
+  overview: '/api/analytics/overview',
+  business: '/api/business/current'
 };
 
-// 🔥 HOOK PERSONALIZADO PARA DATOS
+// 🔥 HOOK PERSONALIZADO PARA DATOS REALES
 const useDashboardData = (timeRange) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
 
   const getFallbackData = () => ({
     overview: {
@@ -120,25 +124,82 @@ const useDashboardData = (timeRange) => {
       setLoading(true);
       setError(null);
       
-      // Simular llamada a API - Reemplazar con tus endpoints reales
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Por ahora usamos datos mock, luego reemplazar con:
-      // const [metrics, channels, insights, analytics] = await Promise.all([
-      //   fetch(API_ENDPOINTS.metrics).then(r => r.json()),
-      //   fetch(API_ENDPOINTS.channels).then(r => r.json()),
-      //   fetch(API_ENDPOINTS.insights).then(r => r.json()),
-      //   fetch(API_ENDPOINTS.analytics).then(r => r.json())
-      // ]);
+      // 🔥 CONEXIÓN CON TUS APIS REALES
+      const [overviewResponse, channelsResponse, insightsResponse, analyticsResponse] = await Promise.all([
+        apiService.get(API_ENDPOINTS.overview, { params: { timeRange } }),
+        apiService.get(API_ENDPOINTS.channels, { params: { timeRange } }),
+        apiService.get(API_ENDPOINTS.insights, { params: { timeRange } }),
+        apiService.get(API_ENDPOINTS.analytics, { params: { timeRange } })
+      ]);
 
-      setData(getFallbackData());
+      const overviewData = overviewResponse.data || {};
+      const channelsData = channelsResponse.data || [];
+      const insightsData = insightsResponse.data || [];
+      const analyticsData = analyticsResponse.data || {};
+
+      // Estructurar datos según tu API
+      setData({
+        overview: {
+          revenue: overviewData.revenue || { current: 0, previous: 0, growth: 0 },
+          customers: overviewData.customers || { current: 0, previous: 0, growth: 0 },
+          conversion: overviewData.conversion || { current: 0, previous: 0, growth: 0 },
+          messages: overviewData.messages || { current: 0, previous: 0, growth: 0 },
+          sales: overviewData.sales || { current: 0, previous: 0, growth: 0 },
+          profit: overviewData.profit || { current: 0, previous: 0, growth: 0 }
+        },
+        channels: channelsData.map(channel => ({
+          name: channel.platform,
+          value: channel.performance,
+          growth: channel.growth,
+          color: getChannelColor(channel.platform),
+          icon: getChannelIcon(channel.platform)
+        })),
+        analytics: {
+          revenueData: analyticsData.revenueTrend || [],
+          customerData: analyticsData.customerTrend || [],
+          conversionData: analyticsData.conversionTrend || [],
+          salesData: analyticsData.salesTrend || []
+        },
+        insights: insightsData.map(insight => ({
+          type: insight.severity || 'info',
+          title: insight.title,
+          message: insight.description,
+          confidence: insight.confidence || 0.8,
+          action: insight.recommendedAction || 'Ver detalles'
+        }))
+      });
+
     } catch (err) {
-      setError(err.message);
+      console.error('Error loading dashboard data:', err);
+      setError('No se pudieron cargar los datos en tiempo real');
       setData(getFallbackData());
     } finally {
       setLoading(false);
     }
   }, [timeRange]);
+
+  // Helper functions para canales
+  const getChannelColor = (platform) => {
+    const colors = {
+      'whatsapp': '#25D366',
+      'instagram': '#E4405F',
+      'facebook': '#1877F2',
+      'email': '#EA4335',
+      'web': '#8B5CF6',
+      'telegram': '#0088CC'
+    };
+    return colors[platform.toLowerCase()] || '#6B7280';
+  };
+
+  const getChannelIcon = (platform) => {
+    const icons = {
+      'whatsapp': WhatsApp,
+      'instagram': Instagram,
+      'facebook': Facebook,
+      'email': Email
+    };
+    return icons[platform.toLowerCase()] || Chat;
+  };
 
   useEffect(() => {
     fetchData();
@@ -147,7 +208,7 @@ const useDashboardData = (timeRange) => {
   return { data, loading, error, refetch: fetchData };
 };
 
-// 🔥 COMPONENTES MEJORADOS CON ESTILO DEL HOME
+// 🔥 COMPONENTES (MANTENIENDO LOS MISMOS ESTILOS)
 
 const ChangeIndicator = ({ value }) => {
   if (value > 0) {
@@ -510,8 +571,8 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
 });
 
 const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
-  // Asegurarnos de que siempre haya datos para mostrar
-  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
+  // 🔥 USAR DATOS REALES DEL BACKEND
+  const revenueData = data?.revenueData || data?.salesData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
   const maxValue = Math.max(...revenueData);
 
   if (loading) {
@@ -565,7 +626,7 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
 
         <Box sx={{ height: 300, display: 'flex', alignItems: 'end', gap: 2, mb: 3, px: 2 }}>
           {revenueData.map((value, index) => (
-            <Tooltip key={index} title={`$${value.toLocaleString()}`} arrow>
+            <Tooltip key={index} title={`$${value?.toLocaleString() || '0'}`} arrow>
               <Box sx={{ 
                 flex: 1, 
                 display: 'flex', 
@@ -577,7 +638,7 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
                   sx={{
                     width: '70%',
                     minWidth: '12px',
-                    height: `${(value / maxValue) * 100}%`,
+                    height: `${((value || 0) / maxValue) * 100}%`,
                     background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
                     borderRadius: '4px 4px 0 0',
                     transition: 'all 0.3s ease',
@@ -842,7 +903,7 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
   );
 };
 
-// 🔥 COMPONENTE PRINCIPAL MEJORADO
+// 🔥 COMPONENTE PRINCIPAL CON CONEXIÓN REAL
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -868,8 +929,8 @@ const Dashboard = () => {
     {
       icon: AttachMoney,
       title: "Ingresos Totales",
-      value: dashboardData?.overview?.revenue?.current,
-      change: dashboardData?.overview?.revenue?.growth,
+      value: dashboardData?.overview?.revenue?.current || dashboardData?.overview?.sales?.current,
+      change: dashboardData?.overview?.revenue?.growth || dashboardData?.overview?.sales?.growth,
       subtitle: "Este mes",
       color: "#10b981",
       chart: true
