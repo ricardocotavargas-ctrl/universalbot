@@ -13,6 +13,10 @@ const financialRoutes = require('./financial');
 // Importar rutas de auth
 const authRoutes = require('./auth');
 
+// Agregar estas líneas a tus rutas existentes
+app.use('/sales', require('./sales'));
+app.use('/customers', require('./customers'));
+
 // ✅ CORREGIDO: Usar router.use() en lugar de app.use()
 router.use('/inventory', inventoryRoutes);
 router.use('/accounts', accountsRoutes);
