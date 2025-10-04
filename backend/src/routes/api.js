@@ -13,9 +13,9 @@ const financialRoutes = require('./financial');
 // Importar rutas de auth
 const authRoutes = require('./auth');
 
-// Agregar estas líneas a tus rutas existentes
-app.use('/sales', require('./sales'));
-app.use('/customers', require('./customers'));
+// ✅ CORREGIDO: Importar rutas de sales y customers
+const salesRoutes = require('./sales');
+const customersRoutes = require('./customers');
 
 // ✅ CORREGIDO: Usar router.use() en lugar de app.use()
 router.use('/inventory', inventoryRoutes);
@@ -23,8 +23,9 @@ router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
 router.use('/auth', authRoutes);
 
-// Usar rutas de auth bajo /api
-router.use('/auth', authRoutes);
+// ✅ CORREGIDO: Agregar rutas de sales y customers
+router.use('/sales', salesRoutes);
+router.use('/customers', customersRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {
