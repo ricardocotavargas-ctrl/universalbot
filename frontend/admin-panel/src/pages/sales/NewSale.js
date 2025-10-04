@@ -1,101 +1,469 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Container, Typography, Box, Paper, Grid, Card, CardContent,
   Button, TextField, FormControl, InputLabel, Select, MenuItem,
   Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
   Stepper, Step, StepLabel, StepContent, Divider, Avatar,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  InputAdornment, Badge, Tooltip, Fab, useMediaQuery, ThemeProvider,
-  createTheme, Alert, Snackbar
+  InputAdornment, Badge, Tooltip, Fab, useMediaQuery,
+  Alert, Snackbar, LinearProgress, Stack, List, ListItem, ListItemIcon,
+  ListItemText, alpha, useTheme
 } from '@mui/material';
 import {
   Add, Remove, Search, Delete, Payment, Receipt,
   QrCode, PersonAdd, Calculate, TrendingUp, LocalOffer,
   Inventory, WhatsApp, CreditCard, Money, AccountBalance,
-  PointOfSale, Smartphone, FlashOn, Rocket, Psychology
+  PointOfSale, Smartphone, FlashOn, Rocket, Psychology,
+  ShoppingCart, Group, Speed, AutoGraph, SmartToy,
+  ArrowForward, CheckCircle, Warning, Discount,
+  CurrencyExchange, ReceiptLong, Print, Send
 } from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
+import { useAuth } from '../../contexts/AuthContext';
 
-// Tema moderno 2030
-const modernTheme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#0066ff',
-      light: '#5e92f3',
-      dark: '#003ddb'
-    },
-    secondary: {
-      main: '#ff6e00',
-      light: '#ff9e40',
-      dark: '#c53d00'
-    },
-    background: {
-      default: '#f8fafc',
-      paper: '#ffffff'
-    }
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 700,
-      fontSize: '2.2rem'
-    },
-    h6: {
-      fontWeight: 600
-    }
-  },
-  shape: {
-    borderRadius: 16
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 600,
-          borderRadius: 12
+// 🔥 HOOK PERSONALIZADO PARA DATOS DE VENTA
+const useSaleData = () => {
+  const [clients, setClients] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simular carga de datos
+    const loadData = async () => {
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock data mejorada
+      setClients([
+        { 
+          id: 1, 
+          name: 'María González', 
+          rif: 'V-12345678', 
+          phone: '+584141234567', 
+          email: 'maria@email.com', 
+          address: 'Caracas',
+          type: 'regular',
+          loyaltyPoints: 450
+        },
+        { 
+          id: 2, 
+          name: 'Carlos Rodríguez', 
+          rif: 'J-87654321', 
+          phone: '+584148765432', 
+          email: 'carlos@email.com', 
+          address: 'Valencia',
+          type: 'premium',
+          loyaltyPoints: 1200
+        },
+        { 
+          id: 3, 
+          name: 'Empresa XYZ C.A.', 
+          rif: 'J-12348765', 
+          phone: '+584142345678', 
+          email: 'contacto@xyz.com', 
+          address: 'Maracaibo',
+          type: 'business',
+          loyaltyPoints: 0
         }
-      }
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          border: '1px solid rgba(0,0,0,0.04)'
+      ]);
+
+      setProducts([
+        { 
+          id: 1, 
+          name: 'Café Premium 250g', 
+          code: 'CAFE-001', 
+          price: 12.50, 
+          cost: 8.00,
+          stock: 45, 
+          category: 'Alimentos', 
+          tax: 16,
+          barcode: '1234567890123',
+          supplier: 'Distribuidora Café SA',
+          minStock: 10
+        },
+        { 
+          id: 2, 
+          name: 'Azúcar Refinada 1kg', 
+          code: 'AZUC-002', 
+          price: 3.80, 
+          cost: 2.50,
+          stock: 120, 
+          category: 'Alimentos', 
+          tax: 16,
+          barcode: '1234567890124',
+          supplier: 'Dulces Nacionales',
+          minStock: 20
+        },
+        { 
+          id: 3, 
+          name: 'Arroz Tipo 1 1kg', 
+          code: 'ARRO-003', 
+          price: 2.50, 
+          cost: 1.80,
+          stock: 89, 
+          category: 'Alimentos', 
+          tax: 16,
+          barcode: '1234567890125',
+          supplier: 'Arrocera Nacional',
+          minStock: 15
+        },
+        { 
+          id: 4, 
+          name: 'Aceite Vegetal 1L', 
+          code: 'ACEI-004', 
+          price: 4.20, 
+          cost: 3.00,
+          stock: 67, 
+          category: 'Alimentos', 
+          tax: 16,
+          barcode: '1234567890126',
+          supplier: 'Aceites Premium',
+          minStock: 12
+        },
+        { 
+          id: 5, 
+          name: 'Harina PAN 1kg', 
+          code: 'HARI-005', 
+          price: 2.80, 
+          cost: 1.90,
+          stock: 34, 
+          category: 'Alimentos', 
+          tax: 16,
+          barcode: '1234567890127',
+          supplier: 'Harinas Nacionales',
+          minStock: 8
         }
-      }
+      ]);
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  return { clients, products, loading };
+};
+
+// 🔥 COMPONENTES MODERNOS
+
+const GradientCard = ({ children, sx, ...props }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)`,
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+        backdropFilter: 'blur(10px)',
+        ...sx
+      }}
+      {...props}
+    >
+      {children}
+    </Card>
+  );
+};
+
+const ProductCard = React.memo(({ product, onAdd, loading }) => {
+  const theme = useTheme();
+  const stockPercentage = (product.stock / 100) * 100;
+  const isLowStock = product.stock <= product.minStock;
+
+  if (loading) {
+    return (
+      <Card sx={{ height: 200, borderRadius: '12px' }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      sx={{
+        height: '100%',
+        background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)`,
+        border: `1px solid ${isLowStock ? alpha('#ef4444', 0.2) : alpha(theme.palette.divider, 0.1)}`,
+        borderRadius: '12px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.12)'
+        }
+      }}
+      onClick={() => onAdd(product)}
+    >
+      <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* Header del producto */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ 
+              fontSize: '0.9rem',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
+              {product.name}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+              {product.code}
+            </Typography>
+          </Box>
+          <Chip 
+            label={`${product.stock} disp.`} 
+            size="small"
+            color={isLowStock ? 'error' : product.stock > 20 ? 'success' : 'warning'}
+            sx={{ 
+              fontWeight: 600,
+              fontSize: '0.65rem'
+            }}
+          />
+        </Box>
+
+        {/* Barra de stock */}
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={stockPercentage}
+            color={isLowStock ? 'error' : product.stock > 20 ? 'success' : 'warning'}
+            sx={{ 
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: alpha(theme.palette.primary.main, 0.1)
+            }}
+          />
+        </Box>
+
+        {/* Precio y categoría */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h5" fontWeight={800} sx={{ 
+            color: theme.palette.primary.main,
+            fontSize: '1.1rem'
+          }}>
+            ${product.price.toFixed(2)}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+            IVA {product.tax}% • {product.category}
+          </Typography>
+        </Box>
+
+        {/* Botón de agregar */}
+        <Button
+          fullWidth
+          variant="contained"
+          startIcon={<Add />}
+          disabled={product.stock === 0}
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            fontWeight: 700,
+            borderRadius: '8px',
+            py: 1,
+            fontSize: '0.8rem',
+            mt: 'auto'
+          }}
+        >
+          Agregar al Carrito
+        </Button>
+      </CardContent>
+    </Card>
+  );
+});
+
+const ClientCard = React.memo(({ client, selected, onSelect, loading }) => {
+  const theme = useTheme();
+
+  if (loading) {
+    return (
+      <Card sx={{ height: 100, borderRadius: '12px' }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  const getClientTypeColor = (type) => {
+    switch (type) {
+      case 'premium': return '#f59e0b';
+      case 'business': return '#8b5cf6';
+      default: return '#6b7280';
     }
-  }
+  };
+
+  return (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)`,
+        border: `2px solid ${selected ? theme.palette.primary.main : alpha(theme.palette.divider, 0.1)}`,
+        borderRadius: '12px',
+        boxShadow: selected ? '0 8px 32px rgba(37, 99, 235, 0.15)' : '0 4px 20px rgba(0,0,0,0.06)',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+        }
+      }}
+      onClick={() => onSelect(client)}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar 
+            sx={{ 
+              bgcolor: selected ? theme.palette.primary.main : getClientTypeColor(client.type),
+              width: 40,
+              height: 40
+            }}
+          >
+            {client.name.charAt(0)}
+          </Avatar>
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Typography fontWeight={700} sx={{ fontSize: '0.9rem', color: '#1f2937' }}>
+                {client.name}
+              </Typography>
+              {client.type !== 'regular' && (
+                <Chip 
+                  label={client.type} 
+                  size="small"
+                  sx={{ 
+                    height: 16,
+                    fontSize: '0.6rem',
+                    fontWeight: 600,
+                    background: alpha(getClientTypeColor(client.type), 0.1),
+                    color: getClientTypeColor(client.type)
+                  }}
+                />
+              )}
+            </Box>
+            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem', display: 'block' }}>
+              {client.rif}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+              {client.phone}
+            </Typography>
+            {client.loyaltyPoints > 0 && (
+              <Chip 
+                label={`${client.loyaltyPoints} pts`} 
+                size="small"
+                sx={{ 
+                  height: 16,
+                  fontSize: '0.6rem',
+                  fontWeight: 600,
+                  background: alpha('#10b981', 0.1),
+                  color: '#10b981',
+                  mt: 0.5
+                }}
+              />
+            )}
+          </Box>
+          {selected && (
+            <CheckCircle sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
 });
 
-// Componentes estilizados
-const FloatingActionButton = styled(Fab)({
-  position: 'fixed',
-  bottom: 24,
-  right: 24,
-  background: 'linear-gradient(45deg, #0066ff 0%, #0051cb 100%)',
-  color: 'white',
-  '&:hover': {
-    background: 'linear-gradient(45deg, #0051cb 0%, #003a9e 100%)'
-  }
+const CartItem = React.memo(({ item, onQuantityChange, onRemove, stock }) => {
+  const theme = useTheme();
+
+  return (
+    <GradientCard sx={{ mb: 1 }}>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Información del producto */}
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1f2937' }}>
+              {item.name}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+              {item.code} • ${item.price.toFixed(2)} c/u
+            </Typography>
+          </Box>
+
+          {/* Controles de cantidad */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton 
+              size="small" 
+              onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+              sx={{
+                background: alpha(theme.palette.primary.main, 0.1),
+                '&:hover': {
+                  background: alpha(theme.palette.primary.main, 0.2)
+                }
+              }}
+            >
+              <Remove sx={{ fontSize: 16 }} />
+            </IconButton>
+            
+            <TextField
+              size="small"
+              value={item.quantity}
+              onChange={(e) => {
+                const newQuantity = parseInt(e.target.value) || 1;
+                if (newQuantity >= 1 && newQuantity <= stock) {
+                  onQuantityChange(item.id, newQuantity);
+                }
+              }}
+              sx={{ 
+                width: 60,
+                '& .MuiInputBase-input': { 
+                  textAlign: 'center',
+                  fontSize: '0.8rem',
+                  fontWeight: 600
+                }
+              }}
+            />
+            
+            <IconButton 
+              size="small" 
+              onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+              disabled={item.quantity >= stock}
+              sx={{
+                background: alpha(theme.palette.primary.main, 0.1),
+                '&:hover': {
+                  background: alpha(theme.palette.primary.main, 0.2)
+                }
+              }}
+            >
+              <Add sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
+
+          {/* Total y acciones */}
+          <Box sx={{ textAlign: 'right', minWidth: 80 }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.primary.main }}>
+              ${(item.price * item.quantity).toFixed(2)}
+            </Typography>
+          </Box>
+
+          <IconButton 
+            size="small" 
+            onClick={() => onRemove(item.id)}
+            sx={{
+              color: '#ef4444',
+              '&:hover': {
+                background: alpha('#ef4444', 0.1)
+              }
+            }}
+          >
+            <Delete sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Box>
+      </CardContent>
+    </GradientCard>
+  );
 });
 
-const GradientCard = styled(Card)({
-  background: 'linear-gradient(135deg, #f6f9ff 0%, #ffffff 100%)',
-  border: '1px solid #e3f2fd'
-});
-
-const ProductCard = styled(Card)({
-  cursor: 'pointer',
-  transition: 'all 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 8px 30px rgba(0,102,255,0.15)'
-  }
-});
+// 🔥 COMPONENTE PRINCIPAL MODERNIZADO
 
 const NewSale = () => {
+  const theme = useTheme();
+  const { user } = useAuth();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [activeStep, setActiveStep] = useState(0);
   const [saleData, setSaleData] = useState({
     client: null,
@@ -105,49 +473,29 @@ const NewSale = () => {
     exchangeRate: 36.5,
     discounts: 0,
     taxes: 0,
-    notes: ''
+    notes: '',
+    shipping: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [clients, setClients] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [openClientDialog, setOpenClientDialog] = useState(false);
-  const [openProductDialog, setOpenProductDialog] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const isMobile = useMediaQuery(modernTheme.breakpoints.down('md'));
+  const [aiSuggestions, setAiSuggestions] = useState([]);
 
-  // Datos de ejemplo
-  useEffect(() => {
-    // Mock data para clientes
-    setClients([
-      { id: 1, name: 'María González', rif: 'V-12345678', phone: '+584141234567', email: 'maria@email.com', address: 'Caracas' },
-      { id: 2, name: 'Carlos Rodríguez', rif: 'J-87654321', phone: '+584148765432', email: 'carlos@email.com', address: 'Valencia' },
-      { id: 3, name: 'Empresa XYZ C.A.', rif: 'J-12348765', phone: '+584142345678', email: 'contacto@xyz.com', address: 'Maracaibo' }
-    ]);
-
-    // Mock data para productos
-    setProducts([
-      { id: 1, name: 'Café Premium 250g', code: 'CAFE-001', price: 12.50, stock: 45, category: 'Alimentos', tax: 16 },
-      { id: 2, name: 'Azúcar Refinada 1kg', code: 'AZUC-002', price: 3.80, stock: 120, category: 'Alimentos', tax: 16 },
-      { id: 3, name: 'Arroz Tipo 1 1kg', code: 'ARRO-003', price: 2.50, stock: 89, category: 'Alimentos', tax: 16 },
-      { id: 4, name: 'Aceite Vegetal 1L', code: 'ACEI-004', price: 4.20, stock: 67, category: 'Alimentos', tax: 16 },
-      { id: 5, name: 'Harina PAN 1kg', code: 'HARI-005', price: 2.80, stock: 34, category: 'Alimentos', tax: 16 }
-    ]);
-  }, []);
+  const { clients, products, loading } = useSaleData();
 
   const steps = [
-    { label: 'Cliente', icon: <PersonAdd /> },
-    { label: 'Productos', icon: <Inventory /> },
-    { label: 'Pago', icon: <Payment /> },
-    { label: 'Confirmación', icon: <Receipt /> }
+    { label: 'Cliente', icon: <Group />, description: 'Selecciona o agrega un cliente' },
+    { label: 'Productos', icon: <ShoppingCart />, description: 'Agrega productos al carrito' },
+    { label: 'Pago', icon: <Payment />, description: 'Configura método de pago' },
+    { label: 'Confirmar', icon: <CheckCircle />, description: 'Revisa y confirma la venta' }
   ];
 
   const paymentMethods = [
-    { value: 'efectivo', label: 'Efectivo', icon: <Money /> },
-    { value: 'transferencia', label: 'Transferencia', icon: <AccountBalance /> },
-    { value: 'pago_movil', label: 'Pago Móvil', icon: <Smartphone /> },
-    { value: 'tarjeta_debito', label: 'Tarjeta Débito', icon: <CreditCard /> },
-    { value: 'tarjeta_credito', label: 'Tarjeta Crédito', icon: <CreditCard /> },
-    { value: 'divisas', label: 'Divisas', icon: <PointOfSale /> }
+    { value: 'efectivo', label: 'Efectivo', icon: <Money />, color: '#10b981' },
+    { value: 'transferencia', label: 'Transferencia', icon: <AccountBalance />, color: '#2563eb' },
+    { value: 'pago_movil', label: 'Pago Móvil', icon: <Smartphone />, color: '#8b5cf6' },
+    { value: 'tarjeta_debito', label: 'Tarjeta Débito', icon: <CreditCard />, color: '#f59e0b' },
+    { value: 'tarjeta_credito', label: 'Tarjeta Crédito', icon: <CreditCard />, color: '#ec4899' },
+    { value: 'divisas', label: 'Divisas', icon: <CurrencyExchange />, color: '#06b6d4' }
   ];
 
   const currencies = [
@@ -156,60 +504,68 @@ const NewSale = () => {
     { value: 'EUR', label: 'Euros (€)', symbol: '€' }
   ];
 
-  const calculateTotals = () => {
+  // Cálculos optimizados con useMemo
+  const totals = useMemo(() => {
     const subtotal = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const taxes = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity * (item.tax / 100)), 0);
-    const total = subtotal + taxes - saleData.discounts;
+    const total = subtotal + taxes - saleData.discounts + saleData.shipping;
 
     return { subtotal, taxes, total };
-  };
+  }, [saleData.products, saleData.discounts, saleData.shipping]);
 
-  const handleAddProduct = (product) => {
+  const handleAddProduct = useCallback((product) => {
     const existingProduct = saleData.products.find(p => p.id === product.id);
     
     if (existingProduct) {
-      setSaleData({
-        ...saleData,
-        products: saleData.products.map(p =>
+      setSaleData(prev => ({
+        ...prev,
+        products: prev.products.map(p =>
           p.id === product.id
             ? { ...p, quantity: p.quantity + 1 }
             : p
         )
-      });
+      }));
     } else {
-      setSaleData({
-        ...saleData,
-        products: [...saleData.products, { ...product, quantity: 1 }]
-      });
+      setSaleData(prev => ({
+        ...prev,
+        products: [...prev.products, { ...product, quantity: 1 }]
+      }));
     }
 
-    setSnackbar({ open: true, message: 'Producto agregado', severity: 'success' });
-  };
+    setSnackbar({ open: true, message: `✅ ${product.name} agregado`, severity: 'success' });
+  }, [saleData.products]);
 
-  const handleRemoveProduct = (productId) => {
-    setSaleData({
-      ...saleData,
-      products: saleData.products.filter(p => p.id !== productId)
-    });
-  };
+  const handleRemoveProduct = useCallback((productId) => {
+    setSaleData(prev => ({
+      ...prev,
+      products: prev.products.filter(p => p.id !== productId)
+    }));
+  }, []);
 
-  const handleQuantityChange = (productId, newQuantity) => {
+  const handleQuantityChange = useCallback((productId, newQuantity) => {
     if (newQuantity < 1) return;
 
-    setSaleData({
-      ...saleData,
-      products: saleData.products.map(p =>
+    const product = products.find(p => p.id === productId);
+    if (newQuantity > product.stock) {
+      setSnackbar({ open: true, message: '❌ Stock insuficiente', severity: 'warning' });
+      return;
+    }
+
+    setSaleData(prev => ({
+      ...prev,
+      products: prev.products.map(p =>
         p.id === productId
           ? { ...p, quantity: newQuantity }
           : p
       )
-    });
-  };
+    }));
+  }, [products]);
 
-  const handleCompleteSale = () => {
-    // Lógica para completar la venta
-    setSnackbar({ open: true, message: 'Venta completada exitosamente', severity: 'success' });
-    // Resetear el formulario después de 2 segundos
+  const handleCompleteSale = useCallback(() => {
+    // Simular procesamiento de venta
+    setSnackbar({ open: true, message: '🎉 Venta completada exitosamente', severity: 'success' });
+    
+    // Resetear después de 2 segundos
     setTimeout(() => {
       setSaleData({
         client: null,
@@ -219,85 +575,106 @@ const NewSale = () => {
         exchangeRate: 36.5,
         discounts: 0,
         taxes: 0,
-        notes: ''
+        notes: '',
+        shipping: 0
       });
       setActiveStep(0);
     }, 2000);
-  };
+  }, []);
 
-  const { subtotal, taxes, total } = calculateTotals();
+  // Generar sugerencias de IA
+  useEffect(() => {
+    if (saleData.products.length > 0) {
+      const suggestions = [
+        {
+          id: 1,
+          type: 'upsell',
+          message: 'Los clientes que compran café también suelen comprar azúcar',
+          product: products.find(p => p.id === 2),
+          confidence: 0.85
+        },
+        {
+          id: 2,
+          type: 'discount',
+          message: 'Aplica un 10% de descuento por compra mayor a $30',
+          action: 'Aplicar descuento',
+          confidence: 0.72
+        }
+      ].filter(s => s);
+      setAiSuggestions(suggestions);
+    } else {
+      setAiSuggestions([]);
+    }
+  }, [saleData.products, products]);
 
+  // Renderizado de pasos
   const renderClientStep = () => (
     <Box>
-      <Typography variant="h6" gutterBottom color="primary">
-        👥 Seleccionar Cliente
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Group sx={{ color: theme.palette.primary.main }} />
+        Seleccionar Cliente
       </Typography>
       
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={8}>
           <TextField
             fullWidth
-            label="Buscar cliente..."
+            label="Buscar cliente por nombre, RIF o teléfono..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search />
+                  <Search sx={{ color: '#6b7280' }} />
                 </InputAdornment>
               )
             }}
+            sx={{ mb: 2 }}
           />
         </Grid>
         
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <Button
             fullWidth
             variant="outlined"
             startIcon={<PersonAdd />}
-            onClick={() => setOpenClientDialog(true)}
-            sx={{ height: '56px' }}
+            sx={{ 
+              height: '56px',
+              borderColor: alpha(theme.palette.primary.main, 0.3),
+              color: theme.palette.primary.main,
+              fontWeight: 600
+            }}
           >
             Nuevo Cliente
           </Button>
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ mt: 2 }}>
+      <Grid container spacing={2}>
         {clients.filter(client => 
           client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.rif.toLowerCase().includes(searchTerm.toLowerCase())
+          client.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          client.phone.includes(searchTerm)
         ).map((client) => (
           <Grid item xs={12} md={6} key={client.id}>
-            <Card 
-              sx={{ 
-                border: saleData.client?.id === client.id ? 2 : 1,
-                borderColor: saleData.client?.id === client.id ? 'primary.main' : 'divider',
-                cursor: 'pointer'
-              }}
-              onClick={() => setSaleData({ ...saleData, client })}
-            >
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    {client.name.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography fontWeight="600">{client.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {client.rif} • {client.phone}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <ClientCard 
+              client={client}
+              selected={saleData.client?.id === client.id}
+              onSelect={(client) => setSaleData(prev => ({ ...prev, client }))}
+              loading={loading}
+            />
           </Grid>
         ))}
       </Grid>
 
       {saleData.client && (
-        <Alert severity="success" sx={{ mt: 2 }}>
+        <Alert severity="success" sx={{ mt: 2, borderRadius: '8px' }}>
           Cliente seleccionado: <strong>{saleData.client.name}</strong>
+          {saleData.client.loyaltyPoints > 0 && (
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              ⭐ {saleData.client.loyaltyPoints} puntos de fidelidad disponibles
+            </Typography>
+          )}
         </Alert>
       )}
     </Box>
@@ -305,173 +682,162 @@ const NewSale = () => {
 
   const renderProductsStep = () => (
     <Box>
-      <Typography variant="h6" gutterBottom color="primary">
-        🛒 Agregar Productos
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <ShoppingCart sx={{ color: theme.palette.primary.main }} />
+        Agregar Productos
       </Typography>
 
       <Grid container spacing={3}>
+        {/* Barra de búsqueda */}
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Buscar productos..."
+            label="Buscar productos por nombre, código o categoría..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search />
+                  <Search sx={{ color: '#6b7280' }} />
                 </InputAdornment>
               ),
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={() => setOpenProductDialog(true)}>
-                    <QrCode />
-                  </IconButton>
+                  <Tooltip title="Escanear código QR">
+                    <IconButton>
+                      <QrCode />
+                    </IconButton>
+                  </Tooltip>
                 </InputAdornment>
               )
             }}
           />
         </Grid>
-      </Grid>
 
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        {products.filter(product => 
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.code.toLowerCase().includes(searchTerm.toLowerCase())
-        ).map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product.id}>
-            <ProductCard>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                  <Box>
-                    <Typography fontWeight="600">{product.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {product.code}
+        {/* Lista de productos */}
+        <Grid item xs={12} md={8}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: '#1f2937' }}>
+            Productos Disponibles ({products.filter(p => 
+              p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              p.category.toLowerCase().includes(searchTerm.toLowerCase())
+            ).length})
+          </Typography>
+          
+          <Grid container spacing={2}>
+            {products.filter(product => 
+              product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              product.category.toLowerCase().includes(searchTerm.toLowerCase())
+            ).map((product) => (
+              <Grid item xs={12} sm={6} md={4} key={product.id}>
+                <ProductCard 
+                  product={product} 
+                  onAdd={handleAddProduct}
+                  loading={loading}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Grid>
+
+        {/* Carrito de compras */}
+        <Grid item xs={12} md={4}>
+          <GradientCard>
+            <CardContent>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Receipt sx={{ color: theme.palette.primary.main }} />
+                Carrito de Compra
+              </Typography>
+
+              {saleData.products.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Inventory sx={{ fontSize: 48, color: '#d1d5db', mb: 1 }} />
+                  <Typography color="text.secondary">
+                    No hay productos en el carrito
+                  </Typography>
+                </Box>
+              ) : (
+                <Box>
+                  {saleData.products.map((product) => (
+                    <CartItem
+                      key={product.id}
+                      item={product}
+                      onQuantityChange={handleQuantityChange}
+                      onRemove={handleRemoveProduct}
+                      stock={products.find(p => p.id === product.id)?.stock || 0}
+                    />
+                  ))}
+
+                  {/* Resumen rápido */}
+                  <Box sx={{ mt: 2, p: 2, background: alpha(theme.palette.primary.main, 0.05), borderRadius: '8px' }}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#1f2937' }}>
+                      Total: ${totals.total.toFixed(2)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                      {saleData.products.reduce((sum, item) => sum + item.quantity, 0)} productos
                     </Typography>
                   </Box>
-                  <Chip 
-                    label={`${product.stock} disp.`} 
-                    size="small" 
-                    color={product.stock > 10 ? 'success' : 'warning'}
-                  />
                 </Box>
+              )}
+            </CardContent>
+          </GradientCard>
 
-                <Typography variant="h6" color="primary" gutterBottom>
-                  ${product.price.toFixed(2)}
+          {/* Sugerencias de IA */}
+          {aiSuggestions.length > 0 && (
+            <GradientCard sx={{ mt: 2 }}>
+              <CardContent>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <SmartToy sx={{ color: '#8b5cf6', fontSize: 18 }} />
+                  Sugerencias de IA
                 </Typography>
-
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  IVA {product.tax}% • {product.category}
-                </Typography>
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={() => handleAddProduct(product)}
-                  disabled={product.stock === 0}
-                >
-                  Agregar
-                </Button>
-              </CardContent>
-            </ProductCard>
-          </Grid>
-        ))}
-      </Grid>
-
-      {saleData.products.length > 0 && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Productos en la Venta
-          </Typography>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Producto</TableCell>
-                  <TableCell>Precio</TableCell>
-                  <TableCell>Cantidad</TableCell>
-                  <TableCell>Total</TableCell>
-                  <TableCell>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {saleData.products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Inventory color="primary" />
-                        <Box>
-                          <Typography fontWeight="500">{product.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {product.code}
+                <List dense>
+                  {aiSuggestions.map((suggestion) => (
+                    <ListItem key={suggestion.id} sx={{ px: 0, py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <Psychology sx={{ color: '#8b5cf6', fontSize: 16 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Typography variant="caption" sx={{ color: '#6b7280', lineHeight: 1.3 }}>
+                            {suggestion.message}
                           </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleQuantityChange(product.id, product.quantity - 1)}
-                        >
-                          <Remove />
-                        </IconButton>
-                        <TextField
-                          size="small"
-                          value={product.quantity}
-                          onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 1)}
-                          sx={{ width: 60 }}
-                          inputProps={{ style: { textAlign: 'center' } }}
-                        />
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleQuantityChange(product.id, product.quantity + 1)}
-                          disabled={product.quantity >= product.stock}
-                        >
-                          <Add />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                    <TableCell>${(product.price * product.quantity).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton 
-                        color="error" 
-                        onClick={() => handleRemoveProduct(product.id)}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CardContent>
+            </GradientCard>
+          )}
+        </Grid>
+      </Grid>
     </Box>
   );
 
   const renderPaymentStep = () => (
     <Box>
-      <Typography variant="h6" gutterBottom color="primary">
-        💰 Método de Pago
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Payment sx={{ color: theme.palette.primary.main }} />
+        Método de Pago
       </Typography>
 
       <Grid container spacing={3}>
+        {/* Método de pago */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>Método de Pago</InputLabel>
             <Select
               value={saleData.paymentMethod}
-              onChange={(e) => setSaleData({ ...saleData, paymentMethod: e.target.value })}
+              onChange={(e) => setSaleData(prev => ({ ...prev, paymentMethod: e.target.value }))}
               label="Método de Pago"
             >
               {paymentMethods.map((method) => (
                 <MenuItem key={method.value} value={method.value}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {method.icon}
+                    <Box sx={{ color: method.color }}>
+                      {method.icon}
+                    </Box>
                     {method.label}
                   </Box>
                 </MenuItem>
@@ -480,12 +846,13 @@ const NewSale = () => {
           </FormControl>
         </Grid>
 
+        {/* Moneda */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>Moneda</InputLabel>
             <Select
               value={saleData.currency}
-              onChange={(e) => setSaleData({ ...saleData, currency: e.target.value })}
+              onChange={(e) => setSaleData(prev => ({ ...prev, currency: e.target.value }))}
               label="Moneda"
             >
               {currencies.map((currency) => (
@@ -497,6 +864,43 @@ const NewSale = () => {
           </FormControl>
         </Grid>
 
+        {/* Campos adicionales */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Descuentos"
+            type="number"
+            value={saleData.discounts}
+            onChange={(e) => setSaleData(prev => ({ ...prev, discounts: parseFloat(e.target.value) || 0 }))}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocalOffer sx={{ color: '#6b7280' }} />
+                </InputAdornment>
+              ),
+              endAdornment: <InputAdornment position="end">$</InputAdornment>
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Envío"
+            type="number"
+            value={saleData.shipping}
+            onChange={(e) => setSaleData(prev => ({ ...prev, shipping: parseFloat(e.target.value) || 0 }))}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FlashOn sx={{ color: '#6b7280' }} />
+                </InputAdornment>
+              ),
+              endAdornment: <InputAdornment position="end">$</InputAdornment>
+            }}
+          />
+        </Grid>
+
         {saleData.currency === 'VES' && (
           <Grid item xs={12}>
             <TextField
@@ -504,35 +908,17 @@ const NewSale = () => {
               label="Tasa de Cambio (Bs. por $)"
               type="number"
               value={saleData.exchangeRate}
-              onChange={(e) => setSaleData({ ...saleData, exchangeRate: parseFloat(e.target.value) })}
+              onChange={(e) => setSaleData(prev => ({ ...prev, exchangeRate: parseFloat(e.target.value) }))}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <TrendingUp />
+                    <TrendingUp sx={{ color: '#6b7280' }} />
                   </InputAdornment>
                 )
               }}
             />
           </Grid>
         )}
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Descuentos"
-            type="number"
-            value={saleData.discounts}
-            onChange={(e) => setSaleData({ ...saleData, discounts: parseFloat(e.target.value) || 0 })}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LocalOffer />
-                </InputAdornment>
-              ),
-              endAdornment: <InputAdornment position="end">$</InputAdornment>
-            }}
-          />
-        </Grid>
 
         <Grid item xs={12}>
           <TextField
@@ -541,126 +927,136 @@ const NewSale = () => {
             multiline
             rows={3}
             value={saleData.notes}
-            onChange={(e) => setSaleData({ ...saleData, notes: e.target.value })}
-            placeholder="Observaciones o instrucciones especiales..."
+            onChange={(e) => setSaleData(prev => ({ ...prev, notes: e.target.value }))}
+            placeholder="Observaciones o instrucciones especiales para esta venta..."
           />
         </Grid>
       </Grid>
 
       <Divider sx={{ my: 3 }} />
 
-      <GradientCard sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Resumen de la Venta
-        </Typography>
-        
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Typography>Subtotal:</Typography>
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Typography>${subtotal.toFixed(2)}</Typography>
-          </Grid>
-
-          <Grid item xs={6}>
-            <Typography>IVA:</Typography>
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Typography>${taxes.toFixed(2)}</Typography>
-          </Grid>
-
-          <Grid item xs={6}>
-            <Typography>Descuentos:</Typography>
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Typography color="error">-${saleData.discounts.toFixed(2)}</Typography>
-          </Grid>
-
-          <Grid item xs={12}>
+      {/* Resumen de la venta */}
+      <GradientCard>
+        <CardContent>
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1f2937' }}>
+            Resumen de la Venta
+          </Typography>
+          
+          <Stack spacing={1}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#6b7280' }}>Subtotal:</Typography>
+              <Typography variant="body2" fontWeight={600}>${totals.subtotal.toFixed(2)}</Typography>
+            </Box>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#6b7280' }}>IVA:</Typography>
+              <Typography variant="body2" fontWeight={600}>${totals.taxes.toFixed(2)}</Typography>
+            </Box>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#6b7280' }}>Descuentos:</Typography>
+              <Typography variant="body2" fontWeight={600} color="error">
+                -${saleData.discounts.toFixed(2)}
+              </Typography>
+            </Box>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#6b7280' }}>Envío:</Typography>
+              <Typography variant="body2" fontWeight={600}>${saleData.shipping.toFixed(2)}</Typography>
+            </Box>
+            
             <Divider />
-          </Grid>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="h6" fontWeight={700}>Total:</Typography>
+              <Typography variant="h6" fontWeight={700} sx={{ 
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent'
+              }}>
+                ${totals.total.toFixed(2)}
+              </Typography>
+            </Box>
 
-          <Grid item xs={6}>
-            <Typography variant="h6">Total:</Typography>
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Typography variant="h6" color="primary">
-              ${total.toFixed(2)}
-            </Typography>
-          </Grid>
-
-          {saleData.currency === 'VES' && (
-            <Grid item xs={12} textAlign="center">
-              <Chip 
-                label={`Equivalente: Bs. ${(total * saleData.exchangeRate).toFixed(2)}`}
-                color="secondary"
-              />
-            </Grid>
-          )}
-        </Grid>
+            {saleData.currency === 'VES' && (
+              <Box sx={{ textAlign: 'center', mt: 1 }}>
+                <Chip 
+                  label={`Equivalente: Bs. ${(totals.total * saleData.exchangeRate).toFixed(2)}`}
+                  color="secondary"
+                  size="small"
+                />
+              </Box>
+            )}
+          </Stack>
+        </CardContent>
       </GradientCard>
     </Box>
   );
 
   const renderConfirmationStep = () => (
     <Box>
-      <Typography variant="h6" gutterBottom color="primary">
-        ✅ Confirmar Venta
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <CheckCircle sx={{ color: theme.palette.primary.main }} />
+        Confirmar Venta
       </Typography>
 
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert severity="info" sx={{ mb: 3, borderRadius: '8px' }}>
         Revise todos los detalles antes de completar la venta
       </Alert>
 
       <Grid container spacing={3}>
+        {/* Información del cliente */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <GradientCard>
             <CardContent>
-              <Typography variant="subtitle1" gutterBottom>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Información del Cliente
               </Typography>
               {saleData.client ? (
                 <Box>
                   <Typography fontWeight="600">{saleData.client.name}</Typography>
-                  <Typography variant="body2">{saleData.client.rif}</Typography>
-                  <Typography variant="body2">{saleData.client.phone}</Typography>
-                  <Typography variant="body2">{saleData.client.email}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.rif}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.phone}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.email}</Typography>
                 </Box>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: '#6b7280' }}>
                   Cliente no seleccionado
                 </Typography>
               )}
             </CardContent>
-          </Card>
+          </GradientCard>
         </Grid>
 
+        {/* Detalles de pago */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <GradientCard>
             <CardContent>
-              <Typography variant="subtitle1" gutterBottom>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Detalles de Pago
               </Typography>
-              <Typography>
+              <Typography variant="body2">
                 Método: {paymentMethods.find(m => m.value === saleData.paymentMethod)?.label}
               </Typography>
-              <Typography>
+              <Typography variant="body2">
                 Moneda: {currencies.find(c => c.value === saleData.currency)?.label}
               </Typography>
               {saleData.currency === 'VES' && (
-                <Typography>
+                <Typography variant="body2">
                   Tasa: Bs. {saleData.exchangeRate} por $
                 </Typography>
               )}
             </CardContent>
-          </Card>
+          </GradientCard>
         </Grid>
 
+        {/* Resumen de productos */}
         <Grid item xs={12}>
-          <Card>
+          <GradientCard>
             <CardContent>
-              <Typography variant="subtitle1" gutterBottom>
-                Resumen de Productos
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Resumen de Productos ({saleData.products.length})
               </Typography>
               <TableContainer>
                 <Table size="small">
@@ -668,14 +1064,22 @@ const NewSale = () => {
                     <TableRow>
                       <TableCell>Producto</TableCell>
                       <TableCell align="right">Cantidad</TableCell>
-                      <TableCell align="right">Precio</TableCell>
+                      <TableCell align="right">Precio Unit.</TableCell>
                       <TableCell align="right">Total</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {saleData.products.map((product) => (
                       <TableRow key={product.id}>
-                        <TableCell>{product.name}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Inventory sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+                            <Box>
+                              <Typography variant="body2" fontWeight={500}>{product.name}</Typography>
+                              <Typography variant="caption" sx={{ color: '#6b7280' }}>{product.code}</Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
                         <TableCell align="right">{product.quantity}</TableCell>
                         <TableCell align="right">${product.price.toFixed(2)}</TableCell>
                         <TableCell align="right">${(product.price * product.quantity).toFixed(2)}</TableCell>
@@ -685,23 +1089,53 @@ const NewSale = () => {
                 </Table>
               </TableContainer>
             </CardContent>
-          </Card>
+          </GradientCard>
         </Grid>
 
+        {/* Acciones finales */}
         <Grid item xs={12}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h4" color="primary" gutterBottom>
-              Total: ${total.toFixed(2)}
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Typography variant="h4" fontWeight={800} gutterBottom sx={{ 
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
+              Total: ${totals.total.toFixed(2)}
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<PointOfSale />}
-              onClick={handleCompleteSale}
-              sx={{ px: 4, py: 1.5 }}
-            >
-              Completar Venta
-            </Button>
+            
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<Print />}
+                sx={{ px: 4, py: 1.5, fontWeight: 600 }}
+              >
+                Imprimir
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<PointOfSale />}
+                onClick={handleCompleteSale}
+                sx={{ 
+                  px: 4, 
+                  py: 1.5, 
+                  fontWeight: 600,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+                }}
+              >
+                Completar Venta
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<Send />}
+                sx={{ px: 4, py: 1.5, fontWeight: 600 }}
+              >
+                Enviar por WhatsApp
+              </Button>
+            </Stack>
           </Box>
         </Grid>
       </Grid>
@@ -709,85 +1143,197 @@ const NewSale = () => {
   );
 
   return (
-    <ThemeProvider theme={modernTheme}>
-      <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+      py: 1
+    }}>
+      <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 3, px: isMobile ? 2 : 3 }}>
+        {/* Header moderno */}
         <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Rocket sx={{ fontSize: 40, color: 'primary.main' }} />
-            <Typography variant="h4" fontWeight="700">
-              Nueva Venta
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Rocket sx={{ fontSize: 40, color: 'primary.main' }} />
+              <Box>
+                <Typography variant="h4" fontWeight={800} sx={{ 
+                  background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  color: 'transparent'
+                }}>
+                  Nueva Venta
+                </Typography>
+                <Typography sx={{ color: '#6b7280' }}>
+                  Sistema de ventas moderno • {user?.business?.name || 'Tu Negocio'}
+                </Typography>
+              </Box>
+            </Box>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip 
+                icon={<Speed />} 
+                label="Modo Rápido" 
+                color="primary" 
+                variant="outlined"
+                sx={{ fontWeight: 600 }}
+              />
+              <Chip 
+                icon={<AutoGraph />} 
+                label="IA Activa" 
+                sx={{ 
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  color: 'white'
+                }}
+              />
+            </Box>
           </Box>
-          <Typography color="text.secondary">
-            Sistema de ventas moderno y eficiente para Venezuela 2030
-          </Typography>
+
+          {/* Stepper moderno */}
+          <Paper sx={{ p: 3, borderRadius: '16px', background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)' }}>
+            <Stepper 
+              activeStep={activeStep} 
+              orientation={isMobile ? 'vertical' : 'horizontal'} 
+              sx={{ mb: 2 }}
+            >
+              {steps.map((step, index) => (
+                <Step key={step.label}>
+                  <StepLabel
+                    StepIconProps={{
+                      sx: {
+                        '&.Mui-completed': { color: '#10b981' },
+                        '&.Mui-active': { color: theme.palette.primary.main }
+                      }
+                    }}
+                    optional={
+                      <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
+                        {step.description}
+                      </Typography>
+                    }
+                  >
+                    {step.label}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+
+            <LinearProgress 
+              variant="determinate" 
+              value={(activeStep / (steps.length - 1)) * 100} 
+              sx={{ 
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+                }
+              }}
+            />
+          </Paper>
         </Box>
 
-        <Stepper activeStep={activeStep} orientation={isMobile ? 'vertical' : 'horizontal'} sx={{ mb: 4 }}>
-          {steps.map((step, index) => (
-            <Step key={step.label}>
-              <StepLabel
-                optional={index === 3 ? <Typography variant="caption">Último paso</Typography> : null}
-                icon={step.icon}
-              >
-                {step.label}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        <Paper sx={{ p: 3, mb: 3 }}>
+        {/* Contenido principal */}
+        <Paper sx={{ 
+          p: 3, 
+          mb: 3, 
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+        }}>
           {activeStep === 0 && renderClientStep()}
           {activeStep === 1 && renderProductsStep()}
           {activeStep === 2 && renderPaymentStep()}
           {activeStep === 3 && renderConfirmationStep()}
         </Paper>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        {/* Navegación */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
             disabled={activeStep === 0}
             onClick={() => setActiveStep(prev => prev - 1)}
             startIcon={<Remove />}
+            sx={{ fontWeight: 600 }}
           >
             Anterior
           </Button>
           
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" sx={{ color: '#6b7280' }}>
+              Paso {activeStep + 1} de {steps.length}
+            </Typography>
+          </Box>
+          
           <Button
             variant="contained"
             onClick={() => setActiveStep(prev => prev + 1)}
-            endIcon={<Add />}
+            endIcon={activeStep === steps.length - 1 ? <CheckCircle /> : <ArrowForward />}
             disabled={
               (activeStep === 0 && !saleData.client) ||
               (activeStep === 1 && saleData.products.length === 0) ||
-              activeStep === 3
+              activeStep === steps.length - 1
             }
+            sx={{ 
+              fontWeight: 600,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+            }}
           >
             {activeStep === steps.length - 1 ? 'Completar' : 'Siguiente'}
           </Button>
         </Box>
 
         {/* Botones flotantes de acción rápida */}
-        <FloatingActionButton>
-          <WhatsApp />
-        </FloatingActionButton>
+        <Tooltip title="Enviar comprobante por WhatsApp">
+          <Fab
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+              color: 'white',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #128C7E 0%, #075E54 100%)'
+              }
+            }}
+          >
+            <WhatsApp />
+          </Fab>
+        </Tooltip>
 
         <Tooltip title="Calculadora rápida">
           <Fab
             color="secondary"
-            sx={{ position: 'fixed', bottom: 24, right: 100 }}
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 100,
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white'
+            }}
           >
             <Calculate />
           </Fab>
         </Tooltip>
 
+        {/* Snackbar para notificaciones */}
         <Snackbar
           open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          message={snackbar.message}
-        />
+          autoHideDuration={4000}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            severity={snackbar.severity} 
+            sx={{ 
+              borderRadius: '8px',
+              fontWeight: 600
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Container>
-    </ThemeProvider>
+    </Box>
   );
 };
 
