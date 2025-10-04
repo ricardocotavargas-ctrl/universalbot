@@ -7,7 +7,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   InputAdornment, Badge, Tooltip, Fab, useMediaQuery,
   Alert, Snackbar, LinearProgress, Stack, List, ListItem, ListItemIcon,
-  ListItemText, alpha, useTheme
+  ListItemText, alpha, useTheme, Skeleton
 } from '@mui/material';
 import {
   Add, Remove, Search, Delete, Payment, Receipt,
@@ -18,129 +18,44 @@ import {
   ArrowForward, CheckCircle, Warning, Discount,
   CurrencyExchange, ReceiptLong, Print, Send
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../services/api';
 
-// 🔥 HOOK PERSONALIZADO PARA DATOS DE VENTA
+// 🔥 HOOK PERSONALIZADO PARA DATOS REALES
 const useSaleData = () => {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simular carga de datos
     const loadData = async () => {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data mejorada
-      setClients([
-        { 
-          id: 1, 
-          name: 'María González', 
-          rif: 'V-12345678', 
-          phone: '+584141234567', 
-          email: 'maria@email.com', 
-          address: 'Caracas',
-          type: 'regular',
-          loyaltyPoints: 450
-        },
-        { 
-          id: 2, 
-          name: 'Carlos Rodríguez', 
-          rif: 'J-87654321', 
-          phone: '+584148765432', 
-          email: 'carlos@email.com', 
-          address: 'Valencia',
-          type: 'premium',
-          loyaltyPoints: 1200
-        },
-        { 
-          id: 3, 
-          name: 'Empresa XYZ C.A.', 
-          rif: 'J-12348765', 
-          phone: '+584142345678', 
-          email: 'contacto@xyz.com', 
-          address: 'Maracaibo',
-          type: 'business',
-          loyaltyPoints: 0
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await api.get('/sales/sale-data');
+        
+        if (response.data.success) {
+          setClients(response.data.clients || []);
+          setProducts(response.data.products || []);
+        } else {
+          setError('Error al cargar datos');
         }
-      ]);
-
-      setProducts([
-        { 
-          id: 1, 
-          name: 'Café Premium 250g', 
-          code: 'CAFE-001', 
-          price: 12.50, 
-          cost: 8.00,
-          stock: 45, 
-          category: 'Alimentos', 
-          tax: 16,
-          barcode: '1234567890123',
-          supplier: 'Distribuidora Café SA',
-          minStock: 10
-        },
-        { 
-          id: 2, 
-          name: 'Azúcar Refinada 1kg', 
-          code: 'AZUC-002', 
-          price: 3.80, 
-          cost: 2.50,
-          stock: 120, 
-          category: 'Alimentos', 
-          tax: 16,
-          barcode: '1234567890124',
-          supplier: 'Dulces Nacionales',
-          minStock: 20
-        },
-        { 
-          id: 3, 
-          name: 'Arroz Tipo 1 1kg', 
-          code: 'ARRO-003', 
-          price: 2.50, 
-          cost: 1.80,
-          stock: 89, 
-          category: 'Alimentos', 
-          tax: 16,
-          barcode: '1234567890125',
-          supplier: 'Arrocera Nacional',
-          minStock: 15
-        },
-        { 
-          id: 4, 
-          name: 'Aceite Vegetal 1L', 
-          code: 'ACEI-004', 
-          price: 4.20, 
-          cost: 3.00,
-          stock: 67, 
-          category: 'Alimentos', 
-          tax: 16,
-          barcode: '1234567890126',
-          supplier: 'Aceites Premium',
-          minStock: 12
-        },
-        { 
-          id: 5, 
-          name: 'Harina PAN 1kg', 
-          code: 'HARI-005', 
-          price: 2.80, 
-          cost: 1.90,
-          stock: 34, 
-          category: 'Alimentos', 
-          tax: 16,
-          barcode: '1234567890127',
-          supplier: 'Harinas Nacionales',
-          minStock: 8
-        }
-      ]);
-
-      setLoading(false);
+      } catch (err) {
+        console.error('Error loading sale data:', err);
+        setError('Error de conexión');
+        setClients([]);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
   }, []);
 
-  return { clients, products, loading };
+  return { clients, products, loading, error };
 };
 
 // 🔥 COMPONENTES MODERNOS
@@ -166,8 +81,9 @@ const GradientCard = ({ children, sx, ...props }) => {
 
 const ProductCard = React.memo(({ product, onAdd, loading }) => {
   const theme = useTheme();
-  const stockPercentage = (product.stock / 100) * 100;
-  const isLowStock = product.stock <= product.minStock;
+  const stockPercentage = product.stock > 0 ? Math.min((product.stock / 100) * 100, 100) : 0;
+  const isLowStock = product.stock <= (product.minStock || 5);
+  const isOutOfStock = product.stock === 0;
 
   if (loading) {
     return (
@@ -182,17 +98,18 @@ const ProductCard = React.memo(({ product, onAdd, loading }) => {
       sx={{
         height: '100%',
         background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)`,
-        border: `1px solid ${isLowStock ? alpha('#ef4444', 0.2) : alpha(theme.palette.divider, 0.1)}`,
+        border: `1px solid ${isOutOfStock ? alpha('#ef4444', 0.3) : isLowStock ? alpha('#f59e0b', 0.2) : alpha(theme.palette.divider, 0.1)}`,
         borderRadius: '12px',
         boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: 'pointer',
-        '&:hover': {
+        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+        opacity: isOutOfStock ? 0.6 : 1,
+        '&:hover': !isOutOfStock ? {
           transform: 'translateY(-4px)',
           boxShadow: '0 12px 40px rgba(0,0,0,0.12)'
-        }
+        } : {}
       }}
-      onClick={() => onAdd(product)}
+      onClick={() => !isOutOfStock && onAdd(product)}
     >
       <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header del producto */}
@@ -200,7 +117,7 @@ const ProductCard = React.memo(({ product, onAdd, loading }) => {
           <Box sx={{ flex: 1 }}>
             <Typography variant="h6" fontWeight={700} sx={{ 
               fontSize: '0.9rem',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              background: isOutOfStock ? '#6b7280' : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               color: 'transparent'
@@ -212,9 +129,9 @@ const ProductCard = React.memo(({ product, onAdd, loading }) => {
             </Typography>
           </Box>
           <Chip 
-            label={`${product.stock} disp.`} 
+            label={isOutOfStock ? 'Agotado' : `${product.stock} disp.`} 
             size="small"
-            color={isLowStock ? 'error' : product.stock > 20 ? 'success' : 'warning'}
+            color={isOutOfStock ? 'default' : isLowStock ? 'warning' : product.stock > 20 ? 'success' : 'primary'}
             sx={{ 
               fontWeight: 600,
               fontSize: '0.65rem'
@@ -223,29 +140,31 @@ const ProductCard = React.memo(({ product, onAdd, loading }) => {
         </Box>
 
         {/* Barra de stock */}
-        <Box sx={{ mb: 2 }}>
-          <LinearProgress 
-            variant="determinate" 
-            value={stockPercentage}
-            color={isLowStock ? 'error' : product.stock > 20 ? 'success' : 'warning'}
-            sx={{ 
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: alpha(theme.palette.primary.main, 0.1)
-            }}
-          />
-        </Box>
+        {!isOutOfStock && (
+          <Box sx={{ mb: 2 }}>
+            <LinearProgress 
+              variant="determinate" 
+              value={stockPercentage}
+              color={isLowStock ? 'warning' : 'success'}
+              sx={{ 
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1)
+              }}
+            />
+          </Box>
+        )}
 
         {/* Precio y categoría */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="h5" fontWeight={800} sx={{ 
-            color: theme.palette.primary.main,
+            color: isOutOfStock ? '#6b7280' : theme.palette.primary.main,
             fontSize: '1.1rem'
           }}>
-            ${product.price.toFixed(2)}
+            ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
           </Typography>
           <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-            IVA {product.tax}% • {product.category}
+            IVA {product.tax || 16}% • {product.category || 'General'}
           </Typography>
         </Box>
 
@@ -254,9 +173,11 @@ const ProductCard = React.memo(({ product, onAdd, loading }) => {
           fullWidth
           variant="contained"
           startIcon={<Add />}
-          disabled={product.stock === 0}
+          disabled={isOutOfStock}
           sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            background: isOutOfStock ? 
+              'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)' :
+              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             fontWeight: 700,
             borderRadius: '8px',
             py: 1,
@@ -264,7 +185,7 @@ const ProductCard = React.memo(({ product, onAdd, loading }) => {
             mt: 'auto'
           }}
         >
-          Agregar al Carrito
+          {isOutOfStock ? 'Agotado' : 'Agregar al Carrito'}
         </Button>
       </CardContent>
     </Card>
@@ -315,12 +236,12 @@ const ClientCard = React.memo(({ client, selected, onSelect, loading }) => {
               height: 40
             }}
           >
-            {client.name.charAt(0)}
+            {client.name ? client.name.charAt(0).toUpperCase() : 'C'}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
               <Typography fontWeight={700} sx={{ fontSize: '0.9rem', color: '#1f2937' }}>
-                {client.name}
+                {client.name || 'Cliente'}
               </Typography>
               {client.type !== 'regular' && (
                 <Chip 
@@ -337,10 +258,10 @@ const ClientCard = React.memo(({ client, selected, onSelect, loading }) => {
               )}
             </Box>
             <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem', display: 'block' }}>
-              {client.rif}
+              {client.rif || 'Sin RIF'}
             </Typography>
             <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-              {client.phone}
+              {client.phone || 'Sin teléfono'}
             </Typography>
             {client.loyaltyPoints > 0 && (
               <Chip 
@@ -379,7 +300,7 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove, stock }) => {
               {item.name}
             </Typography>
             <Typography variant="caption" sx={{ color: '#6b7280' }}>
-              {item.code} • ${item.price.toFixed(2)} c/u
+              {item.code} • ${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'} c/u
             </Typography>
           </Box>
 
@@ -479,8 +400,9 @@ const NewSale = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [processingSale, setProcessingSale] = useState(false);
 
-  const { clients, products, loading } = useSaleData();
+  const { clients, products, loading, error } = useSaleData();
 
   const steps = [
     { label: 'Cliente', icon: <Group />, description: 'Selecciona o agrega un cliente' },
@@ -507,7 +429,7 @@ const NewSale = () => {
   // Cálculos optimizados con useMemo
   const totals = useMemo(() => {
     const subtotal = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const taxes = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity * (item.tax / 100)), 0);
+    const taxes = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
     const total = subtotal + taxes - saleData.discounts + saleData.shipping;
 
     return { subtotal, taxes, total };
@@ -546,6 +468,8 @@ const NewSale = () => {
     if (newQuantity < 1) return;
 
     const product = products.find(p => p.id === productId);
+    if (!product) return;
+
     if (newQuantity > product.stock) {
       setSnackbar({ open: true, message: '❌ Stock insuficiente', severity: 'warning' });
       return;
@@ -561,51 +485,100 @@ const NewSale = () => {
     }));
   }, [products]);
 
-  const handleCompleteSale = useCallback(() => {
-    // Simular procesamiento de venta
-    setSnackbar({ open: true, message: '🎉 Venta completada exitosamente', severity: 'success' });
-    
-    // Resetear después de 2 segundos
-    setTimeout(() => {
-      setSaleData({
-        client: null,
-        products: [],
-        paymentMethod: 'efectivo',
-        currency: 'USD',
-        exchangeRate: 36.5,
-        discounts: 0,
-        taxes: 0,
-        notes: '',
-        shipping: 0
-      });
-      setActiveStep(0);
-    }, 2000);
-  }, []);
+  const handleCompleteSale = useCallback(async () => {
+    try {
+      setProcessingSale(true);
+      
+      const response = await api.post('/sales/new-sale', saleData);
+      
+      if (response.data.success) {
+        setSnackbar({ open: true, message: '🎉 Venta completada exitosamente', severity: 'success' });
+        
+        // Resetear después de 2 segundos
+        setTimeout(() => {
+          setSaleData({
+            client: null,
+            products: [],
+            paymentMethod: 'efectivo',
+            currency: 'USD',
+            exchangeRate: 36.5,
+            discounts: 0,
+            taxes: 0,
+            notes: '',
+            shipping: 0
+          });
+          setActiveStep(0);
+          setSearchTerm('');
+          setAiSuggestions([]);
+        }, 2000);
+      } else {
+        setSnackbar({ open: true, message: '❌ Error al procesar la venta', severity: 'error' });
+      }
+    } catch (error) {
+      console.error('Error completing sale:', error);
+      setSnackbar({ open: true, message: '❌ Error de conexión', severity: 'error' });
+    } finally {
+      setProcessingSale(false);
+    }
+  }, [saleData]);
 
   // Generar sugerencias de IA
   useEffect(() => {
-    if (saleData.products.length > 0) {
-      const suggestions = [
-        {
-          id: 1,
-          type: 'upsell',
-          message: 'Los clientes que compran café también suelen comprar azúcar',
-          product: products.find(p => p.id === 2),
-          confidence: 0.85
-        },
-        {
+    if (saleData.products.length > 0 && products.length > 0) {
+      const suggestions = [];
+      
+      // Sugerencia de upsell basada en productos populares
+      if (saleData.products.some(p => p.category?.toLowerCase().includes('café') || p.name?.toLowerCase().includes('café'))) {
+        const sugarProduct = products.find(p => p.name?.toLowerCase().includes('azúcar') && p.stock > 0);
+        if (sugarProduct && !saleData.products.some(p => p.id === sugarProduct.id)) {
+          suggestions.push({
+            id: 1,
+            type: 'upsell',
+            message: 'Los clientes que compran café también suelen comprar azúcar',
+            product: sugarProduct,
+            confidence: 0.85
+          });
+        }
+      }
+
+      // Sugerencia de descuento por volumen
+      if (totals.subtotal > 30) {
+        suggestions.push({
           id: 2,
           type: 'discount',
           message: 'Aplica un 10% de descuento por compra mayor a $30',
           action: 'Aplicar descuento',
           confidence: 0.72
-        }
-      ].filter(s => s);
+        });
+      }
+
       setAiSuggestions(suggestions);
     } else {
       setAiSuggestions([]);
     }
-  }, [saleData.products, products]);
+  }, [saleData.products, products, totals.subtotal]);
+
+  // Filtrar productos y clientes
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) return products;
+    
+    return products.filter(product => 
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.barcode?.includes(searchTerm)
+    );
+  }, [products, searchTerm]);
+
+  const filteredClients = useMemo(() => {
+    if (!searchTerm) return clients;
+    
+    return clients.filter(client => 
+      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.rif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.phone?.includes(searchTerm)
+    );
+  }, [clients, searchTerm]);
 
   // Renderizado de pasos
   const renderClientStep = () => (
@@ -614,6 +587,12 @@ const NewSale = () => {
         <Group sx={{ color: theme.palette.primary.main }} />
         Seleccionar Cliente
       </Typography>
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }}>
+          {error}
+        </Alert>
+      )}
       
       <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
@@ -650,22 +629,35 @@ const NewSale = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
-        {clients.filter(client => 
-          client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.phone.includes(searchTerm)
-        ).map((client) => (
-          <Grid item xs={12} md={6} key={client.id}>
-            <ClientCard 
-              client={client}
-              selected={saleData.client?.id === client.id}
-              onSelect={(client) => setSaleData(prev => ({ ...prev, client }))}
-              loading={loading}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {loading ? (
+        <Grid container spacing={2}>
+          {[1, 2, 3].map((item) => (
+            <Grid item xs={12} md={6} key={item}>
+              <Skeleton variant="rectangular" height={100} sx={{ borderRadius: '12px' }} />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Grid container spacing={2}>
+          {filteredClients.map((client) => (
+            <Grid item xs={12} md={6} key={client.id}>
+              <ClientCard 
+                client={client}
+                selected={saleData.client?.id === client.id}
+                onSelect={(client) => setSaleData(prev => ({ ...prev, client }))}
+                loading={false}
+              />
+            </Grid>
+          ))}
+          {filteredClients.length === 0 && (
+            <Grid item xs={12}>
+              <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                No se encontraron clientes. Puedes crear uno nuevo.
+              </Alert>
+            </Grid>
+          )}
+        </Grid>
+      )}
 
       {saleData.client && (
         <Alert severity="success" sx={{ mt: 2, borderRadius: '8px' }}>
@@ -686,6 +678,12 @@ const NewSale = () => {
         <ShoppingCart sx={{ color: theme.palette.primary.main }} />
         Agregar Productos
       </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }}>
+          {error}
+        </Alert>
+      )}
 
       <Grid container spacing={3}>
         {/* Barra de búsqueda */}
@@ -717,28 +715,37 @@ const NewSale = () => {
         {/* Lista de productos */}
         <Grid item xs={12} md={8}>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: '#1f2937' }}>
-            Productos Disponibles ({products.filter(p => 
-              p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              p.category.toLowerCase().includes(searchTerm.toLowerCase())
-            ).length})
+            Productos Disponibles ({filteredProducts.length})
           </Typography>
           
-          <Grid container spacing={2}>
-            {products.filter(product => 
-              product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              product.category.toLowerCase().includes(searchTerm.toLowerCase())
-            ).map((product) => (
-              <Grid item xs={12} sm={6} md={4} key={product.id}>
-                <ProductCard 
-                  product={product} 
-                  onAdd={handleAddProduct}
-                  loading={loading}
-                />
-              </Grid>
-            ))}
-          </Grid>
+          {loading ? (
+            <Grid container spacing={2}>
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <Grid item xs={12} sm={6} md={4} key={item}>
+                  <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '12px' }} />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Grid container spacing={2}>
+              {filteredProducts.map((product) => (
+                <Grid item xs={12} sm={6} md={4} key={product.id}>
+                  <ProductCard 
+                    product={product} 
+                    onAdd={handleAddProduct}
+                    loading={false}
+                  />
+                </Grid>
+              ))}
+              {filteredProducts.length === 0 && (
+                <Grid item xs={12}>
+                  <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                    No se encontraron productos con los criterios de búsqueda.
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
+          )}
         </Grid>
 
         {/* Carrito de compras */}
@@ -1118,6 +1125,7 @@ const NewSale = () => {
                 size="large"
                 startIcon={<PointOfSale />}
                 onClick={handleCompleteSale}
+                disabled={processingSale}
                 sx={{ 
                   px: 4, 
                   py: 1.5, 
@@ -1125,7 +1133,7 @@ const NewSale = () => {
                   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
                 }}
               >
-                Completar Venta
+                {processingSale ? 'Procesando...' : 'Completar Venta'}
               </Button>
               <Button
                 variant="outlined"
