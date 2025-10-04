@@ -219,11 +219,11 @@ const useDashboardData = (timeRange = 'week', activeTab = 0) => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [timeRange, activeTab]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, timeRange, activeTab]);
+  }, [fetchData]);
 
   return { data, loading, error, refetch: fetchData };
 };
@@ -411,7 +411,7 @@ const StatCard = React.memo(({
 const ChannelPerformance = React.memo(({ channel, loading = false }) => {
   const IconComponent = channel?.icon;
   
-  if (loading || !channel) {
+  if (loading) {
     return (
       <Card sx={{ 
         p: 2, 
@@ -1083,66 +1083,62 @@ const Dashboard = () => {
   }, [showNotification]);
 
   // Memoizar valores computados
-  const mainMetrics = useMemo(() => {
-    if (!dashboardData) return [];
-    
-    return [
-      {
-        icon: AttachMoney,
-        title: "Ingresos Totales",
-        value: dashboardData.overview?.revenue?.current || 0,
-        change: dashboardData.overview?.revenue?.growth || 0,
-        subtitle: "Ingresos mensuales",
-        color: "#10b981",
-        target: dashboardData.overview?.revenue?.target
-      },
-      {
-        icon: People,
-        title: "Clientes Activos",
-        value: dashboardData.overview?.customers?.current || 0,
-        change: dashboardData.overview?.customers?.growth || 0,
-        subtitle: "Base de clientes",
-        color: "#2563eb",
-        target: dashboardData.overview?.customers?.target
-      },
-      {
-        icon: TrendingUp,
-        title: "Tasa Conversión",
-        value: dashboardData.overview?.conversion?.current || 0,
-        change: dashboardData.overview?.conversion?.growth || 0,
-        subtitle: "Eficiencia de ventas",
-        color: "#f59e0b",
-        target: dashboardData.overview?.conversion?.target
-      },
-      {
-        icon: Chat,
-        title: "Interacciones",
-        value: dashboardData.overview?.messages?.current || 0,
-        change: dashboardData.overview?.messages?.growth || 0,
-        subtitle: "Mensajes hoy",
-        color: "#8b5cf6",
-        target: dashboardData.overview?.messages?.target
-      },
-      {
-        icon: Inventory,
-        title: "Inventario",
-        value: dashboardData.overview?.inventory?.current || 0,
-        change: dashboardData.overview?.inventory?.growth || 0,
-        subtitle: "Nivel de stock",
-        color: "#ec4899",
-        target: dashboardData.overview?.inventory?.target
-      },
-      {
-        icon: Star,
-        title: "Satisfacción",
-        value: dashboardData.overview?.satisfaction?.current || 0,
-        change: dashboardData.overview?.satisfaction?.growth || 0,
-        subtitle: "Calificación promedio",
-        color: "#06b6d4",
-        target: dashboardData.overview?.satisfaction?.target
-      }
-    ];
-  }, [dashboardData]);
+  const mainMetrics = useMemo(() => [
+    {
+      icon: AttachMoney,
+      title: "Ingresos Totales",
+      value: dashboardData?.overview?.revenue?.current,
+      change: dashboardData?.overview?.revenue?.growth,
+      subtitle: "Ingresos mensuales",
+      color: "#10b981",
+      target: dashboardData?.overview?.revenue?.target
+    },
+    {
+      icon: People,
+      title: "Clientes Activos",
+      value: dashboardData?.overview?.customers?.current,
+      change: dashboardData?.overview?.customers?.growth,
+      subtitle: "Base de clientes",
+      color: "#2563eb",
+      target: dashboardData?.overview?.customers?.target
+    },
+    {
+      icon: TrendingUp,
+      title: "Tasa Conversión",
+      value: dashboardData?.overview?.conversion?.current,
+      change: dashboardData?.overview?.conversion?.growth,
+      subtitle: "Eficiencia de ventas",
+      color: "#f59e0b",
+      target: dashboardData?.overview?.conversion?.target
+    },
+    {
+      icon: Chat,
+      title: "Interacciones",
+      value: dashboardData?.overview?.messages?.current,
+      change: dashboardData?.overview?.messages?.growth,
+      subtitle: "Mensajes hoy",
+      color: "#8b5cf6",
+      target: dashboardData?.overview?.messages?.target
+    },
+    {
+      icon: Inventory,
+      title: "Inventario",
+      value: dashboardData?.overview?.inventory?.current,
+      change: dashboardData?.overview?.inventory?.growth,
+      subtitle: "Nivel de stock",
+      color: "#ec4899",
+      target: dashboardData?.overview?.inventory?.target
+    },
+    {
+      icon: Star,
+      title: "Satisfacción",
+      value: dashboardData?.overview?.satisfaction?.current,
+      change: dashboardData?.overview?.satisfaction?.growth,
+      subtitle: "Calificación promedio",
+      color: "#06b6d4",
+      target: dashboardData?.overview?.satisfaction?.target
+    }
+  ], [dashboardData]);
 
   if (loading && !dashboardData) {
     return (
