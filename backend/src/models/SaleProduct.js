@@ -1,72 +1,31 @@
-// src/models/SaleProduct.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
 
-const SaleProduct = sequelize.define('SaleProduct', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
+const saleProductSchema = new mongoose.Schema({
   saleId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'sales',
-      key: 'id'
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Sale',
+    required: true
   },
   productId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'products',
-      key: 'id'
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true
   },
   quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 1
-    }
+    type: Number,
+    required: true,
+    min: 1
   },
   unitPrice: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
+    type: Number,
+    required: true
   },
-  total: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
-  },
-  discount: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
-  },
-  notes: {
-    type: DataTypes.TEXT
-  },
-  metadata: {
-    type: DataTypes.JSONB,
-    defaultValue: {}
-  }
-}, {
-  indexes: [
-    {
-      fields: ['saleId', 'productId'],
-      unique: true
-    }
-  ],
-  hooks: {
-    beforeSave: (saleProduct) => {
-      // Calcular total automáticamente
-      saleProduct.total = saleProduct.quantity * saleProduct.unitPrice - saleProduct.discount;
-    }
+  totalPrice: {
+    type: Number,
+    required: true
   }
 });
 
-// Relaciones
-SaleProduct.belongsTo(require('./Sale'), { foreignKey: 'saleId' });
-SaleProduct.belongsTo(require('./Product'), { foreignKey: 'productId' });
+saleProductSchema.index({ saleId: 1, productId: 1 });
 
-module.exports = SaleProduct;
+module.exports = mongoose.model('SaleProduct', saleProductSchema);
