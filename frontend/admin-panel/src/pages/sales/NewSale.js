@@ -30,6 +30,8 @@ const useSaleData = () => {
       setLoading(true);
       setError(null);
       
+      console.log('📡 Cargando datos de venta...');
+      
       const response = await api.get('/api/sales/sale-data');
       
       if (response.data.success) {
@@ -39,24 +41,8 @@ const useSaleData = () => {
         setError(response.data.message || 'Error al cargar datos');
       }
     } catch (err) {
-      setError('Error de conexión');
-      // Datos de fallback
-      setClients([{
-        id: 1,
-        name: 'Cliente General',
-        rif: 'V-00000000-0', 
-        phone: '0000000000',
-        type: 'regular'
-      }]);
-      setProducts([{
-        id: 1,
-        name: 'Producto de Ejemplo',
-        code: 'PROD-001',
-        price: 10.00,
-        stock: 100,
-        category: 'General',
-        tax: 16
-      }]);
+      console.error('Error:', err);
+      setError('No se pudo conectar con el servidor');
     } finally {
       setLoading(false);
     }
@@ -82,6 +68,15 @@ const useSaleData = () => {
 
   return { clients, products, loading, error, loadData, createClient };
 };
+
+// Componente principal - AGREGAR DEBUG DEL USER
+const NewSale = () => {
+  const theme = useTheme();
+  const { user } = useAuth();
+  
+  // ✅ DEBUG DEL USER
+  console.log('🔍 USER EN NEW SALE:', user);
+  console.log('🔍 businessId:', user?.businessId);
 
 // Componente Principal
 const NewSale = () => {
