@@ -86,9 +86,9 @@ const useDashboardData = (timeRange) => {
       { name: 'Email', value: 18, growth: 5, color: '#EA4335', icon: Email }
     ],
     analytics: {
-      revenueData: [12000, 19000, 15000, 22000, 18000, 23450, 28000],
-      customerData: [25, 30, 28, 35, 40, 45, 48],
-      conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4]
+      revenueData: [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000],
+      customerData: [25, 30, 28, 35, 40, 45, 48, 52, 55, 58, 62, 65],
+      conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4, 3.2, 3.6, 3.8, 4.0, 4.2]
     },
     insights: [
       {
@@ -510,7 +510,8 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
 });
 
 const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
-  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000];
+  // Asegurarnos de que siempre haya datos para mostrar
+  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
   const maxValue = Math.max(...revenueData);
 
   if (loading) {
@@ -562,40 +563,52 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
           </Box>
         </Box>
 
-        <Box sx={{ height: 300, display: 'flex', alignItems: 'end', gap: 2, mb: 3 }}>
+        <Box sx={{ height: 300, display: 'flex', alignItems: 'end', gap: 2, mb: 3, px: 2 }}>
           {revenueData.map((value, index) => (
             <Tooltip key={index} title={`$${value.toLocaleString()}`} arrow>
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Box sx={{ 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                height: '100%'
+              }}>
                 <Box
                   sx={{
-                    width: '80%',
+                    width: '70%',
+                    minWidth: '12px',
                     height: `${(value / maxValue) * 100}%`,
-                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.6) 100%)',
-                    borderRadius: '4px',
+                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
+                    borderRadius: '4px 4px 0 0',
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'scale(1.05)',
-                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)'
+                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 1) 100%)'
                     }
                   }}
                 />
-                <Typography variant="caption" sx={{ mt: 1, fontWeight: 600, color: '#6b7280' }}>
-                  {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][index]}
+                <Typography variant="caption" sx={{ 
+                  mt: 1, 
+                  fontWeight: 600, 
+                  color: '#6b7280',
+                  fontSize: '0.7rem'
+                }}>
+                  {index + 1}
                 </Typography>
               </Box>
             </Tooltip>
           ))}
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2 }}>
           <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            Evolución de ingresos semanal
+            Evolución de ingresos - Últimos {revenueData.length} períodos
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
             <Typography variant="body2" fontWeight={600} sx={{ color: '#10b981' }}>
-              +14.6% crecimiento
+              +{((revenueData[revenueData.length - 1] - revenueData[0]) / revenueData[0] * 100).toFixed(1)}% crecimiento
             </Typography>
           </Box>
         </Box>
