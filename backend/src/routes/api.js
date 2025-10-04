@@ -7,19 +7,167 @@ const Interaction = require('../models/Interaction');
 const inventoryRoutes = require('./inventory');
 const accountsRoutes = require('./accounts'); 
 const financialRoutes = require('./financial');
-
-// ✅ CORREGIDO: Importar rutas correctamente
 const authRoutes = require('./auth');
-const salesRoutes = require('./sales');
-const customersRoutes = require('./customers');
 
-// ✅ CORREGIDO: Usar router.use() correctamente
+// Usar rutas existentes
 router.use('/inventory', inventoryRoutes);
 router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
 router.use('/auth', authRoutes);
-router.use('/sales', salesRoutes);
-router.use('/customers', customersRoutes);
+
+// ✅ RUTAS DE VENTAS INTEGRADAS DIRECTAMENTE - NO MÁS ARCHIVOS SEPARADOS
+
+// Obtener datos para nueva venta
+router.get('/sales/sale-data', (req, res) => {
+  try {
+    console.log('📋 Cargando datos de venta...');
+    
+    const clients = [
+      {
+        id: 1,
+        name: 'Cliente General',
+        rif: 'V-00000000-0',
+        phone: '0000000000',
+        email: null,
+        address: null,
+        type: 'regular'
+      }
+    ];
+
+    const products = [
+      {
+        id: 1,
+        name: 'Producto Ejemplo 1',
+        code: 'PROD-001',
+        price: 10.00,
+        cost: 5.00,
+        stock: 100,
+        category: 'General',
+        tax: 16,
+        barcode: '1234567890123',
+        supplier: 'Proveedor Principal',
+        minStock: 10
+      },
+      {
+        id: 2,
+        name: 'Producto Ejemplo 2',
+        code: 'PROD-002', 
+        price: 15.50,
+        cost: 8.00,
+        stock: 50,
+        category: 'General',
+        tax: 16,
+        barcode: '1234567890124',
+        supplier: 'Proveedor Secundario',
+        minStock: 5
+      }
+    ];
+
+    res.json({
+      success: true,
+      clients,
+      products
+    });
+
+  } catch (error) {
+    console.error('Error en /sales/sale-data:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al cargar datos' 
+    });
+  }
+});
+
+// Crear nuevo cliente rápido
+router.post('/sales/quick-client', (req, res) => {
+  try {
+    const { name, phone, rif } = req.body;
+
+    console.log('👤 Creando cliente:', { name, phone, rif });
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El nombre del cliente es obligatorio'
+      });
+    }
+
+    const newClient = {
+      id: Date.now(),
+      name: name.trim(),
+      phone: phone?.trim() || '0000000000',
+      rif: rif?.trim() || 'V-00000000-0',
+      email: null,
+      address: null,
+      type: 'regular'
+    };
+
+    console.log('✅ Cliente creado exitosamente:', newClient);
+
+    res.json({
+      success: true,
+      client: newClient
+    });
+
+  } catch (error) {
+    console.error('Error en /sales/quick-client:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al crear cliente' 
+    });
+  }
+});
+
+// Nueva venta
+router.post('/sales/new-sale', (req, res) => {
+  try {
+    const { client, products, paymentMethod, discounts, notes, shipping } = req.body;
+
+    console.log('💰 Procesando venta:', {
+      client: client?.name,
+      products: products?.length
+    });
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La venta debe contener al menos un producto'
+      });
+    }
+
+    const subtotal = products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
+    const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
+
+    const sale = {
+      id: Date.now(),
+      totalAmount: total,
+      subtotalAmount: subtotal,
+      taxAmount: taxes,
+      discountAmount: discounts || 0,
+      shippingAmount: shipping || 0,
+      paymentMethod,
+      status: 'completed',
+      notes: notes || '',
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('✅ Venta completada exitosamente:', sale.id);
+
+    res.json({ 
+      success: true, 
+      sale,
+      message: 'Venta completada exitosamente' 
+    });
+
+  } catch (error) {
+    console.error('Error en /sales/new-sale:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al procesar la venta' 
+    });
+  }
+});
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -179,7 +327,7 @@ router.get('/stats', async (req, res) => {
       business.count(),
       user.count(),
       product.count(),
-      interaction.countByBusiness(1) // Using first business for demo
+      interaction.countByBusiness(1)
     ]);
 
     res.json({
@@ -221,134 +369,17 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     status: 'active',
     endpoints: {
-      auth: ['POST /api/auth/login', 'POST /api/auth/register'],
-      sales: ['GET /api/sales/sale-data', 'POST /api/sales/new-sale', 'POST /api/sales/quick-client'],
+      sales: [
+        'GET /api/sales/sale-data',
+        'POST /api/sales/quick-client', 
+        'POST /api/sales/new-sale'
+      ],
       businesses: ['GET /api/businesses', 'POST /api/businesses', 'PUT /api/businesses/:id', 'DELETE /api/businesses/:id'],
       users: ['GET /api/users', 'POST /api/users'],
       products: ['GET /api/products', 'POST /api/products'],
       interactions: ['GET /api/interactions', 'POST /api/interactions'],
       system: ['GET /api/health', 'GET /api/stats', 'GET /api/test-db']
     }
-  });
-});
-
-// ✅ RUTAS DE VENTAS DIRECTAS - ELIMINAR CUANDO FUNCIONE
-router.get('/sales/sale-data', (req, res) => {
-  console.log('📋 Ruta directa de sale-data llamada');
-  
-  const clients = [
-    {
-      id: 1,
-      name: 'Cliente General',
-      rif: 'V-00000000-0',
-      phone: '0000000000',
-      email: null,
-      address: null,
-      type: 'regular'
-    }
-  ];
-
-  const products = [
-    {
-      id: 1,
-      name: 'Producto Ejemplo 1',
-      code: 'PROD-001',
-      price: 10.00,
-      cost: 5.00,
-      stock: 100,
-      category: 'General',
-      tax: 16,
-      barcode: '1234567890123',
-      supplier: 'Proveedor Principal',
-      minStock: 10
-    },
-    {
-      id: 2,
-      name: 'Producto Ejemplo 2',
-      code: 'PROD-002',
-      price: 15.50,
-      cost: 8.00,
-      stock: 50,
-      category: 'General',
-      tax: 16,
-      barcode: '1234567890124',
-      supplier: 'Proveedor Secundario', 
-      minStock: 5
-    }
-  ];
-
-  res.json({
-    success: true,
-    clients,
-    products
-  });
-});
-
-router.post('/sales/quick-client', (req, res) => {
-  console.log('👤 Ruta directa de quick-client llamada:', req.body);
-  
-  const { name, phone, rif } = req.body;
-
-  if (!name || !name.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: 'El nombre del cliente es obligatorio'
-    });
-  }
-
-  const newClient = {
-    id: Date.now(),
-    name: name.trim(),
-    phone: phone?.trim() || '0000000000',
-    rif: rif?.trim() || 'V-00000000-0',
-    email: null,
-    address: null,
-    type: 'regular'
-  };
-
-  console.log('✅ Cliente creado (ruta directa):', newClient);
-
-  res.json({
-    success: true,
-    client: newClient
-  });
-});
-
-router.post('/sales/new-sale', (req, res) => {
-  console.log('💰 Ruta directa de new-sale llamada:', req.body);
-  
-  const { client, products, paymentMethod, discounts, notes, shipping } = req.body;
-
-  if (!products || !Array.isArray(products) || products.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'La venta debe contener al menos un producto'
-    });
-  }
-
-  const subtotal = products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
-  const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
-
-  const sale = {
-    id: Date.now(),
-    totalAmount: total,
-    subtotalAmount: subtotal,
-    taxAmount: taxes,
-    discountAmount: discounts || 0,
-    shippingAmount: shipping || 0,
-    paymentMethod,
-    status: 'completed',
-    notes: notes || '',
-    createdAt: new Date().toISOString()
-  };
-
-  console.log('✅ Venta completada (ruta directa):', sale.id);
-
-  res.json({ 
-    success: true, 
-    sale,
-    message: 'Venta completada exitosamente' 
   });
 });
 
