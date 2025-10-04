@@ -9,81 +9,76 @@ const accountsRoutes = require('./accounts');
 const financialRoutes = require('./financial');
 const authRoutes = require('./auth');
 
+// ✅ AGREGAR IMPORTACIONES MONGODB
+const mongoose = require('mongoose');
+const Customer = require('../models/Customer');
+const Sale = require('../models/Sale');
+const SaleProduct = require('../models/SaleProduct');
+
 // Usar rutas existentes
 router.use('/inventory', inventoryRoutes);
 router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
 router.use('/auth', authRoutes);
 
-// ✅ RUTAS DE VENTAS INTEGRADAS DIRECTAMENTE - NO MÁS ARCHIVOS SEPARADOS
+// ✅ RUTAS MONGODB REALES PARA VENTAS
 
-// Obtener datos para nueva venta
-router.get('/sales/sale-data', (req, res) => {
+// Obtener datos para nueva venta - MONGODB REAL
+router.get('/sales/sale-data', async (req, res) => {
   try {
-    console.log('📋 Cargando datos de venta...');
+    console.log('📋 Cargando datos de venta desde MongoDB...');
     
-    const clients = [
-      {
-        id: 1,
-        name: 'Cliente General',
-        rif: 'V-00000000-0',
-        phone: '0000000000',
-        email: null,
-        address: null,
-        type: 'regular'
-      }
-    ];
+    // Usar businessId temporal para pruebas - reemplazar con req.user.businessId cuando el auth funcione
+    const businessId = '000000000000000000000001';
 
-    const products = [
-      {
-        id: 1,
-        name: 'Producto Ejemplo 1',
-        code: 'PROD-001',
-        price: 10.00,
-        cost: 5.00,
-        stock: 100,
-        category: 'General',
-        tax: 16,
-        barcode: '1234567890123',
-        supplier: 'Proveedor Principal',
-        minStock: 10
-      },
-      {
-        id: 2,
-        name: 'Producto Ejemplo 2',
-        code: 'PROD-002', 
-        price: 15.50,
-        cost: 8.00,
-        stock: 50,
-        category: 'General',
-        tax: 16,
-        barcode: '1234567890124',
-        supplier: 'Proveedor Secundario',
-        minStock: 5
-      }
-    ];
+    const [clients, products] = await Promise.all([
+      Customer.find({ businessId }).lean(),
+      Product.find({ businessId, active: true }).lean()
+    ]);
+
+    console.log(`✅ Datos cargados: ${clients.length} clientes, ${products.length} productos`);
 
     res.json({
       success: true,
-      clients,
-      products
+      clients: clients.map(client => ({
+        id: client._id,
+        name: client.name,
+        rif: client.rif,
+        phone: client.phone,
+        email: client.email,
+        address: client.address,
+        type: client.customerType || 'regular'
+      })),
+      products: products.map(product => ({
+        id: product._id,
+        name: product.name,
+        code: product.code,
+        price: product.price,
+        cost: product.cost,
+        stock: product.stock,
+        category: product.category,
+        tax: product.tax,
+        barcode: product.barcode,
+        supplier: product.supplier,
+        minStock: product.minStock
+      }))
     });
 
   } catch (error) {
-    console.error('Error en /sales/sale-data:', error);
+    console.error('❌ Error en /sales/sale-data:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Error al cargar datos' 
+      message: 'Error al cargar datos: ' + error.message 
     });
   }
 });
 
-// Crear nuevo cliente rápido
-router.post('/sales/quick-client', (req, res) => {
+// Crear nuevo cliente rápido - MONGODB REAL
+router.post('/sales/quick-client', async (req, res) => {
   try {
     const { name, phone, rif } = req.body;
 
-    console.log('👤 Creando cliente:', { name, phone, rif });
+    console.log('👤 Creando cliente en MongoDB:', { name, phone, rif });
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -92,80 +87,140 @@ router.post('/sales/quick-client', (req, res) => {
       });
     }
 
-    const newClient = {
-      id: Date.now(),
-      name: name.trim(),
-      phone: phone?.trim() || '0000000000',
-      rif: rif?.trim() || 'V-00000000-0',
-      email: null,
-      address: null,
-      type: 'regular'
-    };
+    // Usar businessId temporal para pruebas
+    const businessId = '000000000000000000000001';
 
-    console.log('✅ Cliente creado exitosamente:', newClient);
+    const client = new Customer({
+      businessId,
+      name: name.trim(),
+      phone: phone?.trim() || null,
+      rif: rif?.trim() || null,
+      customerType: 'regular',
+      status: 'active'
+    });
+
+    await client.save();
+
+    console.log('✅ Cliente creado en MongoDB:', client._id);
 
     res.json({
       success: true,
-      client: newClient
+      client: {
+        id: client._id,
+        name: client.name,
+        rif: client.rif,
+        phone: client.phone,
+        email: client.email,
+        address: client.address,
+        type: 'regular'
+      }
     });
 
   } catch (error) {
-    console.error('Error en /sales/quick-client:', error);
+    console.error('❌ Error en /sales/quick-client:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Error al crear cliente' 
+      message: 'Error al crear cliente: ' + error.message 
     });
   }
 });
 
-// Nueva venta
-router.post('/sales/new-sale', (req, res) => {
+// Nueva venta - MONGODB REAL
+router.post('/sales/new-sale', async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    const { client, products, paymentMethod, discounts, notes, shipping } = req.body;
+    const { client, products, paymentMethod, currency, exchangeRate, discounts, notes, shipping } = req.body;
 
-    console.log('💰 Procesando venta:', {
-      client: client?.name,
-      products: products?.length
-    });
+    console.log('💰 Procesando venta en MongoDB...');
+
+    // Usar businessId y userId temporales
+    const businessId = '000000000000000000000001';
+    const userId = '000000000000000000000001';
 
     if (!products || !Array.isArray(products) || products.length === 0) {
+      await session.abortTransaction();
       return res.status(400).json({
         success: false,
         message: 'La venta debe contener al menos un producto'
       });
     }
 
+    // Calcular totales
     const subtotal = products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
     const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
 
-    const sale = {
-      id: Date.now(),
+    // Crear venta
+    const sale = new Sale({
+      businessId,
+      customerId: client?.id || null,
       totalAmount: total,
       subtotalAmount: subtotal,
       taxAmount: taxes,
       discountAmount: discounts || 0,
       shippingAmount: shipping || 0,
       paymentMethod,
+      currency,
+      exchangeRate: currency === 'VES' ? exchangeRate : null,
       status: 'completed',
       notes: notes || '',
-      createdAt: new Date().toISOString()
-    };
+      createdBy: userId
+    });
 
-    console.log('✅ Venta completada exitosamente:', sale.id);
+    await sale.save({ session });
+
+    // Crear productos de la venta
+    for (const item of products) {
+      const saleProduct = new SaleProduct({
+        saleId: sale._id,
+        productId: item.id,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        totalPrice: item.price * item.quantity
+      });
+
+      await saleProduct.save({ session });
+
+      // Actualizar stock
+      await Product.findByIdAndUpdate(
+        item.id,
+        { $inc: { stock: -item.quantity } },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    console.log('✅ Venta completada en MongoDB:', sale._id);
 
     res.json({ 
       success: true, 
-      sale,
+      sale: {
+        id: sale._id,
+        totalAmount: sale.totalAmount,
+        subtotalAmount: sale.subtotalAmount,
+        taxAmount: sale.taxAmount,
+        discountAmount: sale.discountAmount,
+        shippingAmount: sale.shippingAmount,
+        paymentMethod: sale.paymentMethod,
+        currency: sale.currency,
+        status: sale.status,
+        notes: sale.notes,
+        createdAt: sale.createdAt
+      },
       message: 'Venta completada exitosamente' 
     });
 
   } catch (error) {
-    console.error('Error en /sales/new-sale:', error);
+    await session.abortTransaction();
+    console.error('❌ Error en /sales/new-sale:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Error al procesar la venta' 
+      message: 'Error al procesar la venta: ' + error.message 
     });
+  } finally {
+    session.endSession();
   }
 });
 
