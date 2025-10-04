@@ -232,4 +232,124 @@ router.get('/', (req, res) => {
   });
 });
 
+// ✅ RUTAS DE VENTAS DIRECTAS - ELIMINAR CUANDO FUNCIONE
+router.get('/sales/sale-data', (req, res) => {
+  console.log('📋 Ruta directa de sale-data llamada');
+  
+  const clients = [
+    {
+      id: 1,
+      name: 'Cliente General',
+      rif: 'V-00000000-0',
+      phone: '0000000000',
+      email: null,
+      address: null,
+      type: 'regular'
+    }
+  ];
+
+  const products = [
+    {
+      id: 1,
+      name: 'Producto Ejemplo 1',
+      code: 'PROD-001',
+      price: 10.00,
+      cost: 5.00,
+      stock: 100,
+      category: 'General',
+      tax: 16,
+      barcode: '1234567890123',
+      supplier: 'Proveedor Principal',
+      minStock: 10
+    },
+    {
+      id: 2,
+      name: 'Producto Ejemplo 2',
+      code: 'PROD-002',
+      price: 15.50,
+      cost: 8.00,
+      stock: 50,
+      category: 'General',
+      tax: 16,
+      barcode: '1234567890124',
+      supplier: 'Proveedor Secundario', 
+      minStock: 5
+    }
+  ];
+
+  res.json({
+    success: true,
+    clients,
+    products
+  });
+});
+
+router.post('/sales/quick-client', (req, res) => {
+  console.log('👤 Ruta directa de quick-client llamada:', req.body);
+  
+  const { name, phone, rif } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'El nombre del cliente es obligatorio'
+    });
+  }
+
+  const newClient = {
+    id: Date.now(),
+    name: name.trim(),
+    phone: phone?.trim() || '0000000000',
+    rif: rif?.trim() || 'V-00000000-0',
+    email: null,
+    address: null,
+    type: 'regular'
+  };
+
+  console.log('✅ Cliente creado (ruta directa):', newClient);
+
+  res.json({
+    success: true,
+    client: newClient
+  });
+});
+
+router.post('/sales/new-sale', (req, res) => {
+  console.log('💰 Ruta directa de new-sale llamada:', req.body);
+  
+  const { client, products, paymentMethod, discounts, notes, shipping } = req.body;
+
+  if (!products || !Array.isArray(products) || products.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'La venta debe contener al menos un producto'
+    });
+  }
+
+  const subtotal = products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
+  const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
+
+  const sale = {
+    id: Date.now(),
+    totalAmount: total,
+    subtotalAmount: subtotal,
+    taxAmount: taxes,
+    discountAmount: discounts || 0,
+    shippingAmount: shipping || 0,
+    paymentMethod,
+    status: 'completed',
+    notes: notes || '',
+    createdAt: new Date().toISOString()
+  };
+
+  console.log('✅ Venta completada (ruta directa):', sale.id);
+
+  res.json({ 
+    success: true, 
+    sale,
+    message: 'Venta completada exitosamente' 
+  });
+});
+
 module.exports = router;
