@@ -22,12 +22,10 @@ import {
   Paper,
   Stack,
   Divider,
-  Avatar,
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
-  Badge
+  ListItemText
 } from '@mui/material';
 import {
   TrendingUp,
@@ -41,10 +39,7 @@ import {
   SmartToy,
   Timeline,
   BarChart,
-  PieChart,
   Refresh,
-  Download,
-  Share,
   WhatsApp,
   Instagram,
   Facebook,
@@ -53,54 +48,18 @@ import {
   ArrowDownward,
   RocketLaunch,
   Star,
-  GppGood,
-  AccessTime,
-  VerifiedUser,
-  PointOfSale,
-  AccountBalance,
-  AutoGraph,
-  Inventory2,
-  Campaign,
   Schedule,
-  Warning,
-  CheckCircle,
-  Error as ErrorIcon,
-  LocalOffer,
   Receipt,
   Group,
-  Message,
-  AccountCircle,
-  CalendarToday,
-  ArrowForward
+  Message
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-
-// 🔥 CONSTANTES Y CONFIGURACIÓN
-const API_ENDPOINTS = {
-  metrics: '/api/analytics/metrics',
-  financial: '/api/financial/dashboard',
-  conversions: '/api/analytics/conversions',
-  sales: '/api/sales',
-  insights: '/api/ai/insights'
-};
 
 // 🔥 HOOK PERSONALIZADO PARA DATOS DEL DASHBOARD
 const useDashboardData = (timeRange = 'week') => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
-
-  const fetchWithAuth = async (url) => {
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (!response.ok) throw new Error('Error fetching data');
-    return response.json();
-  };
 
   const getFallbackData = () => ({
     overview: {
@@ -214,17 +173,10 @@ const useDashboardData = (timeRange = 'week') => {
       setLoading(true);
       setError(null);
       
-      // TODO: Reemplazar con llamadas reales a tus APIs cuando estén listas
-      // const [metrics, financial, conversions] = await Promise.all([
-      //   fetchWithAuth(`${API_ENDPOINTS.metrics}?range=${timeRange}`),
-      //   fetchWithAuth(`${API_ENDPOINTS.financial}?range=${timeRange}`),
-      //   fetchWithAuth(`${API_ENDPOINTS.conversions}?range=${timeRange}`)
-      // ]);
-
       // Simular carga de datos
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Por ahora usamos datos mock, pero estructurados para tu API
+      // Usar datos de fallback por ahora
       setData(getFallbackData());
     } catch (err) {
       setError(err.message);
@@ -281,7 +233,6 @@ const StatCard = React.memo(({
   subtitle, 
   icon: Icon, 
   color = '#2563eb', 
-  chart,
   target,
   loading = false 
 }) => {
@@ -312,7 +263,7 @@ const StatCard = React.memo(({
         border: '1px solid #f1f5f9',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
       }}>
-        <Skeleton variant="rectangular" height="100%" />
+        <Skeleton variant="rectangular" height={160} />
       </Card>
     );
   }
@@ -408,217 +359,6 @@ const StatCard = React.memo(({
   );
 });
 
-// 🔥 GRAFICO CORREGIDO - BARRAS DE ABAJO HACIA ARRIBA
-const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
-  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
-  const interactionData = data?.interactionVolume || [45, 52, 48, 61, 55, 49, 67, 58, 62, 71, 65, 69];
-  const maxRevenue = Math.max(...revenueData);
-  const maxInteractions = Math.max(...interactionData);
-
-  // Etiquetas según el rango de tiempo
-  const getLabels = () => {
-    switch (timeRange) {
-      case 'week':
-        return ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-      case 'month':
-        return ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
-      case 'quarter':
-        return ['Mes 1', 'Mes 2', 'Mes 3'];
-      case 'year':
-        return ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      default:
-        return revenueData.map((_, i) => `Día ${i + 1}`);
-    }
-  };
-
-  const labels = getLabels();
-
-  if (loading) {
-    return (
-      <Card sx={{ 
-        p: 3, 
-        height: 400,
-        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-        border: '1px solid #f1f5f9',
-        borderRadius: '16px'
-      }}>
-        <Skeleton variant="rectangular" height="100%" />
-      </Card>
-    );
-  }
-
-  return (
-    <Card sx={{ 
-      height: '100%',
-      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-      border: '1px solid #f1f5f9',
-      borderRadius: '16px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-    }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Box>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
-              📊 Rendimiento General
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem' }}>
-              Ingresos vs Interacciones - Comparativa visual
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {['week', 'month', 'quarter', 'year'].map((range) => (
-              <Chip
-                key={range}
-                label={
-                  range === 'week' ? 'Semana' :
-                  range === 'month' ? 'Mes' : 
-                  range === 'quarter' ? 'Trimestre' : 'Año'
-                }
-                variant={timeRange === range ? 'filled' : 'outlined'}
-                onClick={() => onTimeRangeChange(range)}
-                size="small"
-                sx={{
-                  background: timeRange === range ? 
-                    'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'transparent',
-                  color: timeRange === range ? 'white' : '#6b7280',
-                  borderColor: timeRange === range ? 'transparent' : '#e5e7eb',
-                  fontSize: '0.75rem'
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Gráfico de Barras Corregido - De abajo hacia arriba */}
-        <Box sx={{ height: 250, display: 'flex', alignItems: 'end', gap: 1, mb: 3, px: 1 }}>
-          {revenueData.slice(0, labels.length).map((value, index) => (
-            <Box key={index} sx={{ 
-              flex: 1, 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
-              height: '100%',
-              justifyContent: 'flex-end'
-            }}>
-              {/* Barra de Ingresos */}
-              <Tooltip title={`Ingresos: $${value.toLocaleString()}`} arrow>
-                <Box
-                  sx={{
-                    width: '70%',
-                    minWidth: '12px',
-                    height: `${(value / maxRevenue) * 100}%`,
-                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    marginBottom: '2px',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 1) 100%)'
-                    }
-                  }}
-                />
-              </Tooltip>
-
-              {/* Barra de Interacciones */}
-              <Tooltip title={`Interacciones: ${interactionData[index]}`} arrow>
-                <Box
-                  sx={{
-                    width: '70%',
-                    minWidth: '12px',
-                    height: `${(interactionData[index] / maxInteractions) * 60}%`,
-                    background: 'linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 0.8) 100%)',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      background: 'linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 1) 100%)'
-                    }
-                  }}
-                />
-              </Tooltip>
-
-              <Typography variant="caption" sx={{ 
-                mt: 1, 
-                fontWeight: 600, 
-                color: '#6b7280',
-                fontSize: '0.7rem'
-              }}>
-                {labels[index]}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Leyenda del Gráfico */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1, mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 12, height: 12, backgroundColor: '#2563eb', borderRadius: '2px' }} />
-              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-                Ingresos ($)
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 12, height: 12, backgroundColor: '#10b981', borderRadius: '2px' }} />
-              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-                Interacciones
-              </Typography>
-            </Box>
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
-            <Typography variant="body2" fontWeight={600} sx={{ color: '#10b981', fontSize: '0.8rem' }}>
-              +{((revenueData[revenueData.length - 1] - revenueData[0]) / revenueData[0] * 100).toFixed(1)}% crecimiento
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Información Adicional */}
-        <Box sx={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-          gap: 2,
-          p: 2,
-          background: 'rgba(248, 250, 252, 0.8)',
-          borderRadius: '8px',
-          border: '1px solid #f1f5f9'
-        }}>
-          <Box>
-            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-              Ingreso Promedio
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ color: '#1f2937' }}>
-              ${(revenueData.reduce((a, b) => a + b, 0) / revenueData.length).toLocaleString()}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-              Interacciones Totales
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ color: '#1f2937' }}>
-              {interactionData.reduce((a, b) => a + b, 0)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-              Mejor Día
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ color: '#1f2937' }}>
-              ${Math.max(...revenueData).toLocaleString()}
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
-
-// ... (Los otros componentes se mantienen igual: ChannelPerformance, AIInsightCard, RecentActivity, etc.)
-// Solo voy a incluir los componentes esenciales para no hacer el código demasiado largo
-
 const ChannelPerformance = React.memo(({ channel, loading = false }) => {
   const IconComponent = channel?.icon;
   
@@ -626,7 +366,7 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
     return (
       <Card sx={{ 
         p: 2, 
-        height: 100,
+        height: 120,
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
         border: '1px solid #f1f5f9',
         borderRadius: '12px'
@@ -635,6 +375,8 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
       </Card>
     );
   }
+
+  if (!channel) return null;
 
   return (
     <Card
@@ -702,6 +444,452 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
     </Card>
   );
 });
+
+const AIInsightCard = React.memo(({ insight, loading = false }) => {
+  const getColors = (type) => {
+    switch (type) {
+      case 'success':
+        return {
+          bg: 'rgba(16, 185, 129, 0.08)',
+          border: 'rgba(16, 185, 129, 0.2)',
+          icon: '#10b981',
+          accent: '#10b981'
+        };
+      case 'opportunity':
+        return {
+          bg: 'rgba(245, 158, 11, 0.08)',
+          border: 'rgba(245, 158, 11, 0.2)',
+          icon: '#f59e0b',
+          accent: '#f59e0b'
+        };
+      case 'warning':
+        return {
+          bg: 'rgba(239, 68, 68, 0.08)',
+          border: 'rgba(239, 68, 68, 0.2)',
+          icon: '#ef4444',
+          accent: '#ef4444'
+        };
+      default:
+        return {
+          bg: 'rgba(37, 99, 235, 0.08)',
+          border: 'rgba(37, 99, 235, 0.2)',
+          icon: '#2563eb',
+          accent: '#2563eb'
+        };
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 2, 
+        height: 140,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '12px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  if (!insight) return null;
+
+  const colors = getColors(insight.type);
+  const timeAgo = new Date(insight.timestamp).toLocaleTimeString('es-ES', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+
+  return (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${colors.bg} 0%, rgba(255, 255, 255, 0.9) 100%)`,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '12px',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateX(4px)'
+        },
+        height: '100%'
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+          <Box
+            sx={{
+              p: 1,
+              background: alpha(colors.icon, 0.1),
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <SmartToy sx={{ fontSize: 18, color: colors.icon }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937', fontSize: '0.9rem' }}>
+                {insight.title}
+              </Typography>
+              <Chip 
+                label={insight.priority === 'high' ? 'Alta' : 'Media'} 
+                size="small"
+                sx={{ 
+                  height: 20,
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  background: insight.priority === 'high' ? 
+                    'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                  color: insight.priority === 'high' ? '#ef4444' : '#f59e0b'
+                }}
+              />
+            </Box>
+            
+            <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.4, color: '#6b7280', fontSize: '0.8rem' }}>
+              {insight.message}
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: colors.accent
+                    }}
+                  />
+                  <Typography variant="caption" fontWeight={600} sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+                    {(insight.confidence * 100).toFixed(0)}% confianza
+                  </Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+                  {timeAgo}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+});
+
+const RecentActivity = React.memo(({ activities, loading = false }) => {
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case 'sale':
+        return <Receipt sx={{ color: '#10b981', fontSize: 18 }} />;
+      case 'customer':
+        return <Group sx={{ color: '#3b82f6', fontSize: 18 }} />;
+      case 'inventory':
+        return <Inventory sx={{ color: '#f59e0b', fontSize: 18 }} />;
+      case 'message':
+        return <Message sx={{ color: '#8b5cf6', fontSize: 18 }} />;
+      default:
+        return <Notifications sx={{ color: '#6b7280', fontSize: 18 }} />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 400,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Schedule sx={{ fontSize: 20, color: '#2563eb' }} />
+          Actividad Reciente
+        </Typography>
+        
+        <List sx={{ p: 0 }}>
+          {activities.map((activity, index) => (
+            <React.Fragment key={activity.id}>
+              <ListItem sx={{ px: 0, py: 1.5 }}>
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      background: 'rgba(37, 99, 235, 0.1)',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {getActivityIcon(activity.type)}
+                  </Box>
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Typography variant="body2" fontWeight={600} sx={{ color: '#1f2937', fontSize: '0.85rem' }}>
+                      {activity.title}
+                    </Typography>
+                  }
+                  secondary={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
+                        {activity.description}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+                        {new Date(activity.timestamp).toLocaleTimeString('es-ES', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
+              {index < activities.length - 1 && (
+                <Divider variant="inset" component="li" sx={{ mx: 0 }} />
+              )}
+            </React.Fragment>
+          ))}
+        </List>
+      </CardContent>
+    </Card>
+  );
+});
+
+const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
+  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
+  const maxRevenue = Math.max(...revenueData);
+
+  const getLabels = () => {
+    switch (timeRange) {
+      case 'week':
+        return ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      case 'month':
+        return ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
+      case 'quarter':
+        return ['Mes 1', 'Mes 2', 'Mes 3'];
+      case 'year':
+        return ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      default:
+        return revenueData.map((_, i) => `Día ${i + 1}`);
+    }
+  };
+
+  const labels = getLabels();
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 400,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
+              📊 Rendimiento de Ingresos
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem' }}>
+              Evolución de ingresos por período
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {['week', 'month', 'quarter', 'year'].map((range) => (
+              <Chip
+                key={range}
+                label={
+                  range === 'week' ? 'Semana' :
+                  range === 'month' ? 'Mes' : 
+                  range === 'quarter' ? 'Trimestre' : 'Año'
+                }
+                variant={timeRange === range ? 'filled' : 'outlined'}
+                onClick={() => onTimeRangeChange(range)}
+                size="small"
+                sx={{
+                  background: timeRange === range ? 
+                    'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'transparent',
+                  color: timeRange === range ? 'white' : '#6b7280',
+                  borderColor: timeRange === range ? 'transparent' : '#e5e7eb',
+                  fontSize: '0.75rem'
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Gráfico de Barras Corregido */}
+        <Box sx={{ 
+          height: 250, 
+          display: 'flex', 
+          alignItems: 'end', 
+          gap: 1, 
+          mb: 3, 
+          px: 1,
+          justifyContent: 'space-between'
+        }}>
+          {revenueData.slice(0, labels.length).map((value, index) => (
+            <Box 
+              key={index} 
+              sx={{ 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                height: '100%',
+                justifyContent: 'flex-end'
+              }}
+            >
+              <Tooltip title={`$${value.toLocaleString()}`} arrow>
+                <Box
+                  sx={{
+                    width: '70%',
+                    minWidth: '20px',
+                    height: `${(value / maxRevenue) * 100}%`,
+                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
+                    borderRadius: '4px 4px 0 0',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 1) 100%)'
+                    }
+                  }}
+                />
+              </Tooltip>
+              <Typography variant="caption" sx={{ 
+                mt: 1, 
+                fontWeight: 600, 
+                color: '#6b7280',
+                fontSize: '0.7rem'
+              }}>
+                {labels[index]}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1 }}>
+          <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem' }}>
+            Evolución de ingresos - {timeRange === 'week' ? 'Última semana' : 
+                                  timeRange === 'month' ? 'Último mes' :
+                                  timeRange === 'quarter' ? 'Último trimestre' : 'Último año'}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
+            <Typography variant="body2" fontWeight={600} sx={{ color: '#10b981', fontSize: '0.8rem' }}>
+              +{((revenueData[revenueData.length - 1] - revenueData[0]) / revenueData[0] * 100).toFixed(1)}% crecimiento
+            </Typography>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const QuickActionsPanel = () => (
+  <Card sx={{ 
+    background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+    border: '1px solid #f1f5f9',
+    borderRadius: '16px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+    mb: 3
+  }}>
+    <CardContent sx={{ p: 3 }}>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1f2937' }}>
+        ⚡ Acciones Rápidas
+      </Typography>
+      <Grid container spacing={2}>
+        {[
+          { 
+            icon: <RocketLaunch />, 
+            label: 'Nueva Venta', 
+            color: '#10b981',
+            description: 'Registrar venta rápida'
+          },
+          { 
+            icon: <Inventory />, 
+            label: 'Gestionar Stock', 
+            color: '#f59e0b',
+            description: 'Revisar inventario'
+          },
+          { 
+            icon: <Chat />, 
+            label: 'Enviar Mensaje', 
+            color: '#8b5cf6',
+            description: 'Comunicación masiva'
+          },
+          { 
+            icon: <Analytics />, 
+            label: 'Ver Reportes', 
+            color: '#2563eb',
+            description: 'Análisis detallado'
+          }
+        ].map((action, index) => (
+          <Grid item xs={6} sm={3} key={index}>
+            <Button
+              fullWidth
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(action.color, 0.1)} 0%, ${alpha(action.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(action.color, 0.2)}`,
+                color: action.color,
+                fontWeight: 600,
+                borderRadius: '12px',
+                py: 2,
+                flexDirection: 'column',
+                gap: 1,
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${alpha(action.color, 0.2)} 0%, ${alpha(action.color, 0.1)} 100%)`,
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <Box sx={{ fontSize: 24 }}>{action.icon}</Box>
+              <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.75rem' }}>
+                {action.label}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.65rem' }}>
+                {action.description}
+              </Typography>
+            </Button>
+          </Grid>
+        ))}
+      </Grid>
+    </CardContent>
+  </Card>
+);
 
 // 🔥 COMPONENTE PRINCIPAL DEL DASHBOARD
 const Dashboard = () => {
@@ -902,6 +1090,9 @@ const Dashboard = () => {
             </Alert>
           )}
 
+          {/* Acciones Rápidas */}
+          <QuickActionsPanel />
+
           {/* Grid Principal del Dashboard */}
           <Grid container spacing={3}>
             {/* Métricas principales - 6 tarjetas */}
@@ -921,8 +1112,16 @@ const Dashboard = () => {
               />
             </Grid>
 
-            {/* Canales de performance */}
+            {/* Actividad reciente */}
             <Grid item xs={12} lg={4}>
+              <RecentActivity 
+                activities={dashboardData?.recentActivity || []}
+                loading={loading}
+              />
+            </Grid>
+
+            {/* Canales de performance */}
+            <Grid item xs={12} lg={6}>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
                 📊 Performance por Canal
               </Typography>
@@ -936,14 +1135,14 @@ const Dashboard = () => {
             </Grid>
 
             {/* Insights de IA */}
-            <Grid item xs={12}>
+            <Grid item xs={12} lg={6}>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: '#1f2937' }}>
                 <SmartToy sx={{ color: '#2563eb' }} />
                 Inteligencia Artificial & Recomendaciones
               </Typography>
-              <Grid container spacing={3}>
+              <Grid container spacing={2}>
                 {(loading ? Array(3).fill({}) : dashboardData?.insights || []).map((insight, index) => (
-                  <Grid item xs={12} md={6} lg={4} key={insight.id || index}>
+                  <Grid item xs={12} key={insight.id || index}>
                     <AIInsightCard insight={insight} loading={loading} />
                   </Grid>
                 ))}
