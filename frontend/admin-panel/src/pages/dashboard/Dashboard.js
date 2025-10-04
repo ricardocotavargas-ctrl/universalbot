@@ -22,10 +22,12 @@ import {
   Paper,
   Stack,
   Divider,
+  Avatar,
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Badge
 } from '@mui/material';
 import {
   TrendingUp,
@@ -39,7 +41,10 @@ import {
   SmartToy,
   Timeline,
   BarChart,
+  PieChart,
   Refresh,
+  Download,
+  Share,
   WhatsApp,
   Instagram,
   Facebook,
@@ -48,12 +53,38 @@ import {
   ArrowDownward,
   RocketLaunch,
   Star,
+  GppGood,
+  AccessTime,
+  VerifiedUser,
+  PointOfSale,
+  AccountBalance,
+  AutoGraph,
+  Inventory2,
+  Campaign,
   Schedule,
+  Warning,
+  CheckCircle,
+  Error as ErrorIcon,
+  LocalOffer,
   Receipt,
   Group,
-  Message
+  Message,
+  AccountCircle,
+  CalendarToday,
+  ArrowForward
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDashboard } from '../../hooks/useDashboard';
+
+// 🔥 CONSTANTES Y CONFIGURACIÓN
+const API_ENDPOINTS = {
+  metrics: '/api/analytics/metrics',
+  kpis: '/api/analytics/kpis',
+  insights: '/api/ai/insights',
+  recentActivity: '/api/analytics/recent-activity',
+  channels: '/api/analytics/channels',
+  performance: '/api/analytics/performance'
+};
 
 // 🔥 HOOK PERSONALIZADO PARA DATOS DEL DASHBOARD
 const useDashboardData = (timeRange = 'week') => {
@@ -70,13 +101,6 @@ const useDashboardData = (timeRange = 'week') => {
       inventory: { current: 89, previous: 82, growth: 8.5, target: 95 },
       satisfaction: { current: 4.8, previous: 4.6, growth: 4.3, target: 4.9 }
     },
-    financial: {
-      totalSales: 52340,
-      totalTransactions: 1247,
-      netProfit: 28700,
-      totalExpenses: 23640,
-      cashFlow: 45000
-    },
     channels: [
       { name: 'WhatsApp', value: 45, growth: 12, color: '#25D366', icon: WhatsApp, volume: 234 },
       { name: 'Instagram', value: 32, growth: 8, color: '#E4405F', icon: Instagram, volume: 167 },
@@ -86,8 +110,7 @@ const useDashboardData = (timeRange = 'week') => {
     analytics: {
       revenueData: [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000],
       customerData: [25, 30, 28, 35, 40, 45, 48, 52, 55, 58, 62, 65],
-      conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4, 3.2, 3.6, 3.8, 4.0, 4.2],
-      interactionVolume: [45, 52, 48, 61, 55, 49, 67, 58, 62, 71, 65, 69]
+      conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4, 3.2, 3.6, 3.8, 4.0, 4.2]
     },
     insights: [
       {
@@ -173,10 +196,18 @@ const useDashboardData = (timeRange = 'week') => {
       setLoading(true);
       setError(null);
       
-      // Simular carga de datos
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simular llamada a API - Reemplazar con endpoints reales
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
-      // Usar datos de fallback por ahora
+      // TODO: Reemplazar con llamadas reales a tus APIs
+      // const [metrics, channels, insights, activity, performance] = await Promise.all([
+      //   fetch(`${API_ENDPOINTS.metrics}?range=${timeRange}`).then(r => r.json()),
+      //   fetch(`${API_ENDPOINTS.channels}?range=${timeRange}`).then(r => r.json()),
+      //   fetch(`${API_ENDPOINTS.insights}?range=${timeRange}`).then(r => r.json()),
+      //   fetch(`${API_ENDPOINTS.recentActivity}?range=${timeRange}`).then(r => r.json()),
+      //   fetch(`${API_ENDPOINTS.performance}?range=${timeRange}`).then(r => r.json())
+      // ]);
+
       setData(getFallbackData());
     } catch (err) {
       setError(err.message);
@@ -233,6 +264,7 @@ const StatCard = React.memo(({
   subtitle, 
   icon: Icon, 
   color = '#2563eb', 
+  chart,
   target,
   loading = false 
 }) => {
@@ -263,7 +295,7 @@ const StatCard = React.memo(({
         border: '1px solid #f1f5f9',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
       }}>
-        <Skeleton variant="rectangular" height={160} />
+        <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
   }
@@ -366,7 +398,7 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
     return (
       <Card sx={{ 
         p: 2, 
-        height: 120,
+        height: 100,
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
         border: '1px solid #f1f5f9',
         borderRadius: '12px'
@@ -375,8 +407,6 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
       </Card>
     );
   }
-
-  if (!channel) return null;
 
   return (
     <Card
@@ -493,8 +523,6 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
     );
   }
 
-  if (!insight) return null;
-
   const colors = getColors(insight.type);
   const timeAgo = new Date(insight.timestamp).toLocaleTimeString('es-ES', { 
     hour: '2-digit', 
@@ -570,6 +598,22 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
                   {timeAgo}
                 </Typography>
               </Box>
+              <Button 
+                variant="outlined" 
+                size="small"
+                endIcon={<ArrowForward sx={{ fontSize: 14 }} />}
+                sx={{ 
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  borderColor: colors.border,
+                  color: colors.icon,
+                  fontSize: '0.75rem',
+                  py: 0.5,
+                  minWidth: 'auto'
+                }}
+              >
+                {insight.action}
+              </Button>
             </Box>
           </Box>
         </Box>
@@ -591,6 +635,20 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
         return <Message sx={{ color: '#8b5cf6', fontSize: 18 }} />;
       default:
         return <Notifications sx={{ color: '#6b7280', fontSize: 18 }} />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+      case 'success':
+        return '#10b981';
+      case 'warning':
+        return '#f59e0b';
+      case 'error':
+        return '#ef4444';
+      default:
+        return '#6b7280';
     }
   };
 
@@ -630,7 +688,7 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
                   <Box
                     sx={{
                       p: 1,
-                      background: 'rgba(37, 99, 235, 0.1)',
+                      background: alpha(getStatusColor(activity.status), 0.1),
                       borderRadius: '8px',
                       display: 'flex',
                       alignItems: 'center',
@@ -667,6 +725,20 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
             </React.Fragment>
           ))}
         </List>
+        
+        <Button 
+          fullWidth 
+          variant="text" 
+          size="small"
+          sx={{ 
+            mt: 2,
+            color: '#2563eb',
+            fontWeight: 600,
+            fontSize: '0.8rem'
+          }}
+        >
+          Ver toda la actividad
+        </Button>
       </CardContent>
     </Card>
   );
@@ -674,24 +746,7 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
 
 const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
   const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
-  const maxRevenue = Math.max(...revenueData);
-
-  const getLabels = () => {
-    switch (timeRange) {
-      case 'week':
-        return ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-      case 'month':
-        return ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
-      case 'quarter':
-        return ['Mes 1', 'Mes 2', 'Mes 3'];
-      case 'year':
-        return ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      default:
-        return revenueData.map((_, i) => `Día ${i + 1}`);
-    }
-  };
-
-  const labels = getLabels();
+  const maxValue = Math.max(...revenueData);
 
   if (loading) {
     return (
@@ -717,14 +772,9 @@ const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false 
     }}>
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Box>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
-              📊 Rendimiento de Ingresos
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem' }}>
-              Evolución de ingresos por período
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
+            📈 Rendimiento de Ingresos
+          </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             {['week', 'month', 'quarter', 'year'].map((range) => (
               <Chip
@@ -749,34 +799,21 @@ const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false 
           </Box>
         </Box>
 
-        {/* Gráfico de Barras Corregido */}
-        <Box sx={{ 
-          height: 250, 
-          display: 'flex', 
-          alignItems: 'end', 
-          gap: 1, 
-          mb: 3, 
-          px: 1,
-          justifyContent: 'space-between'
-        }}>
-          {revenueData.slice(0, labels.length).map((value, index) => (
-            <Box 
-              key={index} 
-              sx={{ 
+        <Box sx={{ height: 250, display: 'flex', alignItems: 'end', gap: 1, mb: 3, px: 1 }}>
+          {revenueData.map((value, index) => (
+            <Tooltip key={index} title={`$${value.toLocaleString()}`} arrow>
+              <Box sx={{ 
                 flex: 1, 
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center',
-                height: '100%',
-                justifyContent: 'flex-end'
-              }}
-            >
-              <Tooltip title={`$${value.toLocaleString()}`} arrow>
+                height: '100%'
+              }}>
                 <Box
                   sx={{
                     width: '70%',
-                    minWidth: '20px',
-                    height: `${(value / maxRevenue) * 100}%`,
+                    minWidth: '12px',
+                    height: `${(value / maxValue) * 100}%`,
                     background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
                     borderRadius: '4px 4px 0 0',
                     transition: 'all 0.3s ease',
@@ -787,24 +824,22 @@ const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false 
                     }
                   }}
                 />
-              </Tooltip>
-              <Typography variant="caption" sx={{ 
-                mt: 1, 
-                fontWeight: 600, 
-                color: '#6b7280',
-                fontSize: '0.7rem'
-              }}>
-                {labels[index]}
-              </Typography>
-            </Box>
+                <Typography variant="caption" sx={{ 
+                  mt: 1, 
+                  fontWeight: 600, 
+                  color: '#6b7280',
+                  fontSize: '0.7rem'
+                }}>
+                  {index + 1}
+                </Typography>
+              </Box>
+            </Tooltip>
           ))}
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1 }}>
           <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem' }}>
-            Evolución de ingresos - {timeRange === 'week' ? 'Última semana' : 
-                                  timeRange === 'month' ? 'Último mes' :
-                                  timeRange === 'quarter' ? 'Último trimestre' : 'Último año'}
+            Evolución de ingresos - Últimos {revenueData.length} períodos
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
@@ -818,7 +853,7 @@ const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false 
   );
 };
 
-const QuickActionsPanel = () => (
+const QuickActionsPanel = ({ onAction }) => (
   <Card sx={{ 
     background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
     border: '1px solid #f1f5f9',
@@ -845,21 +880,34 @@ const QuickActionsPanel = () => (
             description: 'Revisar inventario'
           },
           { 
-            icon: <Chat />, 
-            label: 'Enviar Mensaje', 
+            icon: <Campaign />, 
+            label: 'Campaña Marketing', 
             color: '#8b5cf6',
-            description: 'Comunicación masiva'
+            description: 'Crear campaña IA'
           },
           { 
             icon: <Analytics />, 
-            label: 'Ver Reportes', 
+            label: 'Reporte Avanzado', 
             color: '#2563eb',
-            description: 'Análisis detallado'
+            description: 'Generar análisis'
+          },
+          { 
+            icon: <Group />, 
+            label: 'Clientes', 
+            color: '#ec4899',
+            description: 'Gestionar clientes'
+          },
+          { 
+            icon: <SmartToy />, 
+            label: 'Asistente IA', 
+            color: '#06b6d4',
+            description: 'Consultar recomendaciones'
           }
         ].map((action, index) => (
-          <Grid item xs={6} sm={3} key={index}>
+          <Grid item xs={6} sm={4} md={2} key={index}>
             <Button
               fullWidth
+              onClick={() => onAction?.(action.label)}
               sx={{
                 background: `linear-gradient(135deg, ${alpha(action.color, 0.1)} 0%, ${alpha(action.color, 0.05)} 100%)`,
                 border: `1px solid ${alpha(action.color, 0.2)}`,
@@ -891,7 +939,120 @@ const QuickActionsPanel = () => (
   </Card>
 );
 
+const SystemPerformance = ({ performance, loading = false }) => {
+  const metrics = [
+    { 
+      label: 'Tiempo Respuesta', 
+      value: `${performance?.responseTime || 0} min`, 
+      target: '2.0 min', 
+      progress: performance ? (performance.responseTime / 2.0) * 100 : 0,
+      color: performance?.responseTime <= 2.0 ? '#10b981' : '#f59e0b',
+      icon: <AccessTime />
+    },
+    { 
+      label: 'Disponibilidad', 
+      value: `${performance?.uptime || 0}%`, 
+      target: '99.9%', 
+      progress: performance?.uptime || 0,
+      color: performance?.uptime >= 99.9 ? '#10b981' : '#f59e0b',
+      icon: <GppGood />
+    },
+    { 
+      label: 'Precisión IA', 
+      value: `${performance?.accuracy || 0}%`, 
+      target: '95%', 
+      progress: performance?.accuracy || 0,
+      color: performance?.accuracy >= 95 ? '#10b981' : '#f59e0b',
+      icon: <SmartToy />
+    },
+    { 
+      label: 'Automatización', 
+      value: `${performance?.automation || 0}%`, 
+      target: '90%', 
+      progress: performance?.automation || 0,
+      color: performance?.automation >= 90 ? '#10b981' : '#f59e0b',
+      icon: <AutoGraph />
+    }
+  ];
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 300,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <BarChart sx={{ fontSize: 20, color: '#2563eb' }} />
+          Rendimiento del Sistema
+        </Typography>
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {metrics.map((metric, index) => (
+            <Box key={index}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ color: metric.color }}>
+                    {metric.icon}
+                  </Box>
+                  <Typography variant="body2" fontWeight={600} sx={{ color: '#374151', fontSize: '0.8rem' }}>
+                    {metric.label}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" fontWeight={700} sx={{ color: '#1f2937', fontSize: '0.8rem' }}>
+                  {metric.value}
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={Math.min(metric.progress, 100)} 
+                sx={{ 
+                  height: 6, 
+                  borderRadius: 3,
+                  backgroundColor: '#f1f5f9',
+                  '& .MuiLinearProgress-bar': {
+                    background: `linear-gradient(135deg, ${metric.color} 0%, ${alpha(metric.color, 0.8)} 100%)`,
+                    borderRadius: 3
+                  }
+                }}
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+                  Objetivo: {metric.target}
+                </Typography>
+                <Typography variant="caption" fontWeight={600} sx={{ 
+                  color: metric.progress >= 100 ? '#10b981' : metric.progress >= 80 ? '#f59e0b' : '#ef4444',
+                  fontSize: '0.7rem'
+                }}>
+                  {metric.progress >= 100 ? '✅ Cumplido' : `${metric.progress.toFixed(1)}%`}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
 // 🔥 COMPONENTE PRINCIPAL DEL DASHBOARD
+
 const Dashboard = () => {
   const { user } = useAuth();
   const isMobile = useMediaQuery('(max-width:900px)');
@@ -911,12 +1072,17 @@ const Dashboard = () => {
     showNotification('Datos actualizados correctamente', 'success');
   }, [refetch, showNotification]);
 
+  const handleQuickAction = useCallback((action) => {
+    showNotification(`Acción "${action}" iniciada`, 'info');
+    // Aquí puedes integrar con tu sistema de navegación o APIs
+  }, [showNotification]);
+
   // Memoizar valores computados
   const mainMetrics = useMemo(() => [
     {
       icon: AttachMoney,
       title: "Ingresos Totales",
-      value: dashboardData?.financial?.totalSales || dashboardData?.overview?.revenue?.current,
+      value: dashboardData?.overview?.revenue?.current,
       change: dashboardData?.overview?.revenue?.growth,
       subtitle: "Ingresos mensuales",
       color: "#10b981",
@@ -1042,6 +1208,15 @@ const Dashboard = () => {
                       color: 'white'
                     }}
                   />
+                  <Chip 
+                    icon={<VerifiedUser />}
+                    label="Sistema Estable" 
+                    sx={{ 
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      color: 'white'
+                    }}
+                  />
                 </Box>
               </Box>
               
@@ -1091,7 +1266,7 @@ const Dashboard = () => {
           )}
 
           {/* Acciones Rápidas */}
-          <QuickActionsPanel />
+          <QuickActionsPanel onAction={handleQuickAction} />
 
           {/* Grid Principal del Dashboard */}
           <Grid container spacing={3}>
@@ -1102,7 +1277,7 @@ const Dashboard = () => {
               </Grid>
             ))}
 
-            {/* Gráfica principal de rendimiento CORREGIDA */}
+            {/* Gráfica principal de rendimiento */}
             <Grid item xs={12} lg={8}>
               <PerformanceChart 
                 data={dashboardData?.analytics}
@@ -1112,10 +1287,10 @@ const Dashboard = () => {
               />
             </Grid>
 
-            {/* Actividad reciente */}
+            {/* Sistema de rendimiento */}
             <Grid item xs={12} lg={4}>
-              <RecentActivity 
-                activities={dashboardData?.recentActivity || []}
+              <SystemPerformance 
+                performance={dashboardData?.performance}
                 loading={loading}
               />
             </Grid>
@@ -1134,15 +1309,23 @@ const Dashboard = () => {
               </Grid>
             </Grid>
 
-            {/* Insights de IA */}
+            {/* Actividad reciente */}
             <Grid item xs={12} lg={6}>
+              <RecentActivity 
+                activities={dashboardData?.recentActivity || []}
+                loading={loading}
+              />
+            </Grid>
+
+            {/* Insights de IA */}
+            <Grid item xs={12}>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: '#1f2937' }}>
                 <SmartToy sx={{ color: '#2563eb' }} />
                 Inteligencia Artificial & Recomendaciones
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={3}>
                 {(loading ? Array(3).fill({}) : dashboardData?.insights || []).map((insight, index) => (
-                  <Grid item xs={12} key={insight.id || index}>
+                  <Grid item xs={12} md={6} lg={4} key={insight.id || index}>
                     <AIInsightCard insight={insight} loading={loading} />
                   </Grid>
                 ))}
