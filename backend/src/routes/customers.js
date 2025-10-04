@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// Middleware de autenticación simple
+// Middleware temporal
 const authMiddleware = (req, res, next) => {
   req.user = { id: 1, businessId: 1 };
   next();
