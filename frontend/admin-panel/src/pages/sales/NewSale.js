@@ -11,12 +11,12 @@ import {
 } from '@mui/material';
 import {
   Add, Remove, Search, Delete, Payment, Receipt,
-  QrCode, PersonAdd, Calculate, TrendingUp, LocalOffer,
+  QrCode, PersonAdd, TrendingUp, LocalOffer,
   Inventory, WhatsApp, CreditCard, Money, AccountBalance,
   PointOfSale, Smartphone, FlashOn, Rocket, Psychology,
   ShoppingCart, Group, Speed, AutoGraph, SmartToy,
   ArrowForward, CheckCircle, Warning, Discount,
-  CurrencyExchange, ReceiptLong, Print, Send
+  CurrencyExchange, ReceiptLong, Print, Send, Close
 } from '@mui/icons-material';
 import { useAuth } from '../../../contexts/AuthContext';
 import api from '../../../services/api';
@@ -28,34 +28,48 @@ const useSaleData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await api.get('/sales/sale-data');
-        
-        if (response.data.success) {
-          setClients(response.data.clients || []);
-          setProducts(response.data.products || []);
-        } else {
-          setError('Error al cargar datos');
-        }
-      } catch (err) {
-        console.error('Error loading sale data:', err);
-        setError('Error de conexión');
-        setClients([]);
-        setProducts([]);
-      } finally {
-        setLoading(false);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await api.get('/sales/sale-data');
+      
+      if (response.data.success) {
+        setClients(response.data.clients || []);
+        setProducts(response.data.products || []);
+      } else {
+        setError('Error al cargar datos');
       }
-    };
+    } catch (err) {
+      console.error('Error loading sale data:', err);
+      setError('Error de conexión');
+      setClients([]);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadData();
   }, []);
 
-  return { clients, products, loading, error };
+  const createClient = async (clientData) => {
+    try {
+      const response = await api.post('/sales/quick-client', clientData);
+      if (response.data.success) {
+        setClients(prev => [...prev, response.data.client]);
+        return response.data.client;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error creating client:', error);
+      throw new Error('Error al crear cliente');
+    }
+  };
+
+  return { clients, products, loading, error, loadData, createClient };
 };
 
 // 🔥 COMPONENTES MODERNOS
@@ -263,20 +277,6 @@ const ClientCard = React.memo(({ client, selected, onSelect, loading }) => {
             <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
               {client.phone || 'Sin teléfono'}
             </Typography>
-            {client.loyaltyPoints > 0 && (
-              <Chip 
-                label={`${client.loyaltyPoints} pts`} 
-                size="small"
-                sx={{ 
-                  height: 16,
-                  fontSize: '0.6rem',
-                  fontWeight: 600,
-                  background: alpha('#10b981', 0.1),
-                  color: '#10b981',
-                  mt: 0.5
-                }}
-              />
-            )}
           </Box>
           {selected && (
             <CheckCircle sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
@@ -401,8 +401,11 @@ const NewSale = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [processingSale, setProcessingSale] = useState(false);
+  const [newClientDialog, setNewClientDialog] = useState(false);
+  const [newClientData, setNewClientData] = useState({ name: '', phone: '', rif: '' });
+  const [creatingClient, setCreatingClient] = useState(false);
 
-  const { clients, products, loading, error } = useSaleData();
+  const { clients, products, loading, error, loadData, createClient } = useSaleData();
 
   const steps = [
     { label: 'Cliente', icon: <Group />, description: 'Selecciona o agrega un cliente' },
@@ -435,6 +438,7 @@ const NewSale = () => {
     return { subtotal, taxes, total };
   }, [saleData.products, saleData.discounts, saleData.shipping]);
 
+  // Handlers
   const handleAddProduct = useCallback((product) => {
     const existingProduct = saleData.products.find(p => p.id === product.id);
     
@@ -485,6 +489,28 @@ const NewSale = () => {
     }));
   }, [products]);
 
+  const handleCreateClient = async () => {
+    if (!newClientData.name.trim()) {
+      setSnackbar({ open: true, message: '❌ El nombre es obligatorio', severity: 'error' });
+      return;
+    }
+
+    setCreatingClient(true);
+    try {
+      const client = await createClient(newClientData);
+      if (client) {
+        setSaleData(prev => ({ ...prev, client }));
+        setNewClientDialog(false);
+        setNewClientData({ name: '', phone: '', rif: '' });
+        setSnackbar({ open: true, message: '✅ Cliente creado exitosamente', severity: 'success' });
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: '❌ Error al crear cliente', severity: 'error' });
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
   const handleCompleteSale = useCallback(async () => {
     try {
       setProcessingSale(true);
@@ -492,7 +518,18 @@ const NewSale = () => {
       const response = await api.post('/sales/new-sale', saleData);
       
       if (response.data.success) {
-        setSnackbar({ open: true, message: '🎉 Venta completada exitosamente', severity: 'success' });
+        const sale = response.data.sale;
+        
+        // Generar mensaje para WhatsApp
+        const whatsappMessage = generateWhatsAppMessage(sale);
+        
+        setSnackbar({ 
+          open: true, 
+          message: '🎉 Venta completada exitosamente', 
+          severity: 'success',
+          saleId: sale.id,
+          whatsappMessage
+        });
         
         // Resetear después de 2 segundos
         setTimeout(() => {
@@ -510,6 +547,7 @@ const NewSale = () => {
           setActiveStep(0);
           setSearchTerm('');
           setAiSuggestions([]);
+          loadData(); // Recargar productos para actualizar stock
         }, 2000);
       } else {
         setSnackbar({ open: true, message: '❌ Error al procesar la venta', severity: 'error' });
@@ -520,9 +558,58 @@ const NewSale = () => {
     } finally {
       setProcessingSale(false);
     }
-  }, [saleData]);
+  }, [saleData, loadData]);
 
-  // Generar sugerencias de IA
+  // Generar mensaje de WhatsApp
+  const generateWhatsAppMessage = (sale) => {
+    const businessName = user?.business?.name || 'Tu Negocio';
+    const productsList = sale.Products.map(p => 
+      `• ${p.Product.name} - ${p.quantity} x $${p.unitPrice} = $${p.totalPrice}`
+    ).join('\n');
+    
+    return `¡Hola! Gracias por tu compra en ${businessName}
+
+📋 *Resumen de tu compra:*
+${productsList}
+
+💰 *Total: $${sale.totalAmount}*
+
+📅 Fecha: ${new Date(sale.createdAt).toLocaleDateString()}
+🆔 Nº de venta: ${sale.id}
+
+¡Gracias por tu preferencia!`;
+  };
+
+  // Enviar por WhatsApp
+  const handleSendWhatsApp = (phone, message) => {
+    if (!phone) {
+      setSnackbar({ open: true, message: '❌ El cliente no tiene número registrado', severity: 'warning' });
+      return;
+    }
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // Imprimir comprobante
+  const handlePrintReceipt = async (saleId) => {
+    try {
+      const response = await api.get(`/sales/sale-receipt/${saleId}`);
+      if (response.data.success) {
+        // Aquí implementarías la generación del PDF
+        // Por ahora mostramos una alerta
+        setSnackbar({ open: true, message: '📄 Comprobante generado para impresión', severity: 'info' });
+        
+        // En un entorno real, aquí abrirías el PDF en nueva ventana
+        console.log('Datos para PDF:', response.data.receipt);
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: '❌ Error al generar comprobante', severity: 'error' });
+    }
+  };
+
+  // Sugerencias de IA
   useEffect(() => {
     if (saleData.products.length > 0 && products.length > 0) {
       const suggestions = [];
@@ -539,17 +626,6 @@ const NewSale = () => {
             confidence: 0.85
           });
         }
-      }
-
-      // Sugerencia de descuento por volumen
-      if (totals.subtotal > 30) {
-        suggestions.push({
-          id: 2,
-          type: 'discount',
-          message: 'Aplica un 10% de descuento por compra mayor a $30',
-          action: 'Aplicar descuento',
-          confidence: 0.72
-        });
       }
 
       setAiSuggestions(suggestions);
@@ -617,6 +693,7 @@ const NewSale = () => {
             fullWidth
             variant="outlined"
             startIcon={<PersonAdd />}
+            onClick={() => setNewClientDialog(true)}
             sx={{ 
               height: '56px',
               borderColor: alpha(theme.palette.primary.main, 0.3),
@@ -662,13 +739,57 @@ const NewSale = () => {
       {saleData.client && (
         <Alert severity="success" sx={{ mt: 2, borderRadius: '8px' }}>
           Cliente seleccionado: <strong>{saleData.client.name}</strong>
-          {saleData.client.loyaltyPoints > 0 && (
+          {saleData.client.phone && (
             <Typography variant="body2" sx={{ mt: 0.5 }}>
-              ⭐ {saleData.client.loyaltyPoints} puntos de fidelidad disponibles
+              📞 {saleData.client.phone}
             </Typography>
           )}
         </Alert>
       )}
+
+      {/* Dialog para nuevo cliente */}
+      <Dialog open={newClientDialog} onClose={() => setNewClientDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Crear Nuevo Cliente</Typography>
+            <IconButton onClick={() => setNewClientDialog(false)}>
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Nombre del Cliente *"
+              value={newClientData.name}
+              onChange={(e) => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="Teléfono"
+              value={newClientData.phone}
+              onChange={(e) => setNewClientData(prev => ({ ...prev, phone: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="RIF"
+              value={newClientData.rif}
+              onChange={(e) => setNewClientData(prev => ({ ...prev, rif: e.target.value }))}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNewClientDialog(false)}>Cancelar</Button>
+          <Button 
+            onClick={handleCreateClient} 
+            variant="contained" 
+            disabled={creatingClient || !newClientData.name.trim()}
+          >
+            {creatingClient ? 'Creando...' : 'Crear Cliente'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 
@@ -697,15 +818,6 @@ const NewSale = () => {
               startAdornment: (
                 <InputAdornment position="start">
                   <Search sx={{ color: '#6b7280' }} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title="Escanear código QR">
-                    <IconButton>
-                      <QrCode />
-                    </IconButton>
-                  </Tooltip>
                 </InputAdornment>
               )
             }}
@@ -1023,9 +1135,11 @@ const NewSale = () => {
               {saleData.client ? (
                 <Box>
                   <Typography fontWeight="600">{saleData.client.name}</Typography>
-                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.rif}</Typography>
-                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.phone}</Typography>
-                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.email}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.rif || 'Sin RIF'}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.phone || 'Sin teléfono'}</Typography>
+                  {saleData.client.email && (
+                    <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.email}</Typography>
+                  )}
                 </Box>
               ) : (
                 <Typography variant="body2" sx={{ color: '#6b7280' }}>
@@ -1116,6 +1230,7 @@ const NewSale = () => {
                 variant="outlined"
                 size="large"
                 startIcon={<Print />}
+                onClick={() => snackbar.saleId && handlePrintReceipt(snackbar.saleId)}
                 sx={{ px: 4, py: 1.5, fontWeight: 600 }}
               >
                 Imprimir
@@ -1135,14 +1250,30 @@ const NewSale = () => {
               >
                 {processingSale ? 'Procesando...' : 'Completar Venta'}
               </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                startIcon={<Send />}
-                sx={{ px: 4, py: 1.5, fontWeight: 600 }}
-              >
-                Enviar por WhatsApp
-              </Button>
+              {saleData.client?.phone && (
+                <Button
+                  variant="outlined"
+                  size="large"
+                  startIcon={<Send />}
+                  onClick={() => {
+                    const message = generateWhatsAppMessage({
+                      Products: saleData.products.map(p => ({
+                        Product: { name: p.name },
+                        quantity: p.quantity,
+                        unitPrice: p.price,
+                        totalPrice: p.price * p.quantity
+                      })),
+                      totalAmount: totals.total,
+                      id: 'PENDIENTE',
+                      createdAt: new Date()
+                    });
+                    handleSendWhatsApp(saleData.client.phone, message);
+                  }}
+                  sx={{ px: 4, py: 1.5, fontWeight: 600 }}
+                >
+                  Enviar por WhatsApp
+                </Button>
+              )}
             </Stack>
           </Box>
         </Grid>
@@ -1184,15 +1315,6 @@ const NewSale = () => {
                 color="primary" 
                 variant="outlined"
                 sx={{ fontWeight: 600 }}
-              />
-              <Chip 
-                icon={<AutoGraph />} 
-                label="IA Activa" 
-                sx={{ 
-                  fontWeight: 600,
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                  color: 'white'
-                }}
               />
             </Box>
           </Box>
@@ -1290,43 +1412,10 @@ const NewSale = () => {
           </Button>
         </Box>
 
-        {/* Botones flotantes de acción rápida */}
-        <Tooltip title="Enviar comprobante por WhatsApp">
-          <Fab
-            sx={{
-              position: 'fixed',
-              bottom: 24,
-              right: 24,
-              background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-              color: 'white',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #128C7E 0%, #075E54 100%)'
-              }
-            }}
-          >
-            <WhatsApp />
-          </Fab>
-        </Tooltip>
-
-        <Tooltip title="Calculadora rápida">
-          <Fab
-            color="secondary"
-            sx={{
-              position: 'fixed',
-              bottom: 24,
-              right: 100,
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              color: 'white'
-            }}
-          >
-            <Calculate />
-          </Fab>
-        </Tooltip>
-
         {/* Snackbar para notificaciones */}
         <Snackbar
           open={snackbar.open}
-          autoHideDuration={4000}
+          autoHideDuration={6000}
           onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
@@ -1336,6 +1425,20 @@ const NewSale = () => {
               borderRadius: '8px',
               fontWeight: 600
             }}
+            action={
+              snackbar.saleId && saleData.client?.phone && (
+                <Button
+                  color="inherit"
+                  size="small"
+                  startIcon={<WhatsApp />}
+                  onClick={() => {
+                    handleSendWhatsApp(saleData.client.phone, snackbar.whatsappMessage);
+                  }}
+                >
+                  Enviar WhatsApp
+                </Button>
+              )
+            }
           >
             {snackbar.message}
           </Alert>
