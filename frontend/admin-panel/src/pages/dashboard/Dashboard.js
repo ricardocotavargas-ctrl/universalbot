@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   useTheme,
-  alpha,
   useMediaQuery,
   LinearProgress,
   Chip,
@@ -19,16 +18,13 @@ import {
   Alert,
   Snackbar,
   Skeleton,
-  Paper,
-  Stack,
   Divider,
-  Avatar,
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
-  Badge
+  ListItemText
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   TrendingUp,
   People,
@@ -74,7 +70,6 @@ import {
   ArrowForward
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDashboard } from '../../hooks/useDashboard';
 
 // 🔥 CONSTANTES Y CONFIGURACIÓN
 const API_ENDPOINTS = {
