@@ -18,7 +18,10 @@ import {
   Button,
   Alert,
   Snackbar,
-  Skeleton
+  Skeleton,
+  Paper,
+  Stack,
+  Divider
 } from '@mui/material';
 import {
   TrendingUp,
@@ -41,7 +44,17 @@ import {
   Facebook,
   Email,
   ArrowUpward,
-  ArrowDownward
+  ArrowDownward,
+  RocketLaunch,
+  Star,
+  GppGood,
+  AccessTime,
+  VerifiedUser,
+  PointOfSale,
+  AccountBalance,
+  AutoGraph,
+  Inventory2,
+  Campaign
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -53,43 +66,11 @@ const API_ENDPOINTS = {
   analytics: '/api/analytics/trends'
 };
 
-const TIME_RANGES = [
-  { value: 'today', label: 'Hoy' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-  { value: 'quarter', label: 'Trimestre' }
-];
-
 // 🔥 HOOK PERSONALIZADO PARA DATOS
 const useDashboardData = (timeRange) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const fetchWithTimeout = async (url, params = {}, timeout = 10000) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const queryString = new URLSearchParams(params).toString();
-      const fullUrl = queryString ? `${url}?${queryString}` : url;
-      
-      const response = await fetch(fullUrl, {
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } finally {
-      clearTimeout(id);
-    }
-  };
 
   const getFallbackData = () => ({
     overview: {
@@ -139,24 +120,18 @@ const useDashboardData = (timeRange) => {
       setLoading(true);
       setError(null);
       
-      const [metrics, channels, insights, analytics] = await Promise.all([
-        fetchWithTimeout(API_ENDPOINTS.metrics, { timeRange }),
-        fetchWithTimeout(API_ENDPOINTS.channels, { timeRange }),
-        fetchWithTimeout(API_ENDPOINTS.insights, { timeRange }),
-        fetchWithTimeout(API_ENDPOINTS.analytics, { timeRange })
-      ]);
+      // Simular llamada a API - Reemplazar con tus endpoints reales
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Por ahora usamos datos mock, luego reemplazar con:
+      // const [metrics, channels, insights, analytics] = await Promise.all([
+      //   fetch(API_ENDPOINTS.metrics).then(r => r.json()),
+      //   fetch(API_ENDPOINTS.channels).then(r => r.json()),
+      //   fetch(API_ENDPOINTS.insights).then(r => r.json()),
+      //   fetch(API_ENDPOINTS.analytics).then(r => r.json())
+      // ]);
 
-      setData({
-        overview: {
-          revenue: metrics.revenue || { current: 0, previous: 0, growth: 0 },
-          customers: metrics.customers || { current: 0, previous: 0, growth: 0 },
-          conversion: metrics.conversion || { current: 0, previous: 0, growth: 0 },
-          messages: metrics.messages || { current: 0, previous: 0, growth: 0 }
-        },
-        channels: channels || [],
-        analytics: analytics || {},
-        insights: insights || []
-      });
+      setData(getFallbackData());
     } catch (err) {
       setError(err.message);
       setData(getFallbackData());
@@ -172,86 +147,60 @@ const useDashboardData = (timeRange) => {
   return { data, loading, error, refetch: fetchData };
 };
 
-// 🔥 COMPONENTES MEJORADOS
+// 🔥 COMPONENTES MEJORADOS CON ESTILO DEL HOME
 
 const ChangeIndicator = ({ value }) => {
   if (value > 0) {
-    return <ArrowUpward sx={{ fontSize: 16, color: 'success.main' }} />;
+    return <ArrowUpward sx={{ fontSize: 16, color: '#10b981' }} />;
   }
   if (value < 0) {
-    return <ArrowDownward sx={{ fontSize: 16, color: 'error.main' }} />;
+    return <ArrowDownward sx={{ fontSize: 16, color: '#ef4444' }} />;
   }
-  return <TrendingUp sx={{ fontSize: 16, color: 'text.secondary' }} />;
+  return <TrendingUp sx={{ fontSize: 16, color: '#6b7280' }} />;
 };
 
-const ProgressBar = ({ value, color }) => {
-  const theme = useTheme();
-  
-  return (
-    <Box sx={{ 
-      width: '100%', 
-      height: 8, 
-      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-      borderRadius: 4,
-      overflow: 'hidden',
-      mb: 1
-    }}>
-      <Box
-        sx={{
-          width: `${value}%`,
-          height: '100%',
-          background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.7)} 100%)`,
-          borderRadius: 4,
-          transition: 'width 0.5s ease-in-out'
-        }}
-      />
-    </Box>
-  );
-};
-
-const MiniChart = ({ color, data }) => {
-  const theme = useTheme();
-  
-  return (
-    <Box sx={{ mt: 3, height: 60 }}>
-      <Box sx={{ display: 'flex', alignItems: 'end', gap: 0.5, height: '100%' }}>
-        {data.map((height, index) => (
-          <Box
-            key={index}
-            sx={{
-              flex: 1,
-              height: `${height}%`,
-              background: `linear-gradient(180deg, ${alpha(theme.palette[color].main, 0.8)} 0%, ${alpha(theme.palette[color].main, 0.4)} 100%)`,
-              borderRadius: 1,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.05)'
-              }
-            }}
-          />
-        ))}
-      </Box>
-    </Box>
-  );
-};
-
-const BackgroundGlow = ({ color }) => {
-  const theme = useTheme();
-  
-  return (
+const ProgressBar = ({ value, color }) => (
+  <Box sx={{ 
+    width: '100%', 
+    height: 8, 
+    backgroundColor: '#f1f5f9',
+    borderRadius: 4,
+    overflow: 'hidden',
+    mb: 1
+  }}>
     <Box
       sx={{
-        position: 'absolute',
-        top: -50,
-        right: -50,
-        width: 120,
-        height: 120,
-        background: `radial-gradient(circle, ${alpha(theme.palette[color].main, 0.1)} 0%, transparent 70%)`,
-        borderRadius: '50%'
+        width: `${value}%`,
+        height: '100%',
+        background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
+        borderRadius: 4,
+        transition: 'width 0.5s ease-in-out'
       }}
     />
-  );
-};
+  </Box>
+);
+
+const MiniChart = ({ color, data }) => (
+  <Box sx={{ mt: 3, height: 60 }}>
+    <Box sx={{ display: 'flex', alignItems: 'end', gap: 0.5, height: '100%' }}>
+      {data.map((height, index) => (
+        <Box
+          key={index}
+          sx={{
+            flex: 1,
+            height: `${height}%`,
+            background: `linear-gradient(180deg, ${color} 0%, ${alpha(color, 0.6)} 100%)`,
+            borderRadius: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'scale(1.05)'
+            }
+          }}
+        />
+      ))}
+    </Box>
+  </Box>
+);
 
 const StatCard = React.memo(({ 
   title, 
@@ -259,24 +208,10 @@ const StatCard = React.memo(({
   change, 
   subtitle, 
   icon: Icon, 
-  color = 'primary', 
+  color = '#2563eb', 
   chart,
   loading = false 
 }) => {
-  const theme = useTheme();
-
-  const getChangeColor = (change) => {
-    return change > 0 
-      ? alpha(theme.palette.success.main, 0.1) 
-      : alpha(theme.palette.error.main, 0.1);
-  };
-
-  const getChangeBorderColor = (change) => {
-    return change > 0 
-      ? alpha(theme.palette.success.main, 0.2) 
-      : alpha(theme.palette.error.main, 0.2);
-  };
-
   const formatNumber = (num) => {
     if (!num && num !== 0) return '0';
     if (num >= 1000000) {
@@ -293,7 +228,14 @@ const StatCard = React.memo(({
 
   if (loading) {
     return (
-      <Card sx={{ borderRadius: 3, p: 3, height: 200 }}>
+      <Card sx={{ 
+        borderRadius: '16px',
+        p: 3,
+        height: '100%',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+      }}>
         <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
@@ -302,11 +244,10 @@ const StatCard = React.memo(({
   return (
     <Card 
       sx={{ 
-        background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)`,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        borderRadius: 3,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.04)',
-        backdropFilter: 'blur(10px)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -320,25 +261,31 @@ const StatCard = React.memo(({
       <CardContent sx={{ p: 3, position: 'relative', zIndex: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h2" fontWeight={800} color={`${color}.main`} sx={{ mb: 1 }}>
+            <Typography variant="h2" fontWeight={800} sx={{ 
+              mb: 1,
+              background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
               {formatNumber(value)}
             </Typography>
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 1, color: '#1f2937' }}>
               {title}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: '#6b7280' }}>
               {subtitle}
             </Typography>
           </Box>
           <Box
             sx={{
               p: 2,
-              background: `linear-gradient(135deg, ${alpha(theme.palette[color].main, 0.15)} 0%, ${alpha(theme.palette[color].main, 0.05)} 100%)`,
-              borderRadius: 3,
-              border: `1px solid ${alpha(theme.palette[color].main, 0.1)}`
+              background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
+              borderRadius: '12px',
+              border: `1px solid ${alpha(color, 0.1)}`
             }}
           >
-            <Icon sx={{ fontSize: 28, color: `${color}.main` }} />
+            <Icon sx={{ fontSize: 28, color: color }} />
           </Box>
         </Box>
 
@@ -348,29 +295,36 @@ const StatCard = React.memo(({
             label={`${change > 0 ? '+' : ''}${change}%`} 
             size="small"
             sx={{ 
-              background: getChangeColor(change),
-              color: change > 0 ? 'success.main' : 'error.main',
+              background: change > 0 ? 
+                'rgba(16, 185, 129, 0.1)' : 
+                'rgba(239, 68, 68, 0.1)',
+              color: change > 0 ? '#10b981' : '#ef4444',
               fontWeight: 700,
-              border: `1px solid ${getChangeBorderColor(change)}`
+              border: `1px solid ${change > 0 ? 
+                'rgba(16, 185, 129, 0.2)' : 
+                'rgba(239, 68, 68, 0.2)'}`
             }}
           />
         </Box>
 
         {chart && <MiniChart color={color} data={[30, 45, 60, 75, 65, 80, 90, 85, 95, 88, 92, 100]} />}
       </CardContent>
-
-      <BackgroundGlow color={color} />
     </Card>
   );
 });
 
 const ChannelPerformance = React.memo(({ channel, loading = false }) => {
-  const theme = useTheme();
   const IconComponent = channel?.icon;
   
   if (loading) {
     return (
-      <Card sx={{ p: 3, height: 120 }}>
+      <Card sx={{ 
+        p: 3, 
+        height: 120,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '12px'
+      }}>
         <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
@@ -379,9 +333,9 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
   return (
     <Card
       sx={{
-        background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha(theme.palette.background.paper, 0.8)} 100%)`,
+        background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha('#ffffff', 0.8)} 100%)`,
         border: `1px solid ${alpha(channel.color, 0.2)}`,
-        borderRadius: 3,
+        borderRadius: '12px',
         transition: 'all 0.3s ease',
         '&:hover': {
           transform: 'translateY(-4px)',
@@ -397,7 +351,7 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
             sx={{
               p: 1.5,
               background: alpha(channel.color, 0.1),
-              borderRadius: 2,
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -406,25 +360,30 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
             <IconComponent sx={{ fontSize: 24, color: channel.color }} />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
               {channel.name}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h4" fontWeight={800} color={channel.color}>
+              <Typography variant="h4" fontWeight={800} sx={{ color: channel.color }}>
                 {channel.value}%
               </Typography>
               <Chip 
                 label={`${channel.growth > 0 ? '+' : ''}${channel.growth}%`} 
                 size="small"
-                color={channel.growth > 0 ? 'success' : 'error'}
-                sx={{ fontWeight: 600 }}
+                sx={{ 
+                  background: channel.growth > 0 ? 
+                    'rgba(16, 185, 129, 0.1)' : 
+                    'rgba(239, 68, 68, 0.1)',
+                  color: channel.growth > 0 ? '#10b981' : '#ef4444',
+                  fontWeight: 600 
+                }}
               />
             </Box>
           </Box>
         </Box>
 
         <ProgressBar value={channel.value} color={channel.color} />
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{ color: '#6b7280' }}>
           Participación en ventas totales
         </Typography>
       </CardContent>
@@ -433,53 +392,57 @@ const ChannelPerformance = React.memo(({ channel, loading = false }) => {
 });
 
 const AIInsightCard = React.memo(({ insight, loading = false }) => {
-  const theme = useTheme();
-
-  if (loading) {
-    return (
-      <Card sx={{ p: 3, height: 140 }}>
-        <Skeleton variant="rectangular" height="100%" />
-      </Card>
-    );
-  }
-
   const getColors = (type) => {
     switch (type) {
       case 'success':
         return {
-          bg: alpha(theme.palette.success.main, 0.08),
-          border: alpha(theme.palette.success.main, 0.2),
-          icon: theme.palette.success.main
+          bg: 'rgba(16, 185, 129, 0.08)',
+          border: 'rgba(16, 185, 129, 0.2)',
+          icon: '#10b981'
         };
       case 'opportunity':
         return {
-          bg: alpha(theme.palette.warning.main, 0.08),
-          border: alpha(theme.palette.warning.main, 0.2),
-          icon: theme.palette.warning.main
+          bg: 'rgba(245, 158, 11, 0.08)',
+          border: 'rgba(245, 158, 11, 0.2)',
+          icon: '#f59e0b'
         };
       case 'warning':
         return {
-          bg: alpha(theme.palette.error.main, 0.08),
-          border: alpha(theme.palette.error.main, 0.2),
-          icon: theme.palette.error.main
+          bg: 'rgba(239, 68, 68, 0.08)',
+          border: 'rgba(239, 68, 68, 0.2)',
+          icon: '#ef4444'
         };
       default:
         return {
-          bg: alpha(theme.palette.primary.main, 0.08),
-          border: alpha(theme.palette.primary.main, 0.2),
-          icon: theme.palette.primary.main
+          bg: 'rgba(37, 99, 235, 0.08)',
+          border: 'rgba(37, 99, 235, 0.2)',
+          icon: '#2563eb'
         };
     }
   };
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 140,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '12px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
 
   const colors = getColors(insight.type);
 
   return (
     <Card
       sx={{
-        background: `linear-gradient(135deg, ${colors.bg} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+        background: `linear-gradient(135deg, ${colors.bg} 0%, rgba(255, 255, 255, 0.9) 100%)`,
         border: `1px solid ${colors.border}`,
-        borderRadius: 3,
+        borderRadius: '12px',
         transition: 'all 0.3s ease',
         '&:hover': {
           transform: 'translateX(8px)'
@@ -493,7 +456,7 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
             sx={{
               p: 1.5,
               background: alpha(colors.icon, 0.1),
-              borderRadius: 2,
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -502,10 +465,10 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
             <SmartToy sx={{ fontSize: 20, color: colors.icon }} />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 1, color: '#1f2937' }}>
               {insight.title}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+            <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.6, color: '#6b7280' }}>
               {insight.message}
             </Typography>
             
@@ -517,12 +480,12 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
                     height: 6,
                     borderRadius: '50%',
                     backgroundColor: 
-                      insight.confidence > 0.8 ? theme.palette.success.main :
-                      insight.confidence > 0.6 ? theme.palette.warning.main :
-                      theme.palette.error.main
+                      insight.confidence > 0.8 ? '#10b981' :
+                      insight.confidence > 0.6 ? '#f59e0b' :
+                      '#ef4444'
                   }}
                 />
-                <Typography variant="caption" fontWeight={600}>
+                <Typography variant="caption" fontWeight={600} sx={{ color: '#6b7280' }}>
                   Confianza: {(insight.confidence * 100).toFixed(0)}%
                 </Typography>
               </Box>
@@ -531,7 +494,9 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
                 size="small"
                 sx={{ 
                   fontWeight: 600,
-                  borderRadius: 2
+                  borderRadius: '8px',
+                  borderColor: colors.border,
+                  color: colors.icon
                 }}
               >
                 {insight.action}
@@ -545,34 +510,53 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
 });
 
 const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
-  const theme = useTheme();
+  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000];
+  const maxValue = Math.max(...revenueData);
 
   if (loading) {
     return (
-      <Card sx={{ p: 3, height: 400 }}>
+      <Card sx={{ 
+        p: 3, 
+        height: 400,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
         <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
   }
 
-  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000];
-  const maxValue = Math.max(...revenueData);
-
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
             📈 Análisis de Rendimiento
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            {TIME_RANGES.map((range) => (
+            {['week', 'month', 'quarter'].map((range) => (
               <Chip
-                key={range.value}
-                label={range.label}
-                variant={timeRange === range.value ? 'filled' : 'outlined'}
-                onClick={() => onTimeRangeChange(range.value)}
+                key={range}
+                label={
+                  range === 'week' ? 'Semana' :
+                  range === 'month' ? 'Mes' : 'Trimestre'
+                }
+                variant={timeRange === range ? 'filled' : 'outlined'}
+                onClick={() => onTimeRangeChange(range)}
                 size="small"
+                sx={{
+                  background: timeRange === range ? 
+                    'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'transparent',
+                  color: timeRange === range ? 'white' : '#6b7280',
+                  borderColor: timeRange === range ? 'transparent' : '#e5e7eb'
+                }}
               />
             ))}
           </Box>
@@ -586,17 +570,17 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
                   sx={{
                     width: '80%',
                     height: `${(value / maxValue) * 100}%`,
-                    background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.6)} 100%)`,
-                    borderRadius: 2,
+                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.6) 100%)',
+                    borderRadius: '4px',
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'scale(1.05)',
-                      background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`
+                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)'
                     }
                   }}
                 />
-                <Typography variant="caption" sx={{ mt: 1, fontWeight: 600 }}>
+                <Typography variant="caption" sx={{ mt: 1, fontWeight: 600, color: '#6b7280' }}>
                   {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][index]}
                 </Typography>
               </Box>
@@ -605,12 +589,12 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: '#6b7280' }}>
             Evolución de ingresos semanal
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
-            <Typography variant="body2" fontWeight={600} color="success.main">
+            <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
+            <Typography variant="body2" fontWeight={600} sx={{ color: '#10b981' }}>
               +14.6% crecimiento
             </Typography>
           </Box>
@@ -621,8 +605,6 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
 };
 
 const PerformanceMetrics = ({ loading = false }) => {
-  const theme = useTheme();
-
   const metrics = [
     { label: 'Tiempo Respuesta', value: '2.4 min', target: '2.0 min', progress: 85 },
     { label: 'Satisfacción', value: '4.8/5', target: '4.5/5', progress: 107 },
@@ -632,16 +614,28 @@ const PerformanceMetrics = ({ loading = false }) => {
 
   if (loading) {
     return (
-      <Card sx={{ p: 3, height: 400 }}>
+      <Card sx={{ 
+        p: 3, 
+        height: 400,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
         <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
   }
 
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
       <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
           🎯 Métricas Clave
         </Typography>
         
@@ -649,20 +643,26 @@ const PerformanceMetrics = ({ loading = false }) => {
           {metrics.map((metric, index) => (
             <Box key={index}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="body2" fontWeight={600}>{metric.label}</Typography>
-                <Typography variant="body2" fontWeight={700}>{metric.value}</Typography>
+                <Typography variant="body2" fontWeight={600} sx={{ color: '#374151' }}>{metric.label}</Typography>
+                <Typography variant="body2" fontWeight={700} sx={{ color: '#1f2937' }}>{metric.value}</Typography>
               </Box>
               <LinearProgress 
                 variant="determinate" 
                 value={Math.min(metric.progress, 100)} 
-                color={metric.progress >= 100 ? 'success' : metric.progress >= 80 ? 'warning' : 'error'}
                 sx={{ 
                   height: 6, 
                   borderRadius: 3,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1)
+                  backgroundColor: '#f1f5f9',
+                  '& .MuiLinearProgress-bar': {
+                    background: metric.progress >= 100 ? 
+                      'linear-gradient(135deg, #10b981 0%, #059669 100%)' :
+                      metric.progress >= 80 ? 
+                      'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+                      'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                  }
                 }}
               />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: '#6b7280' }}>
                 Objetivo: {metric.target}
               </Typography>
             </Box>
@@ -673,11 +673,55 @@ const PerformanceMetrics = ({ loading = false }) => {
   );
 };
 
+const QuickActions = () => (
+  <Card sx={{ 
+    background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+    border: '1px solid #f1f5f9',
+    borderRadius: '16px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+    mb: 3
+  }}>
+    <CardContent sx={{ p: 3 }}>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1f2937' }}>
+        ⚡ Acciones Rápidas
+      </Typography>
+      <Grid container spacing={2}>
+        {[
+          { icon: <RocketLaunch />, label: 'Nueva Campaña', color: '#2563eb' },
+          { icon: <Analytics />, label: 'Generar Reporte', color: '#10b981' },
+          { icon: <SmartToy />, label: 'Consultar IA', color: '#8b5cf6' },
+          { icon: <Download />, label: 'Exportar Datos', color: '#f59e0b' }
+        ].map((action, index) => (
+          <Grid item xs={6} sm={3} key={index}>
+            <Button
+              fullWidth
+              startIcon={action.icon}
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(action.color, 0.1)} 0%, ${alpha(action.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(action.color, 0.2)}`,
+                color: action.color,
+                fontWeight: 600,
+                borderRadius: '8px',
+                py: 1.5,
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${alpha(action.color, 0.2)} 0%, ${alpha(action.color, 0.1)} 100%)`,
+                }
+              }}
+            >
+              {action.label}
+            </Button>
+          </Grid>
+        ))}
+      </Grid>
+    </CardContent>
+  </Card>
+);
+
 const LoadingDashboard = () => (
   <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
     <Box sx={{ textAlign: 'center' }}>
-      <Analytics sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-      <Typography variant="h6">
+      <Analytics sx={{ fontSize: 60, color: '#2563eb', mb: 2 }} />
+      <Typography variant="h6" sx={{ color: '#6b7280' }}>
         Cargando datos en tiempo real...
       </Typography>
     </Box>
@@ -685,8 +729,6 @@ const LoadingDashboard = () => (
 );
 
 const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, loading }) => {
-  const theme = useTheme();
-
   if (loading) {
     return (
       <Box sx={{ mb: 4 }}>
@@ -713,7 +755,7 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
             fontWeight={800} 
             gutterBottom
             sx={{ 
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               color: 'transparent',
@@ -722,7 +764,7 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
           >
             Dashboard Executive
           </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, color: '#6b7280' }}>
             Datos en tiempo real • {user?.business?.name || 'Tu Negocio'}
           </Typography>
           
@@ -730,15 +772,19 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
             <Chip 
               icon={<SmartToy />} 
               label="IA Activa" 
-              color="primary" 
-              variant="outlined"
-              sx={{ fontWeight: 600 }}
+              sx={{ 
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                color: 'white'
+              }}
             />
             <Chip 
               label="Tiempo Real" 
-              color="success" 
-              variant="outlined"
-              sx={{ fontWeight: 600 }}
+              sx={{ 
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white'
+              }}
             />
           </Box>
         </Box>
@@ -746,10 +792,13 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Tooltip title="Actualizar datos">
             <IconButton onClick={onRefresh} sx={{ 
-              background: alpha(theme.palette.primary.main, 0.1),
-              '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
+              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+              border: '1px solid rgba(37, 99, 235, 0.1)',
+              '&:hover': { 
+                background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+              }
             }}>
-              <Refresh />
+              <Refresh sx={{ color: '#2563eb' }} />
             </IconButton>
           </Tooltip>
         </Box>
@@ -759,12 +808,16 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
         value={activeTab} 
         onChange={onTabChange}
         sx={{
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          borderBottom: '1px solid #f1f5f9',
           '& .MuiTab-root': {
             fontWeight: 600,
             textTransform: 'none',
             fontSize: '1rem',
-            minHeight: 48
+            minHeight: 48,
+            color: '#6b7280',
+            '&.Mui-selected': {
+              color: '#2563eb'
+            }
           }
         }}
       >
@@ -779,9 +832,8 @@ const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, lo
 // 🔥 COMPONENTE PRINCIPAL MEJORADO
 
 const Dashboard = () => {
-  const theme = useTheme();
   const { user } = useAuth();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery('(max-width:900px)');
   
   const [activeTab, setActiveTab] = useState(0);
   const [timeRange, setTimeRange] = useState('week');
@@ -806,7 +858,7 @@ const Dashboard = () => {
       value: dashboardData?.overview?.revenue?.current,
       change: dashboardData?.overview?.revenue?.growth,
       subtitle: "Este mes",
-      color: "success",
+      color: "#10b981",
       chart: true
     },
     {
@@ -815,7 +867,7 @@ const Dashboard = () => {
       value: dashboardData?.overview?.customers?.current,
       change: dashboardData?.overview?.customers?.growth,
       subtitle: "Base total",
-      color: "primary",
+      color: "#2563eb",
       chart: true
     },
     {
@@ -824,7 +876,7 @@ const Dashboard = () => {
       value: dashboardData?.overview?.conversion?.current,
       change: dashboardData?.overview?.conversion?.growth,
       subtitle: "Porcentaje",
-      color: "warning",
+      color: "#f59e0b",
       chart: true
     },
     {
@@ -833,7 +885,7 @@ const Dashboard = () => {
       value: dashboardData?.overview?.messages?.current,
       change: dashboardData?.overview?.messages?.growth,
       subtitle: "Hoy",
-      color: "info",
+      color: "#8b5cf6",
       chart: true
     }
   ], [dashboardData]);
@@ -844,82 +896,91 @@ const Dashboard = () => {
 
   return (
     <>
-      <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 3 }}>
-        <DashboardHeader 
-          user={user}
-          isMobile={isMobile}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onRefresh={handleRefresh}
-          loading={loading && !dashboardData}
-        />
+      <Box sx={{ 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+        py: 1
+      }}>
+        <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 2 : 3 }}>
+          <DashboardHeader 
+            user={user}
+            isMobile={isMobile}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onRefresh={handleRefresh}
+            loading={loading && !dashboardData}
+          />
 
-        {error && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            {error} - Mostrando datos de demostración
-          </Alert>
-        )}
+          {error && (
+            <Alert severity="warning" sx={{ mb: 3, borderRadius: '8px' }}>
+              {error} - Mostrando datos de demostración
+            </Alert>
+          )}
 
-        <Grid container spacing={3}>
-          {/* Métricas principales */}
-          {mainMetrics.map((metric, index) => (
-            <Grid item xs={12} sm={6} lg={3} key={metric.title}>
-              <StatCard {...metric} loading={loading} />
+          {/* Acciones Rápidas */}
+          <QuickActions />
+
+          <Grid container spacing={3}>
+            {/* Métricas principales */}
+            {mainMetrics.map((metric, index) => (
+              <Grid item xs={12} sm={6} lg={3} key={metric.title}>
+                <StatCard {...metric} loading={loading} />
+              </Grid>
+            ))}
+
+            {/* Gráfica principal */}
+            <Grid item xs={12} lg={8}>
+              <AnalyticsChart 
+                data={dashboardData?.analytics}
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+                loading={loading}
+              />
             </Grid>
-          ))}
 
-          {/* Gráfica principal */}
-          <Grid item xs={12} lg={8}>
-            <AnalyticsChart 
-              data={dashboardData?.analytics}
-              timeRange={timeRange}
-              onTimeRangeChange={setTimeRange}
-              loading={loading}
-            />
-          </Grid>
+            {/* Canales de performance */}
+            <Grid item xs={12} lg={4}>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
+                📊 Performance por Canal
+              </Typography>
+              <Grid container spacing={2}>
+                {(loading ? Array(4).fill({}) : dashboardData?.channels || []).map((channel, index) => (
+                  <Grid item xs={12} key={index}>
+                    <ChannelPerformance channel={channel} loading={loading} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
 
-          {/* Canales de performance */}
-          <Grid item xs={12} lg={4}>
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
-              📊 Performance por Canal
-            </Typography>
-            <Grid container spacing={2}>
-              {(loading ? Array(4).fill({}) : dashboardData?.channels || []).map((channel, index) => (
-                <Grid item xs={12} key={index}>
-                  <ChannelPerformance channel={channel} loading={loading} />
-                </Grid>
-              ))}
+            {/* Insights de IA */}
+            <Grid item xs={12} lg={8}>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: '#1f2937' }}>
+                <SmartToy sx={{ color: '#2563eb' }} />
+                Inteligencia Artificial & Recomendaciones
+              </Typography>
+              <Grid container spacing={3}>
+                {(loading ? Array(3).fill({}) : dashboardData?.insights || []).map((insight, index) => (
+                  <Grid item xs={12} key={index}>
+                    <AIInsightCard insight={insight} loading={loading} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
+
+            {/* Métricas de performance */}
+            <Grid item xs={12} lg={4}>
+              <PerformanceMetrics loading={loading} />
             </Grid>
           </Grid>
-
-          {/* Insights de IA */}
-          <Grid item xs={12} lg={8}>
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SmartToy color="primary" />
-              Inteligencia Artificial & Recomendaciones
-            </Typography>
-            <Grid container spacing={3}>
-              {(loading ? Array(3).fill({}) : dashboardData?.insights || []).map((insight, index) => (
-                <Grid item xs={12} key={index}>
-                  <AIInsightCard insight={insight} loading={loading} />
-                </Grid>
-              ))}
-            </Grid>
-          </Grid>
-
-          {/* Métricas de performance */}
-          <Grid item xs={12} lg={4}>
-            <PerformanceMetrics loading={loading} />
-          </Grid>
-        </Grid>
-      </Container>
+        </Container>
+      </Box>
 
       <Snackbar
         open={notification.open}
         autoHideDuration={4000}
         onClose={() => setNotification(prev => ({ ...prev, open: false }))}
       >
-        <Alert severity={notification.severity}>
+        <Alert severity={notification.severity} sx={{ borderRadius: '8px' }}>
           {notification.message}
         </Alert>
       </Snackbar>
