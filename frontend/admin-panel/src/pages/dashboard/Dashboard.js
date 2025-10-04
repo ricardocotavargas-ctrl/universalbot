@@ -919,7 +919,7 @@ const SystemPerformance = ({ performance, loading = false }) => {
         <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
-  }
+  };
 
   return (
     <Card sx={{ 
