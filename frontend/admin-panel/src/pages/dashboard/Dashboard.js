@@ -75,7 +75,6 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
-// 🔥 HOOK PERSONALIZADO PARA DATOS DEL DASHBOARD
 const useDashboardData = (timeRange = 'week', activeTab = 0) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -122,15 +121,6 @@ const useDashboardData = (timeRange = 'week', activeTab = 0) => {
           timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
           user: 'Sistema',
           status: 'success'
-        },
-        {
-          id: 3,
-          type: 'inventory',
-          title: 'Alerta de inventario',
-          description: 'Producto "Laptop Dell" por debajo del mínimo',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          user: 'Sistema',
-          status: 'warning'
         }
       ],
       insights: [
@@ -143,21 +133,10 @@ const useDashboardData = (timeRange = 'week', activeTab = 0) => {
           action: 'Mantener estrategia',
           timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           priority: 'high'
-        },
-        {
-          id: 2,
-          type: 'opportunity',
-          title: 'Oportunidad en Instagram',
-          message: 'El engagement en Instagram ha aumentado un 25%. Considera aumentar el presupuesto.',
-          confidence: 0.82,
-          action: 'Optimizar campañas',
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          priority: 'medium'
         }
       ]
     };
 
-    // Datos específicos por tab
     if (tabIndex === 0) {
       return {
         ...baseData,
@@ -172,36 +151,14 @@ const useDashboardData = (timeRange = 'week', activeTab = 0) => {
         analytics: {
           revenueData: [45, 52, 48, 61, 55, 49, 58],
           labels: ['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00']
-        },
-        detailedMetrics: {
-          customerSegments: [
-            { segment: 'Nuevos', value: 35, growth: 8 },
-            { segment: 'Recurrentes', value: 45, growth: 12 },
-            { segment: 'VIP', value: 20, growth: 15 }
-          ]
-        }
-      };
-    } else if (tabIndex === 2) {
-      return {
-        ...baseData,
-        analytics: {
-          revenueData: [28000, 32000, 29000, 35000, 38000, 42000, 45000],
-          labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul']
         }
       };
     } else {
       return {
         ...baseData,
         analytics: {
-          revenueData: [75, 78, 82, 85, 87, 89, 92],
-          labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-        },
-        automation: {
-          processes: [
-            { name: 'Respuestas Automáticas', efficiency: 95, timeSaved: 12 },
-            { name: 'Gestión de Inventario', efficiency: 88, timeSaved: 8 },
-            { name: 'Análisis de Datos', efficiency: 92, timeSaved: 6 }
-          ]
+          revenueData: [28000, 32000, 29000, 35000, 38000, 42000, 45000],
+          labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul']
         }
       };
     }
@@ -227,8 +184,6 @@ const useDashboardData = (timeRange = 'week', activeTab = 0) => {
 
   return { data, loading, error, refetch: fetchData };
 };
-
-// 🔥 COMPONENTES DEL DASHBOARD
 
 const ChangeIndicator = ({ value }) => {
   if (value > 0) {
@@ -509,13 +464,6 @@ const AIInsightCard = React.memo(({ insight, loading = false }) => {
           icon: '#f59e0b',
           accent: '#f59e0b'
         };
-      case 'warning':
-        return {
-          bg: 'rgba(239, 68, 68, 0.08)',
-          border: 'rgba(239, 68, 68, 0.2)',
-          icon: '#ef4444',
-          accent: '#ef4444'
-        };
       default:
         return {
           bg: 'rgba(37, 99, 235, 0.08)',
@@ -646,10 +594,6 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
         return <Receipt sx={{ color: '#10b981', fontSize: 18 }} />;
       case 'customer':
         return <Group sx={{ color: '#3b82f6', fontSize: 18 }} />;
-      case 'inventory':
-        return <Inventory sx={{ color: '#f59e0b', fontSize: 18 }} />;
-      case 'message':
-        return <Message sx={{ color: '#8b5cf6', fontSize: 18 }} />;
       default:
         return <Notifications sx={{ color: '#6b7280', fontSize: 18 }} />;
     }
@@ -662,8 +606,6 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
         return '#10b981';
       case 'warning':
         return '#f59e0b';
-      case 'error':
-        return '#ef4444';
       default:
         return '#6b7280';
     }
@@ -883,7 +825,7 @@ const SystemPerformance = ({ performance, loading = false }) => {
     },
     { 
       label: 'Disponibilidad', 
-      value: `${performance?.uptime || 0}%`, 
+      value: `${performance?.uptime || 0}%', 
       target: '99.9%', 
       progress: performance?.uptime || 0,
       color: performance?.uptime >= 99.9 ? '#10b981' : '#f59e0b',
@@ -891,19 +833,11 @@ const SystemPerformance = ({ performance, loading = false }) => {
     },
     { 
       label: 'Precisión IA', 
-      value: `${performance?.accuracy || 0}%`, 
+      value: `${performance?.accuracy || 0}%', 
       target: '95%', 
       progress: performance?.accuracy || 0,
       color: performance?.accuracy >= 95 ? '#10b981' : '#f59e0b',
       icon: <SmartToy />
-    },
-    { 
-      label: 'Automatización', 
-      value: `${performance?.automation || 0}%`, 
-      target: '90%', 
-      progress: performance?.automation || 0,
-      color: performance?.automation >= 90 ? '#10b981' : '#f59e0b',
-      icon: <AutoGraph />
     }
   ];
 
@@ -1014,15 +948,9 @@ const QuickActionsPanel = ({ onAction }) => (
             label: 'Campaña Marketing', 
             color: '#8b5cf6',
             description: 'Crear campaña IA'
-          },
-          { 
-            icon: <Analytics />, 
-            label: 'Reporte Avanzado', 
-            color: '#2563eb',
-            description: 'Generar análisis'
           }
         ].map((action, index) => (
-          <Grid item xs={6} sm={3} key={index}>
+          <Grid item xs={6} sm={4} key={index}>
             <Button
               fullWidth
               onClick={() => onAction?.(action.label)}
@@ -1057,8 +985,6 @@ const QuickActionsPanel = ({ onAction }) => (
   </Card>
 );
 
-// 🔥 COMPONENTE PRINCIPAL DEL DASHBOARD
-
 const Dashboard = () => {
   const { user } = useAuth();
   const isMobile = useMediaQuery('(max-width:900px)');
@@ -1082,7 +1008,6 @@ const Dashboard = () => {
     showNotification(`Acción "${action}" iniciada`, 'info');
   }, [showNotification]);
 
-  // Memoizar valores computados
   const mainMetrics = useMemo(() => [
     {
       icon: AttachMoney,
@@ -1161,7 +1086,6 @@ const Dashboard = () => {
         py: 1
       }}>
         <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 2 : 3 }}>
-          {/* Header del Dashboard */}
           <Box sx={{ mb: 4 }}>
             <Box sx={{ 
               display: 'flex', 
@@ -1187,12 +1111,7 @@ const Dashboard = () => {
                   Dashboard Executive
                 </Typography>
                 <Typography variant="h6" sx={{ mb: 2, color: '#6b7280' }}>
-                  Tiempo real • {user?.business?.name || 'Tu Negocio'} • {new Date().toLocaleDateString('es-ES', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+                  Tiempo real • {user?.business?.name || 'Tu Negocio'}
                 </Typography>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -1251,7 +1170,6 @@ const Dashboard = () => {
               <Tab icon={<Analytics />} label="Visión General" />
               <Tab icon={<BarChart />} label="Análisis Detallado" />
               <Tab icon={<Timeline />} label="Tendencias" />
-              <Tab icon={<SmartToy />} label="IA & Automatización" />
             </Tabs>
           </Box>
 
@@ -1261,30 +1179,21 @@ const Dashboard = () => {
             </Alert>
           )}
 
-          {/* Acciones Rápidas */}
           <QuickActionsPanel onAction={handleQuickAction} />
 
-          {/* Grid Principal del Dashboard */}
           <Grid container spacing={3}>
-            {/* Métricas principales - 6 tarjetas SIMÉTRICAS */}
             {mainMetrics.map((metric, index) => (
               <Grid item xs={6} sm={4} md={4} lg={2} key={metric.title}>
                 <StatCard {...metric} loading={loading} />
               </Grid>
             ))}
 
-            {/* Contenido específico por pestaña */}
             <Grid item xs={12} lg={8}>
               <PerformanceChart 
                 data={dashboardData?.analytics}
                 timeRange={timeRange}
                 onTimeRangeChange={setTimeRange}
-                title={
-                  activeTab === 0 ? "📈 Rendimiento de Ingresos" :
-                  activeTab === 1 ? "📊 Análisis de Conversión por Hora" :
-                  activeTab === 2 ? "📈 Tendencias de Crecimiento" :
-                  "🤖 Eficiencia de Automatización"
-                }
+                title="📈 Rendimiento de Ingresos"
                 loading={loading}
               />
             </Grid>
@@ -1296,7 +1205,6 @@ const Dashboard = () => {
               />
             </Grid>
 
-            {/* Canales de performance */}
             <Grid item xs={12} lg={6}>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
                 📊 Performance por Canal
@@ -1310,7 +1218,6 @@ const Dashboard = () => {
               </Grid>
             </Grid>
 
-            {/* Actividad reciente */}
             <Grid item xs={12} lg={6}>
               <RecentActivity 
                 activities={dashboardData?.recentActivity || []}
@@ -1318,7 +1225,6 @@ const Dashboard = () => {
               />
             </Grid>
 
-            {/* Insights de IA */}
             <Grid item xs={12}>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: '#1f2937' }}>
                 <SmartToy sx={{ color: '#2563eb' }} />
