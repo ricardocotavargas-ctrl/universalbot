@@ -3,27 +3,23 @@ import {
   Container, Typography, Box, Paper, Grid, Card, CardContent,
   Button, TextField, FormControl, InputLabel, Select, MenuItem,
   Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
-  Stepper, Step, StepLabel, StepContent, Divider, Avatar,
+  Stepper, Step, StepLabel, Divider, Avatar,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  InputAdornment, Badge, Tooltip, Fab, useMediaQuery,
-  Alert, Snackbar, LinearProgress, Stack, List, ListItem, ListItemIcon,
-  ListItemText, alpha, useTheme, Skeleton
+  InputAdornment, Alert, Snackbar, LinearProgress, Stack,
+  alpha, useTheme, Skeleton
 } from '@mui/material';
 import {
   Add, Remove, Search, Delete, Payment, Receipt,
-  QrCode, PersonAdd, TrendingUp, LocalOffer,
-  Inventory, WhatsApp, CreditCard, Money, AccountBalance,
-  PointOfSale, Smartphone, FlashOn, Rocket, Psychology,
-  ShoppingCart, Group, Speed, AutoGraph, SmartToy,
-  ArrowForward, CheckCircle, Warning, Discount,
-  CurrencyExchange, ReceiptLong, Print, Send, Close
+  PersonAdd, Inventory, WhatsApp, CreditCard, Money, AccountBalance,
+  PointOfSale, Smartphone, ShoppingCart, Group,
+  ArrowForward, CheckCircle, CurrencyExchange, Print, Send, Close
 } from '@mui/icons-material';
 
-// ✅ IMPORTACIÓN CORREGIDA
+// ✅ USAR TU CONTEXTO DE AUTH EXISTENTE - NO CAMBIAR
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 
-// 🔥 HOOK PERSONALIZADO PARA DATOS REALES
+// Hook para datos de venta
 const useSaleData = () => {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
@@ -35,27 +31,17 @@ const useSaleData = () => {
       setLoading(true);
       setError(null);
       
-      console.log('📋 Cargando datos de venta...');
-      const response = await api.get('/sales/sale-data');
+      const response = await api.get('/api/sales/sale-data');
       
       if (response.data.success) {
-        console.log('✅ Datos cargados:', {
-          clients: response.data.clients?.length,
-          products: response.data.products?.length
-        });
         setClients(response.data.clients || []);
         setProducts(response.data.products || []);
       } else {
-        const errorMsg = response.data.message || 'Error al cargar datos';
-        console.error('❌ Error en response:', errorMsg);
-        setError(errorMsg);
+        setError('Error al cargar datos');
       }
     } catch (err) {
-      console.error('❌ Error loading sale data:', err);
-      const errorMsg = err.response?.data?.message || err.message || 'Error de conexión';
-      setError(errorMsg);
-      setClients([]);
-      setProducts([]);
+      console.error('Error loading sale data:', err);
+      setError('Error de conexión');
     } finally {
       setLoading(false);
     }
@@ -67,66 +53,24 @@ const useSaleData = () => {
 
   const createClient = async (clientData) => {
     try {
-      console.log('👤 Creando cliente:', clientData);
-      const response = await api.post('/sales/quick-client', clientData);
-      
+      const response = await api.post('/api/sales/quick-client', clientData);
       if (response.data.success) {
-        console.log('✅ Cliente creado:', response.data.client);
         setClients(prev => [...prev, response.data.client]);
         return response.data.client;
-      } else {
-        throw new Error(response.data.message || 'Error al crear cliente');
       }
+      throw new Error('Error al crear cliente');
     } catch (error) {
-      console.error('❌ Error creating client:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Error al crear cliente';
-      throw new Error(errorMsg);
+      throw new Error(error.response?.data?.message || 'Error al crear cliente');
     }
   };
 
   return { clients, products, loading, error, loadData, createClient };
 };
 
-// ... (LOS COMPONENTES GradientCard, ProductCard, ClientCard, CartItem SE MANTIENEN IGUALES)
-// 🔥 COMPONENTES MODERNOS (MANTENER EL CÓDIGO ORIGINAL DE ESTOS COMPONENTES)
-
-const GradientCard = ({ children, sx, ...props }) => {
-  const theme = useTheme();
-  return (
-    <Card
-      sx={{
-        background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)`,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-        backdropFilter: 'blur(10px)',
-        ...sx
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-};
-
-const ProductCard = React.memo(({ product, onAdd, loading }) => {
-  // ... (mantener el código original del ProductCard)
-});
-
-const ClientCard = React.memo(({ client, selected, onSelect, loading }) => {
-  // ... (mantener el código original del ClientCard)
-});
-
-const CartItem = React.memo(({ item, onQuantityChange, onRemove, stock }) => {
-  // ... (mantener el código original del CartItem)
-});
-
-// 🔥 COMPONENTE PRINCIPAL MODERNIZADO
-
+// Componente principal de ventas
 const NewSale = () => {
   const theme = useTheme();
   const { user } = useAuth();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [activeStep, setActiveStep] = useState(0);
   const [saleData, setSaleData] = useState({
@@ -136,13 +80,11 @@ const NewSale = () => {
     currency: 'USD',
     exchangeRate: 36.5,
     discounts: 0,
-    taxes: 0,
     notes: '',
     shipping: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [aiSuggestions, setAiSuggestions] = useState([]);
   const [processingSale, setProcessingSale] = useState(false);
   const [newClientDialog, setNewClientDialog] = useState(false);
   const [newClientData, setNewClientData] = useState({ name: '', phone: '', rif: '' });
@@ -158,40 +100,29 @@ const NewSale = () => {
   ];
 
   const paymentMethods = [
-    { value: 'efectivo', label: 'Efectivo', icon: <Money />, color: '#10b981' },
-    { value: 'transferencia', label: 'Transferencia', icon: <AccountBalance />, color: '#2563eb' },
-    { value: 'pago_movil', label: 'Pago Móvil', icon: <Smartphone />, color: '#8b5cf6' },
-    { value: 'tarjeta_debito', label: 'Tarjeta Débito', icon: <CreditCard />, color: '#f59e0b' },
-    { value: 'tarjeta_credito', label: 'Tarjeta Crédito', icon: <CreditCard />, color: '#ec4899' },
-    { value: 'divisas', label: 'Divisas', icon: <CurrencyExchange />, color: '#06b6d4' }
+    { value: 'efectivo', label: 'Efectivo', icon: <Money /> },
+    { value: 'transferencia', label: 'Transferencia', icon: <AccountBalance /> },
+    { value: 'pago_movil', label: 'Pago Móvil', icon: <Smartphone /> },
+    { value: 'tarjeta', label: 'Tarjeta', icon: <CreditCard /> },
+    { value: 'divisas', label: 'Divisas', icon: <CurrencyExchange /> }
   ];
 
-  const currencies = [
-    { value: 'USD', label: 'Dólares ($)', symbol: '$' },
-    { value: 'VES', label: 'Bolívares (Bs.)', symbol: 'Bs.' },
-    { value: 'EUR', label: 'Euros (€)', symbol: '€' }
-  ];
-
-  // Cálculos optimizados con useMemo
+  // Cálculos
   const totals = useMemo(() => {
     const subtotal = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const taxes = saleData.products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
     const total = subtotal + taxes - saleData.discounts + saleData.shipping;
-
     return { subtotal, taxes, total };
   }, [saleData.products, saleData.discounts, saleData.shipping]);
 
   // Handlers
   const handleAddProduct = useCallback((product) => {
-    const existingProduct = saleData.products.find(p => p.id === product.id);
-    
-    if (existingProduct) {
+    const existing = saleData.products.find(p => p.id === product.id);
+    if (existing) {
       setSaleData(prev => ({
         ...prev,
-        products: prev.products.map(p =>
-          p.id === product.id
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
+        products: prev.products.map(p => 
+          p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
         )
       }));
     } else {
@@ -200,7 +131,6 @@ const NewSale = () => {
         products: [...prev.products, { ...product, quantity: 1 }]
       }));
     }
-
     setSnackbar({ open: true, message: `✅ ${product.name} agregado`, severity: 'success' });
   }, [saleData.products]);
 
@@ -213,7 +143,6 @@ const NewSale = () => {
 
   const handleQuantityChange = useCallback((productId, newQuantity) => {
     if (newQuantity < 1) return;
-
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
@@ -225,9 +154,7 @@ const NewSale = () => {
     setSaleData(prev => ({
       ...prev,
       products: prev.products.map(p =>
-        p.id === productId
-          ? { ...p, quantity: newQuantity }
-          : p
+        p.id === productId ? { ...p, quantity: newQuantity } : p
       )
     }));
   }, [products]);
@@ -241,50 +168,25 @@ const NewSale = () => {
     setCreatingClient(true);
     try {
       const client = await createClient(newClientData);
-      if (client) {
-        setSaleData(prev => ({ ...prev, client }));
-        setNewClientDialog(false);
-        setNewClientData({ name: '', phone: '', rif: '' });
-        setSnackbar({ open: true, message: '✅ Cliente creado exitosamente', severity: 'success' });
-      }
+      setSaleData(prev => ({ ...prev, client }));
+      setNewClientDialog(false);
+      setNewClientData({ name: '', phone: '', rif: '' });
+      setSnackbar({ open: true, message: '✅ Cliente creado exitosamente', severity: 'success' });
     } catch (error) {
-      setSnackbar({ 
-        open: true, 
-        message: `❌ ${error.message || 'Error al crear cliente'}`,
-        severity: 'error' 
-      });
+      setSnackbar({ open: true, message: `❌ ${error.message}`, severity: 'error' });
     } finally {
       setCreatingClient(false);
     }
   };
 
-  const handleCompleteSale = useCallback(async () => {
+  const handleCompleteSale = async () => {
     try {
       setProcessingSale(true);
-      
-      console.log('💰 Enviando datos de venta:', {
-        products: saleData.products.length,
-        client: saleData.client?.name,
-        total: totals.total
-      });
-      
-      const response = await api.post('/sales/new-sale', saleData);
+      const response = await api.post('/api/sales/new-sale', saleData);
       
       if (response.data.success) {
-        const sale = response.data.sale;
+        setSnackbar({ open: true, message: '🎉 Venta completada exitosamente', severity: 'success' });
         
-        // Generar mensaje para WhatsApp
-        const whatsappMessage = generateWhatsAppMessage(sale);
-        
-        setSnackbar({ 
-          open: true, 
-          message: '🎉 Venta completada exitosamente', 
-          severity: 'success',
-          saleId: sale.id,
-          whatsappMessage
-        });
-        
-        // Resetear después de 2 segundos
         setTimeout(() => {
           setSaleData({
             client: null,
@@ -293,153 +195,51 @@ const NewSale = () => {
             currency: 'USD',
             exchangeRate: 36.5,
             discounts: 0,
-            taxes: 0,
             notes: '',
             shipping: 0
           });
           setActiveStep(0);
-          setSearchTerm('');
-          setAiSuggestions([]);
-          loadData(); // Recargar productos para actualizar stock
+          loadData();
         }, 2000);
       } else {
         throw new Error(response.data.message || 'Error al procesar la venta');
       }
     } catch (error) {
-      console.error('❌ Error completing sale:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Error de conexión';
-      setSnackbar({ 
-        open: true, 
-        message: `❌ ${errorMsg}`,
-        severity: 'error' 
-      });
+      setSnackbar({ open: true, message: `❌ ${error.response?.data?.message || error.message}`, severity: 'error' });
     } finally {
       setProcessingSale(false);
     }
-  }, [saleData, loadData, totals.total]);
-
-  // Generar mensaje de WhatsApp
-  const generateWhatsAppMessage = (sale) => {
-    const businessName = user?.business?.name || 'Tu Negocio';
-    const productsList = sale.Products?.map(p => 
-      `• ${p.Product.name} - ${p.quantity} x $${p.unitPrice} = $${p.totalPrice}`
-    ).join('\n') || 'No hay productos';
-    
-    return `¡Hola! Gracias por tu compra en ${businessName}
-
-📋 *Resumen de tu compra:*
-${productsList}
-
-💰 *Total: $${sale.totalAmount}*
-
-📅 Fecha: ${new Date(sale.createdAt).toLocaleDateString()}
-🆔 Nº de venta: ${sale.id}
-
-¡Gracias por tu preferencia!`;
   };
 
-  // Enviar por WhatsApp
-  const handleSendWhatsApp = (phone, message) => {
-    if (!phone) {
-      setSnackbar({ open: true, message: '❌ El cliente no tiene número registrado', severity: 'warning' });
-      return;
-    }
-
-    const formattedPhone = phone.replace(/\D/g, '');
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  // Imprimir comprobante
-  const handlePrintReceipt = async (saleId) => {
-    try {
-      const response = await api.get(`/sales/sale-receipt/${saleId}`);
-      if (response.data.success) {
-        // Aquí implementarías la generación del PDF
-        const receiptData = response.data.receipt;
-        console.log('🧾 Datos para comprobante:', receiptData);
-        
-        // Por ahora mostramos los datos en consola y un mensaje
-        setSnackbar({ 
-          open: true, 
-          message: `📄 Comprobante #${saleId} generado con logo de ${receiptData.companyInfo.name}`,
-          severity: 'info' 
-        });
-        
-        // En un entorno real, aquí abrirías el PDF en nueva ventana
-        // generatePDF(receiptData);
-      }
-    } catch (error) {
-      console.error('❌ Error generating receipt:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Error al generar comprobante';
-      setSnackbar({ open: true, message: `❌ ${errorMsg}`, severity: 'error' });
-    }
-  };
-
-  // Sugerencias de IA
-  useEffect(() => {
-    if (saleData.products.length > 0 && products.length > 0) {
-      const suggestions = [];
-      
-      // Sugerencia de upsell basada en productos populares
-      if (saleData.products.some(p => p.category?.toLowerCase().includes('café') || p.name?.toLowerCase().includes('café'))) {
-        const sugarProduct = products.find(p => p.name?.toLowerCase().includes('azúcar') && p.stock > 0);
-        if (sugarProduct && !saleData.products.some(p => p.id === sugarProduct.id)) {
-          suggestions.push({
-            id: 1,
-            type: 'upsell',
-            message: 'Los clientes que compran café también suelen comprar azúcar',
-            product: sugarProduct,
-            confidence: 0.85
-          });
-        }
-      }
-
-      setAiSuggestions(suggestions);
-    } else {
-      setAiSuggestions([]);
-    }
-  }, [saleData.products, products, totals.subtotal]);
-
-  // Filtrar productos y clientes
+  // Filtros
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
-    
     return products.filter(product => 
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.barcode?.includes(searchTerm)
+      product.code?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm]);
 
   const filteredClients = useMemo(() => {
     if (!searchTerm) return clients;
-    
     return clients.filter(client => 
       client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.rif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone?.includes(searchTerm)
+      client.rif?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [clients, searchTerm]);
 
-  // Renderizado de pasos (SE MANTIENEN IGUALES PERO CON MEJOR MANEJO DE ERRORES)
+  // Render steps
   const renderClientStep = () => (
     <Box>
-      <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Group sx={{ color: theme.palette.primary.main }} />
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+        <Group sx={{ mr: 1, color: theme.palette.primary.main }} />
         Seleccionar Cliente
       </Typography>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
-          <Button 
-            size="small" 
-            onClick={loadData}
-            sx={{ ml: 1 }}
-          >
+          <Button size="small" onClick={loadData} sx={{ ml: 1 }}>
             Reintentar
           </Button>
         </Alert>
@@ -459,7 +259,6 @@ ${productsList}
                 </InputAdornment>
               )
             }}
-            sx={{ mb: 2 }}
           />
         </Grid>
         
@@ -469,60 +268,63 @@ ${productsList}
             variant="outlined"
             startIcon={<PersonAdd />}
             onClick={() => setNewClientDialog(true)}
-            sx={{ 
-              height: '56px',
-              borderColor: alpha(theme.palette.primary.main, 0.3),
-              color: theme.palette.primary.main,
-              fontWeight: 600
-            }}
+            sx={{ height: '56px' }}
           >
             Nuevo Cliente
           </Button>
         </Grid>
       </Grid>
 
-      {loading ? (
-        <Grid container spacing={2}>
-          {[1, 2, 3].map((item) => (
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+        {loading ? (
+          [1, 2, 3].map((item) => (
             <Grid item xs={12} md={6} key={item}>
               <Skeleton variant="rectangular" height={100} sx={{ borderRadius: '12px' }} />
             </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Grid container spacing={2}>
-          {filteredClients.map((client) => (
+          ))
+        ) : (
+          filteredClients.map((client) => (
             <Grid item xs={12} md={6} key={client.id}>
-              <ClientCard 
-                client={client}
-                selected={saleData.client?.id === client.id}
-                onSelect={(client) => setSaleData(prev => ({ ...prev, client }))}
-                loading={false}
-              />
+              <Card
+                sx={{
+                  border: `2px solid ${saleData.client?.id === client.id ? theme.palette.primary.main : alpha(theme.palette.divider, 0.1)}`,
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+                  }
+                }}
+                onClick={() => setSaleData(prev => ({ ...prev, client }))}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: saleData.client?.id === client.id ? theme.palette.primary.main : '#6b7280' }}>
+                      {client.name.charAt(0)}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>
+                        {client.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                        {client.rif}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
+                        {client.phone}
+                      </Typography>
+                    </Box>
+                    {saleData.client?.id === client.id && (
+                      <CheckCircle sx={{ color: theme.palette.primary.main }} />
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
-          ))}
-          {filteredClients.length === 0 && !loading && (
-            <Grid item xs={12}>
-              <Alert severity="info" sx={{ borderRadius: '8px' }}>
-                No se encontraron clientes. Puedes crear uno nuevo.
-              </Alert>
-            </Grid>
-          )}
-        </Grid>
-      )}
+          ))
+        )}
+      </Grid>
 
-      {saleData.client && (
-        <Alert severity="success" sx={{ mt: 2, borderRadius: '8px' }}>
-          Cliente seleccionado: <strong>{saleData.client.name}</strong>
-          {saleData.client.phone && (
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              📞 {saleData.client.phone}
-            </Typography>
-          )}
-        </Alert>
-      )}
-
-      {/* Dialog para nuevo cliente */}
       <Dialog open={newClientDialog} onClose={() => setNewClientDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -539,8 +341,6 @@ ${productsList}
               value={newClientData.name}
               onChange={(e) => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
               fullWidth
-              error={!newClientData.name.trim()}
-              helperText={!newClientData.name.trim() ? "El nombre es obligatorio" : ""}
             />
             <TextField
               label="Teléfono"
@@ -570,172 +370,432 @@ ${productsList}
     </Box>
   );
 
-  // ... (LOS DEMÁS RENDER STEPS SE MANTIENEN IGUALES)
+  const renderProductsStep = () => (
+    <Box>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+        <ShoppingCart sx={{ mr: 1, color: theme.palette.primary.main }} />
+        Agregar Productos
+      </Typography>
 
-  return (
-    <Box sx={{ 
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
-      py: 1
-    }}>
-      <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 3, px: isMobile ? 2 : 3 }}>
-        {/* Header moderno */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Rocket sx={{ fontSize: 40, color: 'primary.main' }} />
-              <Box>
-                <Typography variant="h4" fontWeight={800} sx={{ 
-                  background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  color: 'transparent'
-                }}>
-                  Nueva Venta
-                </Typography>
-                <Typography sx={{ color: '#6b7280' }}>
-                  Sistema de ventas moderno • {user?.business?.name || 'Tu Negocio'}
-                </Typography>
-              </Box>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Buscar productos por nombre, código o categoría..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: '#6b7280' }} />
+                </InputAdornment>
+              )
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+            Productos Disponibles ({filteredProducts.length})
+          </Typography>
+          
+          <Grid container spacing={2}>
+            {filteredProducts.map((product) => (
+              <Grid item xs={12} sm={6} md={4} key={product.id}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 40px rgba(0,0,0,0.12)'
+                    }
+                  }}
+                  onClick={() => handleAddProduct(product)}
+                >
+                  <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" fontWeight={700} sx={{ fontSize: '0.9rem' }}>
+                          {product.name}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+                          {product.code}
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        label={`${product.stock} disp.`} 
+                        size="small"
+                        color={product.stock === 0 ? 'error' : product.stock > 20 ? 'success' : 'warning'}
+                      />
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="h5" fontWeight={800} sx={{ color: theme.palette.primary.main }}>
+                        ${product.price.toFixed(2)}
+                      </Typography>
+                    </Box>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      startIcon={<Add />}
+                      disabled={product.stock === 0}
+                    >
+                      Agregar al Carrito
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)` }}>
+            <CardContent>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+                <Receipt sx={{ mr: 1, color: theme.palette.primary.main }} />
+                Carrito de Compra
+              </Typography>
+
+              {saleData.products.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Inventory sx={{ fontSize: 48, color: '#d1d5db', mb: 1 }} />
+                  <Typography color="text.secondary">
+                    No hay productos en el carrito
+                  </Typography>
+                </Box>
+              ) : (
+                <Box>
+                  {saleData.products.map((product) => (
+                    <Card key={product.id} sx={{ mb: 1 }}>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle2" fontWeight={700}>
+                              {product.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                              ${product.price.toFixed(2)} c/u
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <IconButton size="small" onClick={() => handleQuantityChange(product.id, product.quantity - 1)}>
+                              <Remove />
+                            </IconButton>
+                            <TextField
+                              size="small"
+                              value={product.quantity}
+                              sx={{ width: 60 }}
+                              inputProps={{ style: { textAlign: 'center' } }}
+                            />
+                            <IconButton size="small" onClick={() => handleQuantityChange(product.id, product.quantity + 1)}>
+                              <Add />
+                            </IconButton>
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} sx={{ minWidth: 80, textAlign: 'right' }}>
+                            ${(product.price * product.quantity).toFixed(2)}
+                          </Typography>
+                          <IconButton size="small" onClick={() => handleRemoveProduct(product.id)}>
+                            <Delete />
+                          </IconButton>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  <Box sx={{ mt: 2, p: 2, background: alpha(theme.palette.primary.main, 0.05), borderRadius: '8px' }}>
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      Total: ${totals.total.toFixed(2)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                      {saleData.products.reduce((sum, item) => sum + item.quantity, 0)} productos
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  const renderPaymentStep = () => (
+    <Box>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+        <Payment sx={{ mr: 1, color: theme.palette.primary.main }} />
+        Método de Pago
+      </Typography>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Método de Pago</InputLabel>
+            <Select
+              value={saleData.paymentMethod}
+              onChange={(e) => setSaleData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+              label="Método de Pago"
+            >
+              {paymentMethods.map((method) => (
+                <MenuItem key={method.value} value={method.value}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {method.icon}
+                    {method.label}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Descuentos"
+            type="number"
+            value={saleData.discounts}
+            onChange={(e) => setSaleData(prev => ({ ...prev, discounts: parseFloat(e.target.value) || 0 }))}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">$</InputAdornment>
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Notas de la venta"
+            multiline
+            rows={3}
+            value={saleData.notes}
+            onChange={(e) => setSaleData(prev => ({ ...prev, notes: e.target.value }))}
+            placeholder="Observaciones o instrucciones especiales..."
+          />
+        </Grid>
+      </Grid>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Card sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)` }}>
+        <CardContent>
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+            Resumen de la Venta
+          </Typography>
+          
+          <Stack spacing={1}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography>Subtotal:</Typography>
+              <Typography fontWeight={600}>${totals.subtotal.toFixed(2)}</Typography>
             </Box>
             
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip 
-                icon={<Speed />} 
-                label="Modo Rápido" 
-                color="primary" 
-                variant="outlined"
-                sx={{ fontWeight: 600 }}
-              />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography>IVA:</Typography>
+              <Typography fontWeight={600}>${totals.taxes.toFixed(2)}</Typography>
             </Box>
-          </Box>
-
-          {/* Stepper moderno */}
-          <Paper sx={{ p: 3, borderRadius: '16px', background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)' }}>
-            <Stepper 
-              activeStep={activeStep} 
-              orientation={isMobile ? 'vertical' : 'horizontal'} 
-              sx={{ mb: 2 }}
-            >
-              {steps.map((step, index) => (
-                <Step key={step.label}>
-                  <StepLabel
-                    StepIconProps={{
-                      sx: {
-                        '&.Mui-completed': { color: '#10b981' },
-                        '&.Mui-active': { color: theme.palette.primary.main }
-                      }
-                    }}
-                    optional={
-                      <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
-                        {step.description}
-                      </Typography>
-                    }
-                  >
-                    {step.label}
-                  </StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-
-            <LinearProgress 
-              variant="determinate" 
-              value={(activeStep / (steps.length - 1)) * 100} 
-              sx={{ 
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                '& .MuiLinearProgress-bar': {
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
-                }
-              }}
-            />
-          </Paper>
-        </Box>
-
-        {/* Contenido principal */}
-        <Paper sx={{ 
-          p: 3, 
-          mb: 3, 
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
-        }}>
-          {activeStep === 0 && renderClientStep()}
-          {activeStep === 1 && renderProductsStep()}
-          {activeStep === 2 && renderPaymentStep()}
-          {activeStep === 3 && renderConfirmationStep()}
-        </Paper>
-
-        {/* Navegación */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button
-            disabled={activeStep === 0}
-            onClick={() => setActiveStep(prev => prev - 1)}
-            startIcon={<Remove />}
-            sx={{ fontWeight: 600 }}
-          >
-            Anterior
-          </Button>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" sx={{ color: '#6b7280' }}>
-              Paso {activeStep + 1} de {steps.length}
-            </Typography>
-          </Box>
-          
-          <Button
-            variant="contained"
-            onClick={() => setActiveStep(prev => prev + 1)}
-            endIcon={activeStep === steps.length - 1 ? <CheckCircle /> : <ArrowForward />}
-            disabled={
-              (activeStep === 0 && !saleData.client) ||
-              (activeStep === 1 && saleData.products.length === 0) ||
-              activeStep === steps.length - 1
-            }
-            sx={{ 
-              fontWeight: 600,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
-            }}
-          >
-            {activeStep === steps.length - 1 ? 'Completar' : 'Siguiente'}
-          </Button>
-        </Box>
-
-        {/* Snackbar para notificaciones */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert 
-            severity={snackbar.severity} 
-            sx={{ 
-              borderRadius: '8px',
-              fontWeight: 600
-            }}
-            action={
-              snackbar.saleId && saleData.client?.phone && (
-                <Button
-                  color="inherit"
-                  size="small"
-                  startIcon={<WhatsApp />}
-                  onClick={() => {
-                    handleSendWhatsApp(saleData.client.phone, snackbar.whatsappMessage);
-                  }}
-                >
-                  Enviar WhatsApp
-                </Button>
-              )
-            }
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Container>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography>Descuentos:</Typography>
+              <Typography fontWeight={600} color="error">-${saleData.discounts.toFixed(2)}</Typography>
+            </Box>
+            
+            <Divider />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="h6">Total:</Typography>
+              <Typography variant="h6" fontWeight={700}>${totals.total.toFixed(2)}</Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
     </Box>
+  );
+
+  const renderConfirmationStep = () => (
+    <Box>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+        <CheckCircle sx={{ mr: 1, color: theme.palette.primary.main }} />
+        Confirmar Venta
+      </Typography>
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        Revise todos los detalles antes de completar la venta
+      </Alert>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Información del Cliente
+              </Typography>
+              {saleData.client ? (
+                <Box>
+                  <Typography fontWeight="600">{saleData.client.name}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.rif}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.phone}</Typography>
+                </Box>
+              ) : (
+                <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                  Cliente no seleccionado
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Detalles de Pago
+              </Typography>
+              <Typography variant="body2">
+                Método: {paymentMethods.find(m => m.value === saleData.paymentMethod)?.label}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Resumen de Productos ({saleData.products.length})
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Producto</TableCell>
+                      <TableCell align="right">Cantidad</TableCell>
+                      <TableCell align="right">Precio Unit.</TableCell>
+                      <TableCell align="right">Total</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {saleData.products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Inventory sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+                            <Box>
+                              <Typography variant="body2" fontWeight={500}>{product.name}</Typography>
+                              <Typography variant="caption" sx={{ color: '#6b7280' }}>{product.code}</Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right">{product.quantity}</TableCell>
+                        <TableCell align="right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell align="right">${(product.price * product.quantity).toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Typography variant="h4" fontWeight={800} gutterBottom>
+              Total: ${totals.total.toFixed(2)}
+            </Typography>
+            
+            <Stack direction="row" spacing={2} justifyContent="center">
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<Print />}
+                sx={{ px: 4 }}
+              >
+                Imprimir
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<PointOfSale />}
+                onClick={handleCompleteSale}
+                disabled={processingSale}
+                sx={{ px: 4 }}
+              >
+                {processingSale ? 'Procesando...' : 'Completar Venta'}
+              </Button>
+              {saleData.client?.phone && (
+                <Button
+                  variant="outlined"
+                  size="large"
+                  startIcon={<Send />}
+                  sx={{ px: 4 }}
+                >
+                  Enviar por WhatsApp
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={800} gutterBottom>
+          Nueva Venta
+        </Typography>
+        <Typography sx={{ color: '#6b7280' }}>
+          Sistema de ventas • {user?.business?.name || 'Tu Negocio'}
+        </Typography>
+      </Box>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+          {steps.map((step) => (
+            <Step key={step.label}>
+              <StepLabel>{step.label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        {activeStep === 0 && renderClientStep()}
+        {activeStep === 1 && renderProductsStep()}
+        {activeStep === 2 && renderPaymentStep()}
+        {activeStep === 3 && renderConfirmationStep()}
+      </Paper>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Button
+          disabled={activeStep === 0}
+          onClick={() => setActiveStep(prev => prev - 1)}
+        >
+          Anterior
+        </Button>
+        
+        <Button
+          variant="contained"
+          onClick={() => setActiveStep(prev => prev + 1)}
+          disabled={
+            (activeStep === 0 && !saleData.client) ||
+            (activeStep === 1 && saleData.products.length === 0) ||
+            activeStep === 3
+          }
+        >
+          {activeStep === 3 ? 'Completar' : 'Siguiente'}
+        </Button>
+      </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 
