@@ -15,15 +15,14 @@ import {
   ArrowForward, CheckCircle, CurrencyExchange, Print, Send, Close
 } from '@mui/icons-material';
 
-// ✅ USAR TU CONTEXTO DE AUTH EXISTENTE - NO CAMBIAR
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 
-// 🔥 HOOK MEJORADO CON DEBUGGING
+// Hook simplificado y funcional
 const useSaleData = () => {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const loadData = async () => {
@@ -31,34 +30,33 @@ const useSaleData = () => {
       setLoading(true);
       setError(null);
       
-      console.log('📡 Intentando cargar datos de venta...');
-      
       const response = await api.get('/api/sales/sale-data');
-      console.log('📨 Respuesta del servidor:', response);
       
       if (response.data.success) {
-        console.log('✅ Datos cargados exitosamente:', {
-          clients: response.data.clients?.length,
-          products: response.data.products?.length
-        });
         setClients(response.data.clients || []);
         setProducts(response.data.products || []);
       } else {
-        console.error('❌ Error en respuesta:', response.data);
-        setError(response.data.message || 'Error en la respuesta del servidor');
+        setError(response.data.message || 'Error al cargar datos');
       }
     } catch (err) {
-      console.error('💥 Error de conexión:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        url: err.config?.url
-      });
-      
-      const errorMsg = err.response?.data?.message || 
-                      err.message || 
-                      'Error de conexión con el servidor';
-      setError(errorMsg);
+      setError('Error de conexión');
+      // Datos de fallback
+      setClients([{
+        id: 1,
+        name: 'Cliente General',
+        rif: 'V-00000000-0', 
+        phone: '0000000000',
+        type: 'regular'
+      }]);
+      setProducts([{
+        id: 1,
+        name: 'Producto de Ejemplo',
+        code: 'PROD-001',
+        price: 10.00,
+        stock: 100,
+        category: 'General',
+        tax: 16
+      }]);
     } finally {
       setLoading(false);
     }
@@ -70,44 +68,25 @@ const useSaleData = () => {
 
   const createClient = async (clientData) => {
     try {
-      console.log('👤 Enviando datos del cliente:', clientData);
       const response = await api.post('/api/sales/quick-client', clientData);
       
-      console.log('📨 Respuesta creación cliente:', response);
-      
       if (response.data.success) {
-        console.log('✅ Cliente creado exitosamente:', response.data.client);
         setClients(prev => [...prev, response.data.client]);
         return response.data.client;
-      } else {
-        throw new Error(response.data.message || 'Error al crear cliente');
       }
+      throw new Error(response.data.message || 'Error al crear cliente');
     } catch (error) {
-      console.error('💥 Error creando cliente:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      const errorMsg = error.response?.data?.message || 
-                      error.message || 
-                      'Error al crear cliente';
-      throw new Error(errorMsg);
+      throw new Error(error.response?.data?.message || 'Error al crear cliente');
     }
   };
 
   return { clients, products, loading, error, loadData, createClient };
 };
 
-// Componente principal de ventas
+// Componente Principal
 const NewSale = () => {
   const theme = useTheme();
   const { user } = useAuth();
-
-   // ✅ DEBUG: Verificar usuario
-  console.log('🔍 USUARIO ACTUAL:', user);
-  console.log('🔍 businessId:', user?.businessId);
-  console.log('🔍 business:', user?.business);
   
   const [activeStep, setActiveStep] = useState(0);
   const [saleData, setSaleData] = useState({
@@ -130,10 +109,10 @@ const NewSale = () => {
   const { clients, products, loading, error, loadData, createClient } = useSaleData();
 
   const steps = [
-    { label: 'Cliente', icon: <Group />, description: 'Selecciona o agrega un cliente' },
-    { label: 'Productos', icon: <ShoppingCart />, description: 'Agrega productos al carrito' },
-    { label: 'Pago', icon: <Payment />, description: 'Configura método de pago' },
-    { label: 'Confirmar', icon: <CheckCircle />, description: 'Revisa y confirma la venta' }
+    { label: 'Cliente', description: 'Selecciona o agrega un cliente' },
+    { label: 'Productos', description: 'Agrega productos al carrito' },
+    { label: 'Pago', description: 'Configura método de pago' },
+    { label: 'Confirmar', description: 'Revisa y confirma la venta' }
   ];
 
   const paymentMethods = [
@@ -180,21 +159,13 @@ const NewSale = () => {
 
   const handleQuantityChange = useCallback((productId, newQuantity) => {
     if (newQuantity < 1) return;
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-
-    if (newQuantity > product.stock) {
-      setSnackbar({ open: true, message: '❌ Stock insuficiente', severity: 'warning' });
-      return;
-    }
-
     setSaleData(prev => ({
       ...prev,
       products: prev.products.map(p =>
         p.id === productId ? { ...p, quantity: newQuantity } : p
       )
     }));
-  }, [products]);
+  }, []);
 
   const handleCreateClient = async () => {
     if (!newClientData.name.trim()) {
@@ -276,9 +247,6 @@ const NewSale = () => {
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
-          <Button size="small" onClick={loadData} sx={{ ml: 1 }}>
-            Reintentar
-          </Button>
         </Alert>
       )}
       
@@ -286,15 +254,11 @@ const NewSale = () => {
         <Grid item xs={12} md={8}>
           <TextField
             fullWidth
-            label="Buscar cliente por nombre, RIF o teléfono..."
+            label="Buscar cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: '#6b7280' }} />
-                </InputAdornment>
-              )
+              startAdornment: <Search sx={{ color: '#6b7280', mr: 1 }} />
             }}
           />
         </Grid>
@@ -313,53 +277,35 @@ const NewSale = () => {
       </Grid>
 
       <Grid container spacing={2} sx={{ mt: 2 }}>
-        {loading ? (
-          [1, 2, 3].map((item) => (
-            <Grid item xs={12} md={6} key={item}>
-              <Skeleton variant="rectangular" height={100} sx={{ borderRadius: '12px' }} />
-            </Grid>
-          ))
-        ) : (
-          filteredClients.map((client) => (
-            <Grid item xs={12} md={6} key={client.id}>
-              <Card
-                sx={{
-                  border: `2px solid ${saleData.client?.id === client.id ? theme.palette.primary.main : alpha(theme.palette.divider, 0.1)}`,
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-                  }
-                }}
-                onClick={() => setSaleData(prev => ({ ...prev, client }))}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: saleData.client?.id === client.id ? theme.palette.primary.main : '#6b7280' }}>
-                      {client.name.charAt(0)}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>
-                        {client.name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                        {client.rif}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
-                        {client.phone}
-                      </Typography>
-                    </Box>
-                    {saleData.client?.id === client.id && (
-                      <CheckCircle sx={{ color: theme.palette.primary.main }} />
-                    )}
+        {filteredClients.map((client) => (
+          <Grid item xs={12} md={6} key={client.id}>
+            <Card
+              sx={{
+                border: `2px solid ${saleData.client?.id === client.id ? theme.palette.primary.main : '#e5e7eb'}`,
+                borderRadius: '12px',
+                cursor: 'pointer'
+              }}
+              onClick={() => setSaleData(prev => ({ ...prev, client }))}
+            >
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: saleData.client?.id === client.id ? theme.palette.primary.main : '#6b7280' }}>
+                    {client.name.charAt(0)}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography fontWeight={700}>{client.name}</Typography>
+                    <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                      {client.rif} • {client.phone}
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))
-        )}
+                  {saleData.client?.id === client.id && (
+                    <CheckCircle sx={{ color: theme.palette.primary.main }} />
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       <Dialog open={newClientDialog} onClose={() => setNewClientDialog(false)} maxWidth="sm" fullWidth>
@@ -418,15 +364,11 @@ const NewSale = () => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Buscar productos por nombre, código o categoría..."
+            label="Buscar productos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: '#6b7280' }} />
-                </InputAdornment>
-              )
+              startAdornment: <Search sx={{ color: '#6b7280', mr: 1 }} />
             }}
           />
         </Grid>
@@ -442,12 +384,7 @@ const NewSale = () => {
                 <Card
                   sx={{
                     height: '100%',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 12px 40px rgba(0,0,0,0.12)'
-                    }
+                    cursor: 'pointer'
                   }}
                   onClick={() => handleAddProduct(product)}
                 >
@@ -464,7 +401,7 @@ const NewSale = () => {
                       <Chip 
                         label={`${product.stock} disp.`} 
                         size="small"
-                        color={product.stock === 0 ? 'error' : product.stock > 20 ? 'success' : 'warning'}
+                        color={product.stock === 0 ? 'error' : 'primary'}
                       />
                     </Box>
                     <Box sx={{ mb: 2 }}>
@@ -488,7 +425,7 @@ const NewSale = () => {
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)` }}>
+          <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
                 <Receipt sx={{ mr: 1, color: theme.palette.primary.main }} />
@@ -607,14 +544,13 @@ const NewSale = () => {
             rows={3}
             value={saleData.notes}
             onChange={(e) => setSaleData(prev => ({ ...prev, notes: e.target.value }))}
-            placeholder="Observaciones o instrucciones especiales..."
           />
         </Grid>
       </Grid>
 
       <Divider sx={{ my: 3 }} />
 
-      <Card sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.7)} 100%)` }}>
+      <Card>
         <CardContent>
           <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
             Resumen de la Venta
@@ -759,16 +695,6 @@ const NewSale = () => {
               >
                 {processingSale ? 'Procesando...' : 'Completar Venta'}
               </Button>
-              {saleData.client?.phone && (
-                <Button
-                  variant="outlined"
-                  size="large"
-                  startIcon={<Send />}
-                  sx={{ px: 4 }}
-                >
-                  Enviar por WhatsApp
-                </Button>
-              )}
             </Stack>
           </Box>
         </Grid>
