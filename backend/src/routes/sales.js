@@ -1,17 +1,22 @@
 const express = require('express');
 const router = express.Router();
 
-// Middleware de autenticación simple
+// Middleware temporal - ELIMINAR cuando tu auth funcione
 const authMiddleware = (req, res, next) => {
-  // Simular usuario autenticado con businessId = 1
-  req.user = { id: 1, businessId: 1 };
+  // Usuario temporal para pruebas
+  req.user = { 
+    id: 1, 
+    businessId: 1  // ✅ businessId fijo para pruebas
+  };
   next();
 };
 
 // Obtener datos para nueva venta
 router.get('/sale-data', authMiddleware, async (req, res) => {
   try {
-    // Datos de ejemplo reales
+    console.log('📋 Cargando datos de venta...');
+    
+    // Datos de ejemplo - REEMPLAZAR con tu base de datos después
     const clients = [
       {
         id: 1,
@@ -27,7 +32,7 @@ router.get('/sale-data', authMiddleware, async (req, res) => {
     const products = [
       {
         id: 1,
-        name: 'Producto de Ejemplo',
+        name: 'Producto Ejemplo 1',
         code: 'PROD-001',
         price: 10.00,
         cost: 5.00,
@@ -40,7 +45,7 @@ router.get('/sale-data', authMiddleware, async (req, res) => {
       },
       {
         id: 2,
-        name: 'Otro Producto',
+        name: 'Producto Ejemplo 2',
         code: 'PROD-002',
         price: 15.50,
         cost: 8.00,
@@ -73,6 +78,8 @@ router.post('/quick-client', authMiddleware, async (req, res) => {
   try {
     const { name, phone, rif } = req.body;
 
+    console.log('👤 Creando cliente:', { name, phone, rif });
+
     if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
@@ -80,9 +87,9 @@ router.post('/quick-client', authMiddleware, async (req, res) => {
       });
     }
 
-    // Cliente temporal con ID único
+    // ✅ CLIENTE TEMPORAL - REEMPLAZAR con tu modelo Customer después
     const newClient = {
-      id: Date.now(),
+      id: Date.now(), // ID temporal único
       name: name.trim(),
       phone: phone?.trim() || '0000000000',
       rif: rif?.trim() || 'V-00000000-0',
@@ -90,6 +97,8 @@ router.post('/quick-client', authMiddleware, async (req, res) => {
       address: null,
       type: 'regular'
     };
+
+    console.log('✅ Cliente creado:', newClient);
 
     res.json({
       success: true,
@@ -110,6 +119,12 @@ router.post('/new-sale', authMiddleware, async (req, res) => {
   try {
     const { client, products, paymentMethod, currency, exchangeRate, discounts, notes, shipping } = req.body;
 
+    console.log('💰 Procesando venta:', {
+      client: client?.name,
+      products: products?.length,
+      total: products?.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    });
+
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({
         success: false,
@@ -122,7 +137,7 @@ router.post('/new-sale', authMiddleware, async (req, res) => {
     const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
     const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
 
-    // Venta simulada
+    // ✅ VENTA TEMPORAL - REEMPLAZAR con tu modelo Sale después
     const sale = {
       id: Date.now(),
       totalAmount: total,
@@ -137,6 +152,8 @@ router.post('/new-sale', authMiddleware, async (req, res) => {
       notes: notes || '',
       createdAt: new Date().toISOString()
     };
+
+    console.log('✅ Venta completada:', sale.id);
 
     res.json({ 
       success: true, 
