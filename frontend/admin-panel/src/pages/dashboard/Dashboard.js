@@ -28,9 +28,8 @@ import {
   ListItemIcon,
   ListItemText,
   Badge,
-  MenuItem,
-  Select,
-  FormControl
+  Menu,
+  MenuItem
 } from '@mui/material';
 import {
   TrendingUp,
@@ -74,150 +73,184 @@ import {
   Message,
   AccountCircle,
   CalendarToday,
-  ArrowForward
+  ArrowForward,
+  MoreVert,
+  ViewModule,
+  TableChart,
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 // 🔥 CONSTANTES Y CONFIGURACIÓN
 const API_ENDPOINTS = {
   metrics: '/api/analytics/metrics',
-  kpis: '/api/analytics/kpis',
-  insights: '/api/ai/insights',
-  recentActivity: '/api/analytics/recent-activity',
-  channels: '/api/analytics/channels',
-  performance: '/api/analytics/performance'
+  conversions: '/api/analytics/conversions',
+  financial: '/api/financial/dashboard',
+  sales: '/api/sales',
+  recentActivity: '/api/analytics/recent-activity'
 };
 
 // 🔥 HOOK PERSONALIZADO PARA DATOS DEL DASHBOARD
-const useDashboardData = (timeRange = 'week') => {
+const useDashboardData = (timeRange = 'week', activeTab = 0) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getFallbackData = () => ({
-    overview: {
-      revenue: { current: 52340, previous: 45680, growth: 14.6, target: 60000 },
-      customers: { current: 1245, previous: 1120, growth: 11.2, target: 1500 },
-      conversion: { current: 3.4, previous: 2.9, growth: 17.2, target: 4.0 },
-      messages: { current: 156, previous: 142, growth: 9.9, target: 200 },
-      inventory: { current: 89, previous: 82, growth: 8.5, target: 95 },
-      satisfaction: { current: 4.8, previous: 4.6, growth: 4.3, target: 4.9 }
-    },
-    channels: [
-      { name: 'WhatsApp', value: 45, growth: 12, color: '#25D366', icon: WhatsApp, volume: 234 },
-      { name: 'Instagram', value: 32, growth: 8, color: '#E4405F', icon: Instagram, volume: 167 },
-      { name: 'Facebook', value: 28, growth: -2, color: '#1877F2', icon: Facebook, volume: 145 },
-      { name: 'Email', value: 18, growth: 5, color: '#EA4335', icon: Email, volume: 89 }
-    ],
-    analytics: {
-      revenueData: [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000],
-      customerData: [25, 30, 28, 35, 40, 45, 48, 52, 55, 58, 62, 65],
-      conversionData: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4, 3.2, 3.6, 3.8, 4.0, 4.2]
-    },
-    insights: [
-      {
-        id: 1,
-        type: 'success',
-        title: 'Tendencia Positiva Detectada',
-        message: 'El crecimiento de ingresos ha superado las proyecciones en un 15% este mes.',
-        confidence: 0.94,
-        action: 'Mantener estrategia actual',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        priority: 'high'
+  // Datos realistas basados en tus APIs
+  const getRealisticData = (tabIndex) => {
+    const baseData = {
+      overview: {
+        revenue: { current: 52340, previous: 45680, growth: 14.6, target: 60000 },
+        customers: { current: 1245, previous: 1120, growth: 11.2, target: 1500 },
+        conversion: { current: 3.4, previous: 2.9, growth: 17.2, target: 4.0 },
+        messages: { current: 156, previous: 142, growth: 9.9, target: 200 },
+        inventory: { current: 89, previous: 82, growth: 8.5, target: 95 },
+        satisfaction: { current: 4.7, previous: 4.6, growth: 2.2, target: 4.9 }
       },
-      {
-        id: 2,
-        type: 'opportunity',
-        title: 'Oportunidad en Instagram',
-        message: 'El engagement en Instagram ha aumentado un 25%. Considera aumentar el presupuesto en esta plataforma.',
-        confidence: 0.82,
-        action: 'Optimizar campañas',
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        priority: 'medium'
+      financial: {
+        totalSales: 52340,
+        totalTransactions: 234,
+        netProfit: 28700,
+        expenses: 15640,
+        cashFlow: 13200,
+        receivables: 8400
       },
-      {
-        id: 3,
-        type: 'warning',
-        title: 'Atención: Stock Bajo',
-        message: '3 productos están por debajo del nivel mínimo de inventario.',
-        confidence: 0.76,
-        action: 'Revisar inventario',
-        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        priority: 'high'
+      analytics: {
+        total_conversations: 1247,
+        conversion_rate: 23.4,
+        avg_response_time: '2.3min',
+        customer_satisfaction: 4.7,
+        revenue_trend: [12000, 15000, 18000, 21000, 24000, 28000, 32000, 35000, 38000, 42000, 45000, 52340],
+        interaction_volume: [45, 52, 48, 61, 55, 49, 67, 72, 65, 78, 82, 89]
       }
-    ],
-    recentActivity: [
-      {
-        id: 1,
-        type: 'sale',
-        title: 'Nueva venta realizada',
-        description: 'Venta #2845 por $450.00',
-        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        user: 'María González',
-        amount: 450.00,
-        status: 'completed'
-      },
-      {
-        id: 2,
-        type: 'customer',
-        title: 'Nuevo cliente registrado',
-        description: 'Carlos Rodríguez se registró en el sistema',
-        timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-        user: 'Sistema',
-        status: 'success'
-      },
-      {
-        id: 3,
-        type: 'inventory',
-        title: 'Alerta de inventario',
-        description: 'Producto "Laptop Dell" por debajo del mínimo',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        user: 'Sistema',
-        status: 'warning'
-      },
-      {
-        id: 4,
-        type: 'message',
-        title: 'Mensaje automático enviado',
-        description: 'Respuesta automática a consulta de WhatsApp',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        user: 'Bot IA',
-        status: 'completed'
-      }
-    ],
-    performance: {
-      responseTime: 2.4,
-      uptime: 99.9,
-      accuracy: 94.2,
-      automation: 87.5
+    };
+
+    // Datos específicos por pestaña
+    if (tabIndex === 0) { // Visión General
+      return {
+        ...baseData,
+        channels: [
+          { name: 'WhatsApp', value: 45, growth: 12, color: '#25D366', icon: WhatsApp, volume: 234 },
+          { name: 'Instagram', value: 32, growth: 8, color: '#E4405F', icon: Instagram, volume: 167 },
+          { name: 'Facebook', value: 28, growth: -2, color: '#1877F2', icon: Facebook, volume: 145 },
+          { name: 'Email', value: 18, growth: 5, color: '#EA4335', icon: Email, volume: 89 }
+        ],
+        insights: [
+          {
+            id: 1,
+            type: 'success',
+            title: 'Crecimiento Excepcional',
+            message: 'Los ingresos han superado las proyecciones en un 15% este mes. Tendencia positiva detectada en todas las métricas.',
+            confidence: 0.94,
+            action: 'Mantener estrategia',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            priority: 'high'
+          },
+          {
+            id: 2,
+            type: 'opportunity',
+            title: 'Instagram en Crecimiento',
+            message: 'El engagement en Instagram aumentó 25%. Oportunidad para expandir campañas en esta plataforma.',
+            confidence: 0.82,
+            action: 'Optimizar campañas',
+            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+            priority: 'medium'
+          }
+        ]
+      };
+    } else if (tabIndex === 1) { // Análisis Detallado
+      return {
+        ...baseData,
+        detailedMetrics: {
+          byChannel: {
+            whatsapp: { conversions: 234, revenue: 28450, growth: 15 },
+            instagram: { conversions: 167, revenue: 15680, growth: 25 },
+            facebook: { conversions: 145, revenue: 13200, growth: -2 },
+            email: { conversions: 89, revenue: 8450, growth: 8 }
+          },
+          hourlyPerformance: Array.from({length: 24}, (_, i) => ({
+            hour: i,
+            conversions: Math.floor(Math.random() * 15) + 5,
+            revenue: Math.floor(Math.random() * 2000) + 500
+          })),
+          productPerformance: [
+            { product: 'iPhone 13', conversions: 89, revenue: 53400, margin: 35 },
+            { product: 'Curso Inglés', conversions: 45, revenue: 9000, margin: 60 },
+            { product: 'Consulta Médica', conversions: 67, revenue: 3350, margin: 45 }
+          ]
+        }
+      };
+    } else if (tabIndex === 2) { // Tendencias
+      return {
+        ...baseData,
+        trends: {
+          revenueGrowth: [12, 15, 18, 21, 24, 28, 32, 35, 38, 42, 45, 52],
+          customerGrowth: [856, 923, 987, 1045, 1120, 1189, 1245, 1312, 1389, 1456, 1523, 1589],
+          conversionTrend: [2.1, 2.4, 2.2, 2.8, 2.6, 3.1, 3.4, 3.2, 3.6, 3.8, 4.0, 4.2],
+          seasonalPattern: Array.from({length: 12}, (_, i) => ({
+            month: i,
+            revenue: Math.floor(Math.random() * 30000) + 20000,
+            customers: Math.floor(Math.random() * 500) + 800
+          }))
+        }
+      };
+    } else { // IA & Automatización
+      return {
+        ...baseData,
+        automation: {
+          processes: [
+            { name: 'Respuestas Automáticas', efficiency: 92, timeSaved: 45 },
+            { name: 'Segmentación Clientes', efficiency: 87, timeSaved: 32 },
+            { name: 'Análisis Ventas', efficiency: 95, timeSaved: 28 },
+            { name: 'Alertas Inventario', efficiency: 89, timeSaved: 15 }
+          ],
+          aiPerformance: {
+            accuracy: 94.2,
+            responseTime: 2.3,
+            automationRate: 87.5,
+            costReduction: 35.8
+          },
+          recommendations: [
+            {
+              type: 'optimization',
+              title: 'Optimizar Horarios de Publicación',
+              impact: 'high',
+              description: 'Publicar entre 7-9 PM aumenta engagement un 23%',
+              implementation: '2 días'
+            }
+          ]
+        }
+      };
     }
-  });
+  };
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Simular llamada a API - Reemplazar con tus endpoints reales
+      // Simular llamada a API real
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       // TODO: Reemplazar con llamadas reales a tus APIs
-      // const [metrics, channels, insights, activity, performance] = await Promise.all([
-      //   fetch(`${API_ENDPOINTS.metrics}?range=${timeRange}`).then(r => r.json()),
-      //   fetch(`${API_ENDPOINTS.channels}?range=${timeRange}`).then(r => r.json()),
-      //   fetch(`${API_ENDPOINTS.insights}?range=${timeRange}`).then(r => r.json()),
-      //   fetch(`${API_ENDPOINTS.recentActivity}?range=${timeRange}`).then(r => r.json()),
-      //   fetch(`${API_ENDPOINTS.performance}?range=${timeRange}`).then(r => r.json())
+      // const responses = await Promise.all([
+      //   fetch(`${API_ENDPOINTS.metrics}?range=${timeRange}`),
+      //   fetch(`${API_ENDPOINTS.conversions}?range=${timeRange}`),
+      //   fetch(`${API_ENDPOINTS.financial}?range=${timeRange}`)
       // ]);
+      
+      // const [metrics, conversions, financial] = await Promise.all(
+      //   responses.map(r => r.json())
+      // );
 
-      setData(getFallbackData());
+      setData(getRealisticData(activeTab));
     } catch (err) {
       setError(err.message);
-      setData(getFallbackData());
+      setData(getRealisticData(activeTab));
     } finally {
       setLoading(false);
     }
-  }, [timeRange]);
+  }, [timeRange, activeTab]);
 
   useEffect(() => {
     fetchData();
@@ -226,7 +259,7 @@ const useDashboardData = (timeRange = 'week') => {
   return { data, loading, error, refetch: fetchData };
 };
 
-// 🔥 COMPONENTES DEL DASHBOARD (DISEÑO ORIGINAL MEJORADO)
+// 🔥 COMPONENTES DEL DASHBOARD
 
 const ChangeIndicator = ({ value }) => {
   if (value > 0) {
@@ -259,29 +292,6 @@ const ProgressBar = ({ value, color, height = 8 }) => (
   </Box>
 );
 
-const MiniChart = ({ color, data }) => (
-  <Box sx={{ mt: 3, height: 60 }}>
-    <Box sx={{ display: 'flex', alignItems: 'end', gap: 0.5, height: '100%' }}>
-      {data.map((height, index) => (
-        <Box
-          key={index}
-          sx={{
-            flex: 1,
-            height: `${height}%`,
-            background: `linear-gradient(180deg, ${color} 0%, ${alpha(color, 0.6)} 100%)`,
-            borderRadius: 1,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'scale(1.05)'
-            }
-          }}
-        />
-      ))}
-    </Box>
-  </Box>
-);
-
-// 🔥 STATCARD ORIGINAL MEJORADA - Simetría perfecta
 const StatCard = React.memo(({ 
   title, 
   value, 
@@ -289,24 +299,39 @@ const StatCard = React.memo(({
   subtitle, 
   icon: Icon, 
   color = '#2563eb', 
-  chart,
   target,
-  loading = false 
+  loading = false,
+  format = 'number'
 }) => {
   const formatNumber = (num) => {
     if (!num && num !== 0) return '0';
-    if (num >= 1000000) {
-      return `$${(num / 1000000).toFixed(1)}M`;
+    
+    if (format === 'currency') {
+      if (num >= 1000000) {
+        return `$${(num / 1000000).toFixed(1)}M`;
+      }
+      if (num >= 1000) {
+        return `$${(num / 1000).toFixed(1)}K`;
+      }
+      return `$${num.toLocaleString()}`;
     }
-    if (num >= 1000) {
-      return `$${(num / 1000).toFixed(1)}K`;
+    
+    if (format === 'percentage') {
+      return `${num}%`;
     }
+    
+    if (format === 'decimal') {
+      return num.toFixed(1);
+    }
+    
     if (typeof num === 'number' && num < 10) {
       return num.toFixed(1);
     }
+    
     if (typeof num === 'number') {
       return num.toLocaleString();
     }
+    
     return num;
   };
 
@@ -338,11 +363,10 @@ const StatCard = React.memo(({
         overflow: 'hidden',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          transform: 'translateY(-8px)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.12)'
+          transform: 'translateY(-4px)',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.12)'
         },
-        height: '100%',
-        minHeight: '200px' // 🔥 SIMETRÍA ASEGURADA
+        height: '100%'
       }}
     >
       <CardContent sx={{ p: 3, position: 'relative', zIndex: 2 }}>
@@ -377,253 +401,54 @@ const StatCard = React.memo(({
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ChangeIndicator value={change} />
-          <Chip 
-            label={`${change > 0 ? '+' : ''}${change}%`} 
-            size="small"
-            sx={{ 
-              background: change > 0 ? 
-                'rgba(16, 185, 129, 0.1)' : 
-                'rgba(239, 68, 68, 0.1)',
-              color: change > 0 ? '#10b981' : '#ef4444',
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              border: `1px solid ${change > 0 ? 
-                'rgba(16, 185, 129, 0.2)' : 
-                'rgba(239, 68, 68, 0.2)'}`
-            }}
-          />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ChangeIndicator value={change} />
+            <Chip 
+              label={`${change > 0 ? '+' : ''}${change}%`} 
+              size="small"
+              sx={{ 
+                background: change > 0 ? 
+                  'rgba(16, 185, 129, 0.1)' : 
+                  'rgba(239, 68, 68, 0.1)',
+                color: change > 0 ? '#10b981' : '#ef4444',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                border: `1px solid ${change > 0 ? 
+                  'rgba(16, 185, 129, 0.2)' : 
+                  'rgba(239, 68, 68, 0.2)'}`
+              }}
+            />
+          </Box>
+          
+          {target && (
+            <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+              Meta: {formatNumber(target)}
+            </Typography>
+          )}
         </Box>
-
-        {chart && <MiniChart color={color} data={[30, 45, 60, 75, 65, 80, 90, 85, 95, 88, 92, 100]} />}
 
         {target && (
           <Box sx={{ mt: 2 }}>
             <ProgressBar value={Math.min(progress, 100)} color={color} />
-            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
-              {progress.toFixed(1)}% del objetivo {formatNumber(target)}
+            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+              {progress.toFixed(1)}% del objetivo
             </Typography>
           </Box>
         )}
       </CardContent>
-
-      {/* Efecto de brillo de fondo */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -50,
-          right: -50,
-          width: 120,
-          height: 120,
-          background: `radial-gradient(circle, ${alpha(color, 0.1)} 0%, transparent 70%)`,
-          borderRadius: '50%'
-        }}
-      />
     </Card>
   );
 });
 
-const ChannelPerformance = React.memo(({ channel, loading = false }) => {
-  const IconComponent = channel?.icon;
-  
-  if (loading) {
-    return (
-      <Card sx={{ 
-        p: 3, 
-        height: 120,
-        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-        border: '1px solid #f1f5f9',
-        borderRadius: '12px'
-      }}>
-        <Skeleton variant="rectangular" height="100%" />
-      </Card>
-    );
-  }
-
-  return (
-    <Card
-      sx={{
-        background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha('#ffffff', 0.8)} 100%)`,
-        border: `1px solid ${alpha(channel.color, 0.2)}`,
-        borderRadius: '12px',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          borderColor: alpha(channel.color, 0.4),
-          boxShadow: `0 12px 40px ${alpha(channel.color, 0.15)}`
-        },
-        height: '100%'
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Box
-            sx={{
-              p: 1.5,
-              background: alpha(channel.color, 0.1),
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <IconComponent sx={{ fontSize: 24, color: channel.color }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
-              {channel.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h4" fontWeight={800} sx={{ color: channel.color }}>
-                {channel.value}%
-              </Typography>
-              <Chip 
-                label={`${channel.growth > 0 ? '+' : ''}${channel.growth}%`} 
-                size="small"
-                sx={{ 
-                  background: channel.growth > 0 ? 
-                    'rgba(16, 185, 129, 0.1)' : 
-                    'rgba(239, 68, 68, 0.1)',
-                  color: channel.growth > 0 ? '#10b981' : '#ef4444',
-                  fontWeight: 600 
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        <ProgressBar value={channel.value} color={channel.color} />
-        <Typography variant="caption" sx={{ color: '#6b7280' }}>
-          Participación en ventas totales
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-});
-
-const AIInsightCard = React.memo(({ insight, loading = false }) => {
-  const getColors = (type) => {
-    switch (type) {
-      case 'success':
-        return {
-          bg: 'rgba(16, 185, 129, 0.08)',
-          border: 'rgba(16, 185, 129, 0.2)',
-          icon: '#10b981'
-        };
-      case 'opportunity':
-        return {
-          bg: 'rgba(245, 158, 11, 0.08)',
-          border: 'rgba(245, 158, 11, 0.2)',
-          icon: '#f59e0b'
-        };
-      case 'warning':
-        return {
-          bg: 'rgba(239, 68, 68, 0.08)',
-          border: 'rgba(239, 68, 68, 0.2)',
-          icon: '#ef4444'
-        };
-      default:
-        return {
-          bg: 'rgba(37, 99, 235, 0.08)',
-          border: 'rgba(37, 99, 235, 0.2)',
-          icon: '#2563eb'
-        };
-    }
-  };
-
-  if (loading) {
-    return (
-      <Card sx={{ 
-        p: 3, 
-        height: 140,
-        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-        border: '1px solid #f1f5f9',
-        borderRadius: '12px'
-      }}>
-        <Skeleton variant="rectangular" height="100%" />
-      </Card>
-    );
-  }
-
-  const colors = getColors(insight.type);
-
-  return (
-    <Card
-      sx={{
-        background: `linear-gradient(135deg, ${colors.bg} 0%, rgba(255, 255, 255, 0.9) 100%)`,
-        border: `1px solid ${colors.border}`,
-        borderRadius: '12px',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateX(8px)'
-        },
-        height: '100%'
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-          <Box
-            sx={{
-              p: 1.5,
-              background: alpha(colors.icon, 0.1),
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <SmartToy sx={{ fontSize: 20, color: colors.icon }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 1, color: '#1f2937' }}>
-              {insight.title}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.6, color: '#6b7280' }}>
-              {insight.message}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    backgroundColor: 
-                      insight.confidence > 0.8 ? '#10b981' :
-                      insight.confidence > 0.6 ? '#f59e0b' :
-                      '#ef4444'
-                  }}
-                />
-                <Typography variant="caption" fontWeight={600} sx={{ color: '#6b7280' }}>
-                  Confianza: {(insight.confidence * 100).toFixed(0)}%
-                </Typography>
-              </Box>
-              <Button 
-                variant="outlined" 
-                size="small"
-                sx={{ 
-                  fontWeight: 600,
-                  borderRadius: '8px',
-                  borderColor: colors.border,
-                  color: colors.icon
-                }}
-              >
-                {insight.action}
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-});
-
-// 🔥 GRAFICO CORREGIDO - Manteniendo diseño original pero con barras de abajo hacia arriba
-const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
-  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
+// 🔥 GRÁFICO CORREGIDO - Barras de abajo hacia arriba
+const PerformanceChart = ({ data, timeRange, onTimeRangeChange, title = "Rendimiento de Ingresos", loading = false }) => {
+  const revenueData = data?.revenue_trend || [12000, 15000, 18000, 21000, 24000, 28000, 32000, 35000, 38000, 42000, 45000, 52340];
   const maxValue = Math.max(...revenueData);
+  const minValue = Math.min(...revenueData);
+  
+  // Calcular crecimiento total
+  const totalGrowth = ((revenueData[revenueData.length - 1] - revenueData[0]) / revenueData[0]) * 100;
 
   if (loading) {
     return (
@@ -650,15 +475,16 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
-            📈 Análisis de Rendimiento
+            {title}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            {['week', 'month', 'quarter'].map((range) => (
+            {['week', 'month', 'quarter', 'year'].map((range) => (
               <Chip
                 key={range}
                 label={
-                  range === 'week' ? 'Semana' :
-                  range === 'month' ? 'Mes' : 'Trimestre'
+                  range === 'week' ? '7D' :
+                  range === 'month' ? '30D' : 
+                  range === 'quarter' ? '90D' : '1A'
                 }
                 variant={timeRange === range ? 'filled' : 'outlined'}
                 onClick={() => onTimeRangeChange(range)}
@@ -667,67 +493,159 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
                   background: timeRange === range ? 
                     'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'transparent',
                   color: timeRange === range ? 'white' : '#6b7280',
-                  borderColor: timeRange === range ? 'transparent' : '#e5e7eb'
+                  borderColor: timeRange === range ? 'transparent' : '#e5e7eb',
+                  fontSize: '0.75rem',
+                  fontWeight: 600
                 }}
               />
             ))}
           </Box>
         </Box>
 
-        {/* 🔥 GRAFICO CORREGIDO - Barras de ABAJO hacia ARRIBA */}
+        {/* Gráfico corregido - barras de abajo hacia arriba */}
         <Box sx={{ 
-          height: 300, 
+          height: 250, 
           display: 'flex', 
-          alignItems: 'end', // Esto hace que las barras crezcan desde abajo
-          gap: 2, 
-          mb: 3,
-          px: 2 
+          alignItems: 'end', // Esto asegura que las barras crezcan desde abajo
+          gap: 1, 
+          mb: 3, 
+          px: 1,
+          position: 'relative'
         }}>
-          {revenueData.map((value, index) => (
-            <Tooltip key={index} title={`$${value.toLocaleString()}`} arrow>
-              <Box sx={{ 
-                flex: 1, 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                height: '100%',
-                justifyContent: 'flex-end' // Barras ancladas al fondo
-              }}>
-                <Box
-                  sx={{
-                    width: '80%',
-                    height: `${(value / maxValue) * 100}%`,
-                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 1) 100%)'
-                    }
-                  }}
-                />
-                <Typography variant="caption" sx={{ 
-                  mt: 1, 
-                  fontWeight: 600, 
-                  color: '#6b7280',
-                  fontSize: '0.7rem'
+          {/* Línea de base */}
+          <Box sx={{
+            position: 'absolute',
+            bottom: 30,
+            left: 0,
+            right: 0,
+            height: 2,
+            backgroundColor: '#e5e7eb',
+            zIndex: 1
+          }} />
+          
+          {revenueData.map((value, index) => {
+            const height = ((value - minValue) / (maxValue - minValue)) * 100;
+            const isLatest = index === revenueData.length - 1;
+            
+            return (
+              <Tooltip 
+                key={index} 
+                title={
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      Período {index + 1}
+                    </Typography>
+                    <Typography variant="body2">
+                      Ingresos: ${value.toLocaleString()}
+                    </Typography>
+                    {isLatest && (
+                      <Typography variant="caption" sx={{ color: '#10b981' }}>
+                        Último registro
+                      </Typography>
+                    )}
+                  </Box>
+                } 
+                arrow
+              >
+                <Box sx={{ 
+                  flex: 1, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  height: '100%',
+                  position: 'relative',
+                  zIndex: 2
                 }}>
-                  {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][index] || index + 1}
-                </Typography>
-              </Box>
-            </Tooltip>
-          ))}
+                  <Box
+                    sx={{
+                      width: '70%',
+                      minWidth: '12px',
+                      height: `${height}%`,
+                      background: isLatest 
+                        ? 'linear-gradient(180deg, #10b981 0%, #059669 100%)' 
+                        : 'linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%)',
+                      borderRadius: '4px 4px 0 0',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                      },
+                      '&::after': isLatest ? {
+                        content: '""',
+                        position: 'absolute',
+                        top: -4,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: '#10b981',
+                        boxShadow: '0 0 8px rgba(16, 185, 129, 0.5)'
+                      } : {}
+                    }}
+                  />
+                  <Typography variant="caption" sx={{ 
+                    mt: 1, 
+                    fontWeight: 600, 
+                    color: isLatest ? '#10b981' : '#6b7280',
+                    fontSize: '0.7rem'
+                  }}>
+                    {index + 1}
+                  </Typography>
+                </Box>
+              </Tooltip>
+            );
+          })}
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2 }}>
-          <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            Evolución de ingresos - Últimos {revenueData.length} períodos
-          </Typography>
+        {/* Información del gráfico */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          px: 1,
+          flexWrap: 'wrap',
+          gap: 2
+        }}>
+          <Box>
+            <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem', mb: 0.5 }}>
+              Evolución de {revenueData.length} períodos
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+              Desde ${revenueData[0].toLocaleString()} hasta ${revenueData[revenueData.length - 1].toLocaleString()}
+            </Typography>
+          </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
-            <Typography variant="body2" fontWeight={600} sx={{ color: '#10b981' }}>
-              +{((revenueData[revenueData.length - 1] - revenueData[0]) / revenueData[0] * 100).toFixed(1)}% crecimiento
+            <TrendingUp sx={{ fontSize: 16, color: totalGrowth >= 0 ? '#10b981' : '#ef4444' }} />
+            <Typography variant="body2" fontWeight={600} sx={{ 
+              color: totalGrowth >= 0 ? '#10b981' : '#ef4444',
+              fontSize: '0.8rem' 
+            }}>
+              {totalGrowth >= 0 ? '+' : ''}{totalGrowth.toFixed(1)}% crecimiento total
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Leyenda */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          mt: 2, 
+          px: 1,
+          flexWrap: 'wrap'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 12, height: 12, borderRadius: 2, background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }} />
+            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+              Períodos anteriores
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 12, height: 12, borderRadius: 2, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }} />
+            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+              Último período
             </Typography>
           </Box>
         </Box>
@@ -736,340 +654,157 @@ const AnalyticsChart = ({ data, timeRange, onTimeRangeChange, loading = false })
   );
 };
 
-const PerformanceMetrics = ({ loading = false }) => {
-  const metrics = [
-    { label: 'Tiempo Respuesta', value: '2.4 min', target: '2.0 min', progress: 85 },
-    { label: 'Satisfacción', value: '4.8/5', target: '4.5/5', progress: 107 },
-    { label: 'Retención', value: '78.5%', target: '75%', progress: 105 },
-    { label: 'Eficiencia', value: '92.3%', target: '90%', progress: 103 }
-  ];
+// 🔥 COMPONENTES ESPECÍFICOS POR PESTAÑA
 
-  if (loading) {
-    return (
-      <Card sx={{ 
-        p: 3, 
-        height: 400,
-        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-        border: '1px solid #f1f5f9',
-        borderRadius: '16px'
-      }}>
-        <Skeleton variant="rectangular" height="100%" />
-      </Card>
-    );
-  }
+const OverviewTab = ({ data, loading, timeRange, onTimeRangeChange }) => (
+  <Grid container spacing={3}>
+    {/* Métricas principales */}
+    {[
+      {
+        icon: AttachMoney,
+        title: "Ingresos Totales",
+        value: data?.overview?.revenue?.current,
+        change: data?.overview?.revenue?.growth,
+        subtitle: "Ingresos mensuales",
+        color: "#10b981",
+        target: data?.overview?.revenue?.target,
+        format: 'currency'
+      },
+      {
+        icon: People,
+        title: "Clientes Activos",
+        value: data?.overview?.customers?.current,
+        change: data?.overview?.customers?.growth,
+        subtitle: "Base de clientes",
+        color: "#2563eb",
+        target: data?.overview?.customers?.target
+      },
+      {
+        icon: TrendingUp,
+        title: "Tasa Conversión",
+        value: data?.overview?.conversion?.current,
+        change: data?.overview?.conversion?.growth,
+        subtitle: "Eficiencia de ventas",
+        color: "#f59e0b",
+        target: data?.overview?.conversion?.target,
+        format: 'percentage'
+      },
+      {
+        icon: Chat,
+        title: "Interacciones",
+        value: data?.overview?.messages?.current,
+        change: data?.overview?.messages?.growth,
+        subtitle: "Mensajes hoy",
+        color: "#8b5cf6",
+        target: data?.overview?.messages?.target
+      },
+      {
+        icon: Inventory,
+        title: "Inventario",
+        value: data?.overview?.inventory?.current,
+        change: data?.overview?.inventory?.growth,
+        subtitle: "Nivel de stock",
+        color: "#ec4899",
+        target: data?.overview?.inventory?.target,
+        format: 'percentage'
+      },
+      {
+        icon: Star,
+        title: "Satisfacción",
+        value: data?.overview?.satisfaction?.current,
+        change: data?.overview?.satisfaction?.growth,
+        subtitle: "Calificación promedio",
+        color: "#06b6d4",
+        target: data?.overview?.satisfaction?.target,
+        format: 'decimal'
+      }
+    ].map((metric, index) => (
+      <Grid item xs={12} sm={6} md={4} lg={2} key={metric.title}>
+        <StatCard {...metric} loading={loading} />
+      </Grid>
+    ))}
 
-  return (
-    <Card sx={{ 
-      height: '100%',
-      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-      border: '1px solid #f1f5f9',
-      borderRadius: '16px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-    }}>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
-          🎯 Métricas Clave
-        </Typography>
-        
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {metrics.map((metric, index) => (
-            <Box key={index}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="body2" fontWeight={600} sx={{ color: '#374151' }}>{metric.label}</Typography>
-                <Typography variant="body2" fontWeight={700} sx={{ color: '#1f2937' }}>{metric.value}</Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={Math.min(metric.progress, 100)} 
-                sx={{ 
-                  height: 6, 
-                  borderRadius: 3,
-                  backgroundColor: '#f1f5f9',
-                  '& .MuiLinearProgress-bar': {
-                    background: metric.progress >= 100 ? 
-                      'linear-gradient(135deg, #10b981 0%, #059669 100%)' :
-                      metric.progress >= 80 ? 
-                      'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
-                      'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                  }
-                }}
-              />
-              <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: '#6b7280' }}>
-                Objetivo: {metric.target}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
+    {/* Gráfico principal */}
+    <Grid item xs={12} lg={8}>
+      <PerformanceChart 
+        data={data?.analytics}
+        timeRange={timeRange}
+        onTimeRangeChange={onTimeRangeChange}
+        loading={loading}
+        title="📈 Tendencias de Ingresos"
+      />
+    </Grid>
 
-const QuickActions = () => (
-  <Card sx={{ 
-    background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-    border: '1px solid #f1f5f9',
-    borderRadius: '16px',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-    mb: 3
-  }}>
-    <CardContent sx={{ p: 3 }}>
-      <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1f2937' }}>
-        ⚡ Acciones Rápidas
+    {/* Canales de performance */}
+    <Grid item xs={12} lg={4}>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
+        📊 Performance por Canal
       </Typography>
       <Grid container spacing={2}>
-        {[
-          { icon: <RocketLaunch />, label: 'Nueva Campaña', color: '#2563eb' },
-          { icon: <Analytics />, label: 'Generar Reporte', color: '#10b981' },
-          { icon: <SmartToy />, label: 'Consultar IA', color: '#8b5cf6' },
-          { icon: <Download />, label: 'Exportar Datos', color: '#f59e0b' }
-        ].map((action, index) => (
-          <Grid item xs={6} sm={3} key={index}>
-            <Button
-              fullWidth
-              startIcon={action.icon}
-              sx={{
-                background: `linear-gradient(135deg, ${alpha(action.color, 0.1)} 0%, ${alpha(action.color, 0.05)} 100%)`,
-                border: `1px solid ${alpha(action.color, 0.2)}`,
-                color: action.color,
-                fontWeight: 600,
-                borderRadius: '8px',
-                py: 1.5,
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${alpha(action.color, 0.2)} 0%, ${alpha(action.color, 0.1)} 100%)`,
-                }
-              }}
-            >
-              {action.label}
-            </Button>
+        {(loading ? Array(4).fill({}) : data?.channels || []).map((channel, index) => (
+          <Grid item xs={12} key={index}>
+            <ChannelPerformance channel={channel} loading={loading} />
           </Grid>
         ))}
       </Grid>
-    </CardContent>
-  </Card>
+    </Grid>
+  </Grid>
 );
 
-const RecentActivity = React.memo(({ activities, loading = false }) => {
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'sale':
-        return <Receipt sx={{ color: '#10b981', fontSize: 18 }} />;
-      case 'customer':
-        return <Group sx={{ color: '#3b82f6', fontSize: 18 }} />;
-      case 'inventory':
-        return <Inventory sx={{ color: '#f59e0b', fontSize: 18 }} />;
-      case 'message':
-        return <Message sx={{ color: '#8b5cf6', fontSize: 18 }} />;
-      default:
-        return <Notifications sx={{ color: '#6b7280', fontSize: 18 }} />;
-    }
-  };
-
-  if (loading) {
-    return (
+const DetailedAnalysisTab = ({ data, loading, timeRange, onTimeRangeChange }) => (
+  <Grid container spacing={3}>
+    <Grid item xs={12} lg={8}>
+      <PerformanceChart 
+        data={data?.analytics}
+        timeRange={timeRange}
+        onTimeRangeChange={onTimeRangeChange}
+        loading={loading}
+        title="📊 Análisis Detallado de Conversiones"
+      />
+    </Grid>
+    
+    <Grid item xs={12} lg={4}>
       <Card sx={{ 
-        p: 3, 
-        height: 400,
+        height: '100%',
         background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
         border: '1px solid #f1f5f9',
-        borderRadius: '16px'
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
       }}>
-        <Skeleton variant="rectangular" height="100%" />
-      </Card>
-    );
-  }
-
-  return (
-    <Card sx={{ 
-      height: '100%',
-      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
-      border: '1px solid #f1f5f9',
-      borderRadius: '16px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-    }}>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Schedule sx={{ fontSize: 20, color: '#2563eb' }} />
-          Actividad Reciente
-        </Typography>
-        
-        <List sx={{ p: 0 }}>
-          {activities.map((activity, index) => (
-            <React.Fragment key={activity.id}>
-              <ListItem sx={{ px: 0, py: 1.5 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <Box
-                    sx={{
-                      p: 1,
-                      background: alpha('#2563eb', 0.1),
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    {getActivityIcon(activity.type)}
-                  </Box>
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography variant="body2" fontWeight={600} sx={{ color: '#1f2937', fontSize: '0.85rem' }}>
-                      {activity.title}
-                    </Typography>
-                  }
-                  secondary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
-                      <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
-                        {activity.description}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.7rem' }}>
-                        {new Date(activity.timestamp).toLocaleTimeString('es-ES', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </ListItem>
-              {index < activities.length - 1 && (
-                <Divider variant="inset" component="li" sx={{ mx: 0 }} />
-              )}
-            </React.Fragment>
-          ))}
-        </List>
-        
-        <Button 
-          fullWidth 
-          variant="text" 
-          size="small"
-          sx={{ 
-            mt: 2,
-            color: '#2563eb',
-            fontWeight: 600,
-            fontSize: '0.8rem'
-          }}
-        >
-          Ver toda la actividad
-        </Button>
-      </CardContent>
-    </Card>
-  );
-});
-
-const LoadingDashboard = () => (
-  <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-    <Box sx={{ textAlign: 'center' }}>
-      <Analytics sx={{ fontSize: 60, color: '#2563eb', mb: 2 }} />
-      <Typography variant="h6" sx={{ color: '#6b7280' }}>
-        Cargando datos en tiempo real...
-      </Typography>
-    </Box>
-  </Container>
-);
-
-const DashboardHeader = ({ user, isMobile, activeTab, onTabChange, onRefresh, loading }) => {
-  if (loading) {
-    return (
-      <Box sx={{ mb: 4 }}>
-        <Skeleton variant="text" height={60} width="60%" sx={{ mb: 2 }} />
-        <Skeleton variant="text" height={30} width="40%" sx={{ mb: 3 }} />
-        <Skeleton variant="rectangular" height={48} />
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ mb: 4 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        gap: 3,
-        mb: 4
-      }}>
-        <Box>
-          <Typography 
-            variant={isMobile ? "h4" : "h2"} 
-            fontWeight={800} 
-            gutterBottom
-            sx={{ 
-              background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              color: 'transparent',
-              lineHeight: 1.2
-            }}
-          >
-            Dashboard Executive
-          </Typography>
-          <Typography variant="h6" sx={{ mb: 2, color: '#6b7280' }}>
-            Datos en tiempo real • {user?.business?.name || 'Tu Negocio'}
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
+            Métricas de Conversión
           </Typography>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Chip 
-              icon={<SmartToy />} 
-              label="IA Activa" 
-              sx={{ 
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                color: 'white'
-              }}
-            />
-            <Chip 
-              label="Tiempo Real" 
-              sx={{ 
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white'
-              }}
-            />
-          </Box>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Tooltip title="Actualizar datos">
-            <IconButton onClick={onRefresh} sx={{ 
-              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
-              border: '1px solid rgba(37, 99, 235, 0.1)',
-              '&:hover': { 
-                background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
-              }
-            }}>
-              <Refresh sx={{ color: '#2563eb' }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+          {data?.detailedMetrics?.productPerformance?.map((product, index) => (
+            <Box key={index} sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body2" fontWeight={600} sx={{ color: '#374151' }}>
+                  {product.product}
+                </Typography>
+                <Typography variant="body2" fontWeight={700} sx={{ color: '#10b981' }}>
+                  ${product.revenue.toLocaleString()}
+                </Typography>
+              </Box>
+              <ProgressBar value={product.margin} color="#10b981" />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                  {product.conversions} conversiones
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                  {product.margin}% margen
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </CardContent>
+      </Card>
+    </Grid>
+  </Grid>
+);
 
-      <Tabs 
-        value={activeTab} 
-        onChange={onTabChange}
-        sx={{
-          borderBottom: '1px solid #f1f5f9',
-          '& .MuiTab-root': {
-            fontWeight: 600,
-            textTransform: 'none',
-            fontSize: '1rem',
-            minHeight: 48,
-            color: '#6b7280',
-            '&.Mui-selected': {
-              color: '#2563eb'
-            }
-          }
-        }}
-      >
-        <Tab icon={<Analytics />} label="Visión General" />
-        <Tab icon={<BarChart />} label="Análisis Detallado" />
-        <Tab icon={<Timeline />} label="Tendencias" />
-      </Tabs>
-    </Box>
-  );
-};
+// 🔥 COMPONENTE PRINCIPAL DEL DASHBOARD
 
-// 🔥 COMPONENTE PRINCIPAL - DISEÑO ORIGINAL MEJORADO
 const Dashboard = () => {
   const { user } = useAuth();
   const isMobile = useMediaQuery('(max-width:900px)');
@@ -1078,7 +813,7 @@ const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('week');
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
 
-  const { data: dashboardData, loading, error, refetch } = useDashboardData(timeRange);
+  const { data: dashboardData, loading, error, refetch } = useDashboardData(timeRange, activeTab);
 
   const showNotification = useCallback((message, severity = 'info') => {
     setNotification({ open: true, message, severity });
@@ -1089,56 +824,67 @@ const Dashboard = () => {
     showNotification('Datos actualizados correctamente', 'success');
   }, [refetch, showNotification]);
 
-  const handleQuickAction = useCallback((action) => {
-    showNotification(`Acción "${action}" iniciada`, 'info');
-  }, [showNotification]);
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
-  // Memoizar valores computados - ORDEN ORIGINAL
-  const mainMetrics = useMemo(() => [
-    {
-      icon: AttachMoney,
-      title: "Ingresos Totales",
-      value: dashboardData?.overview?.revenue?.current,
-      change: dashboardData?.overview?.revenue?.growth,
-      subtitle: "Este mes",
-      color: "#10b981",
-      chart: true,
-      target: dashboardData?.overview?.revenue?.target
-    },
-    {
-      icon: People,
-      title: "Clientes Activos",
-      value: dashboardData?.overview?.customers?.current,
-      change: dashboardData?.overview?.customers?.growth,
-      subtitle: "Base total",
-      color: "#2563eb",
-      chart: true,
-      target: dashboardData?.overview?.customers?.target
-    },
-    {
-      icon: TrendingUp,
-      title: "Tasa Conversión",
-      value: dashboardData?.overview?.conversion?.current,
-      change: dashboardData?.overview?.conversion?.growth,
-      subtitle: "Porcentaje",
-      color: "#f59e0b",
-      chart: true,
-      target: dashboardData?.overview?.conversion?.target
-    },
-    {
-      icon: Chat,
-      title: "Interacciones",
-      value: dashboardData?.overview?.messages?.current,
-      change: dashboardData?.overview?.messages?.growth,
-      subtitle: "Hoy",
-      color: "#8b5cf6",
-      chart: true,
-      target: dashboardData?.overview?.messages?.target
+  // Renderizar contenido basado en la pestaña activa
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 0:
+        return (
+          <OverviewTab 
+            data={dashboardData}
+            loading={loading}
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+          />
+        );
+      case 1:
+        return (
+          <DetailedAnalysisTab 
+            data={dashboardData}
+            loading={loading}
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+          />
+        );
+      case 2:
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h4" fontWeight={700} sx={{ color: '#1f2937', textAlign: 'center', my: 4 }}>
+                Análisis de Tendencias - Próximamente
+              </Typography>
+            </Grid>
+          </Grid>
+        );
+      case 3:
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h4" fontWeight={700} sx={{ color: '#1f2937', textAlign: 'center', my: 4 }}>
+                IA & Automatización - Próximamente
+              </Typography>
+            </Grid>
+          </Grid>
+        );
+      default:
+        return <OverviewTab data={dashboardData} loading={loading} />;
     }
-  ], [dashboardData]);
+  };
 
   if (loading && !dashboardData) {
-    return <LoadingDashboard />;
+    return (
+      <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Analytics sx={{ fontSize: 60, color: '#2563eb', mb: 2 }} />
+          <Typography variant="h6" sx={{ color: '#6b7280' }}>
+            Cargando dashboard...
+          </Typography>
+        </Box>
+      </Container>
+    );
   }
 
   return (
@@ -1149,14 +895,109 @@ const Dashboard = () => {
         py: 1
       }}>
         <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 2 : 3 }}>
-          <DashboardHeader 
-            user={user}
-            isMobile={isMobile}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onRefresh={handleRefresh}
-            loading={loading && !dashboardData}
-          />
+          {/* Header del Dashboard */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              gap: 3,
+              mb: 4
+            }}>
+              <Box>
+                <Typography 
+                  variant={isMobile ? "h4" : "h2"} 
+                  fontWeight={800} 
+                  gutterBottom
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #1e293b 0%, #374151 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    color: 'transparent',
+                    lineHeight: 1.2
+                  }}
+                >
+                  Dashboard Executive
+                </Typography>
+                <Typography variant="h6" sx={{ mb: 2, color: '#6b7280' }}>
+                  Tiempo real • {user?.business?.name || 'Tu Negocio'} • {new Date().toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                  <Chip 
+                    icon={<SmartToy />} 
+                    label="IA Activa" 
+                    sx={{ 
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                      color: 'white'
+                    }}
+                  />
+                  <Chip 
+                    label="Tiempo Real" 
+                    sx={{ 
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: 'white'
+                    }}
+                  />
+                  <Chip 
+                    icon={<VerifiedUser />}
+                    label="Sistema Estable" 
+                    sx={{ 
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      color: 'white'
+                    }}
+                  />
+                </Box>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Tooltip title="Actualizar datos">
+                  <IconButton onClick={handleRefresh} sx={{ 
+                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+                    border: '1px solid rgba(37, 99, 235, 0.1)',
+                    '&:hover': { 
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                    }
+                  }}>
+                    <Refresh sx={{ color: '#2563eb' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+
+            {/* Pestañas funcionales */}
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange}
+              sx={{
+                borderBottom: '1px solid #f1f5f9',
+                '& .MuiTab-root': {
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  minHeight: 48,
+                  color: '#6b7280',
+                  '&.Mui-selected': {
+                    color: '#2563eb'
+                  }
+                }
+              }}
+            >
+              <Tab icon={<Analytics />} label="Visión General" />
+              <Tab icon={<BarChart />} label="Análisis Detallado" />
+              <Tab icon={<Timeline />} label="Tendencias" />
+              <Tab icon={<SmartToy />} label="IA & Automatización" />
+            </Tabs>
+          </Box>
 
           {error && (
             <Alert severity="warning" sx={{ mb: 3, borderRadius: '8px' }}>
@@ -1164,62 +1005,8 @@ const Dashboard = () => {
             </Alert>
           )}
 
-          {/* Acciones Rápidas */}
-          <QuickActions />
-
-          {/* Grid Principal del Dashboard - ORDEN ORIGINAL */}
-          <Grid container spacing={3}>
-            {/* Métricas principales - 4 tarjetas como antes */}
-            {mainMetrics.map((metric, index) => (
-              <Grid item xs={12} sm={6} lg={3} key={metric.title}>
-                <StatCard {...metric} loading={loading} />
-              </Grid>
-            ))}
-
-            {/* Gráfica principal - CORREGIDA */}
-            <Grid item xs={12} lg={8}>
-              <AnalyticsChart 
-                data={dashboardData?.analytics}
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-                loading={loading}
-              />
-            </Grid>
-
-            {/* Canales de performance */}
-            <Grid item xs={12} lg={4}>
-              <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937' }}>
-                📊 Performance por Canal
-              </Typography>
-              <Grid container spacing={2}>
-                {(loading ? Array(4).fill({}) : dashboardData?.channels || []).map((channel, index) => (
-                  <Grid item xs={12} key={index}>
-                    <ChannelPerformance channel={channel} loading={loading} />
-                  </Grid>
-                ))}
-              </Grid>
-            </Grid>
-
-            {/* Insights de IA */}
-            <Grid item xs={12} lg={8}>
-              <Typography variant="h6" fontWeight={700} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: '#1f2937' }}>
-                <SmartToy sx={{ color: '#2563eb' }} />
-                Inteligencia Artificial & Recomendaciones
-              </Typography>
-              <Grid container spacing={3}>
-                {(loading ? Array(3).fill({}) : dashboardData?.insights || []).map((insight, index) => (
-                  <Grid item xs={12} key={index}>
-                    <AIInsightCard insight={insight} loading={loading} />
-                  </Grid>
-                ))}
-              </Grid>
-            </Grid>
-
-            {/* Métricas de performance */}
-            <Grid item xs={12} lg={4}>
-              <PerformanceMetrics loading={loading} />
-            </Grid>
-          </Grid>
+          {/* Contenido de las pestañas */}
+          {renderTabContent()}
         </Container>
       </Box>
 
@@ -1235,5 +1022,90 @@ const Dashboard = () => {
     </>
   );
 };
+
+// Componente ChannelPerformance (necesario para el código anterior)
+const ChannelPerformance = React.memo(({ channel, loading = false }) => {
+  const IconComponent = channel?.icon;
+  
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 2, 
+        height: 100,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '12px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha('#ffffff', 0.8)} 100%)`,
+        border: `1px solid ${alpha(channel.color, 0.2)}`,
+        borderRadius: '12px',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: alpha(channel.color, 0.4),
+          boxShadow: `0 8px 32px ${alpha(channel.color, 0.15)}`
+        },
+        height: '100%'
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              p: 1,
+              background: alpha(channel.color, 0.1),
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <IconComponent sx={{ fontSize: 20, color: channel.color }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937', fontSize: '0.9rem' }}>
+              {channel.name}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h4" fontWeight={800} sx={{ color: channel.color, fontSize: '1.25rem' }}>
+                {channel.value}%
+              </Typography>
+              <Chip 
+                label={`${channel.growth > 0 ? '+' : ''}${channel.growth}%`} 
+                size="small"
+                sx={{ 
+                  background: channel.growth > 0 ? 
+                    'rgba(16, 185, 129, 0.1)' : 
+                    'rgba(239, 68, 68, 0.1)',
+                  color: channel.growth > 0 ? '#10b981' : '#ef4444',
+                  fontWeight: 600,
+                  fontSize: '0.7rem'
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        <ProgressBar value={channel.value} color={channel.color} height={6} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+            Participación
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem', fontWeight: 600 }}>
+            {channel.volume} interacciones
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+});
 
 export default Dashboard;
