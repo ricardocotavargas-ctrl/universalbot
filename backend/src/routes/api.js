@@ -7,13 +7,13 @@ const Interaction = require('../models/Interaction');
 const inventoryRoutes = require('./inventory');
 const accountsRoutes = require('./accounts'); 
 const financialRoutes = require('./financial');
-
-// ✅ CORREGIDO: Importar rutas correctamente
 const authRoutes = require('./auth');
+
+// ✅ CORREGIDO: Importar las rutas correctamente
 const salesRoutes = require('./sales');
 const customersRoutes = require('./customers');
 
-// ✅ CORREGIDO: Usar router.use() correctamente
+// ✅ CORREGIDO: Usar las rutas con router.use()
 router.use('/inventory', inventoryRoutes);
 router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
