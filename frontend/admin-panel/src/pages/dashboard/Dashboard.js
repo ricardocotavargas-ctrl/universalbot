@@ -778,7 +778,7 @@ const PerformanceChart = ({ data, timeRange, onTimeRangeChange, title = "Rendimi
         <Skeleton variant="rectangular" height="100%" />
       </Card>
     );
-  }
+  };
 
   return (
     <Card sx={{ 
