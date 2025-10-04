@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 
-// Hook para datos de venta
+// 🔥 HOOK MEJORADO CON DEBUGGING
 const useSaleData = () => {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
@@ -31,17 +31,34 @@ const useSaleData = () => {
       setLoading(true);
       setError(null);
       
+      console.log('📡 Intentando cargar datos de venta...');
+      
       const response = await api.get('/api/sales/sale-data');
+      console.log('📨 Respuesta del servidor:', response);
       
       if (response.data.success) {
+        console.log('✅ Datos cargados exitosamente:', {
+          clients: response.data.clients?.length,
+          products: response.data.products?.length
+        });
         setClients(response.data.clients || []);
         setProducts(response.data.products || []);
       } else {
-        setError('Error al cargar datos');
+        console.error('❌ Error en respuesta:', response.data);
+        setError(response.data.message || 'Error en la respuesta del servidor');
       }
     } catch (err) {
-      console.error('Error loading sale data:', err);
-      setError('Error de conexión');
+      console.error('💥 Error de conexión:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url
+      });
+      
+      const errorMsg = err.response?.data?.message || 
+                      err.message || 
+                      'Error de conexión con el servidor';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -53,14 +70,29 @@ const useSaleData = () => {
 
   const createClient = async (clientData) => {
     try {
+      console.log('👤 Enviando datos del cliente:', clientData);
       const response = await api.post('/api/sales/quick-client', clientData);
+      
+      console.log('📨 Respuesta creación cliente:', response);
+      
       if (response.data.success) {
+        console.log('✅ Cliente creado exitosamente:', response.data.client);
         setClients(prev => [...prev, response.data.client]);
         return response.data.client;
+      } else {
+        throw new Error(response.data.message || 'Error al crear cliente');
       }
-      throw new Error('Error al crear cliente');
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al crear cliente');
+      console.error('💥 Error creando cliente:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      const errorMsg = error.response?.data?.message || 
+                      error.message || 
+                      'Error al crear cliente';
+      throw new Error(errorMsg);
     }
   };
 
