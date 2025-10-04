@@ -77,11 +77,6 @@ const NewSale = () => {
   // ✅ DEBUG DEL USER
   console.log('🔍 USER EN NEW SALE:', user);
   console.log('🔍 businessId:', user?.businessId);
-
-// Componente Principal
-const NewSale = () => {
-  const theme = useTheme();
-  const { user } = useAuth();
   
   const [activeStep, setActiveStep] = useState(0);
   const [saleData, setSaleData] = useState({
