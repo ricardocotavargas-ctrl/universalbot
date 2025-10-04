@@ -18,7 +18,7 @@ import {
   ArrowForward, CheckCircle, Warning, Discount,
   CurrencyExchange, ReceiptLong, Print, Send, Close
 } from '@mui/icons-material';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import api from '../../../services/api';
 
 // 🔥 HOOK PERSONALIZADO PARA DATOS REALES
