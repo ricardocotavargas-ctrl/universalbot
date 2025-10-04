@@ -1,102 +1,66 @@
-module.exports = (sequelize, DataTypes) => {
-  const Sale = sequelize.define('Sale', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    businessId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Businesses',
-        key: 'id'
-      }
-    },
-    customerId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'Customers',
-        key: 'id'
-      }
-    },
-    totalAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false
-    },
-    subtotalAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false
-    },
-    taxAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      defaultValue: 0
-    },
-    discountAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      defaultValue: 0
-    },
-    shippingAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      defaultValue: 0
-    },
-    paymentMethod: {
-      type: DataTypes.ENUM('efectivo', 'transferencia', 'pago_movil', 'tarjeta_debito', 'tarjeta_credito', 'divisas'),
-      allowNull: false
-    },
-    currency: {
-      type: DataTypes.ENUM('USD', 'VES', 'EUR'),
-      allowNull: false,
-      defaultValue: 'USD'
-    },
-    exchangeRate: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: true
-    },
-    status: {
-      type: DataTypes.ENUM('pending', 'completed', 'cancelled'),
-      allowNull: false,
-      defaultValue: 'completed'
-    },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    createdBy: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id'
-      }
-    }
-  }, {
-    tableName: 'Sales',
-    timestamps: true,
-    indexes: [
-      {
-        fields: ['businessId']
-      },
-      {
-        fields: ['customerId']
-      },
-      {
-        fields: ['createdAt']
-      }
-    ]
-  });
+const mongoose = require('mongoose');
 
-  Sale.associate = function(models) {
-    Sale.belongsTo(models.Business, { foreignKey: 'businessId' });
-    Sale.belongsTo(models.Customer, { foreignKey: 'customerId' });
-    Sale.belongsTo(models.User, { foreignKey: 'createdBy', as: 'Creator' });
-    Sale.hasMany(models.SaleProduct, { foreignKey: 'saleId', as: 'Products' });
-    Sale.hasMany(models.Transaction, { foreignKey: 'saleId' });
-  };
+const saleSchema = new mongoose.Schema({
+  businessId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Business',
+    required: true
+  },
+  customerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Customer'
+  },
+  totalAmount: {
+    type: Number,
+    required: true
+  },
+  subtotalAmount: {
+    type: Number,
+    required: true
+  },
+  taxAmount: {
+    type: Number,
+    default: 0
+  },
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
+  shippingAmount: {
+    type: Number,
+    default: 0
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['efectivo', 'transferencia', 'pago_movil', 'tarjeta_debito', 'tarjeta_credito', 'divisas'],
+    required: true
+  },
+  currency: {
+    type: String,
+    enum: ['USD', 'VES', 'EUR'],
+    default: 'USD'
+  },
+  exchangeRate: {
+    type: Number
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'cancelled'],
+    default: 'completed'
+  },
+  notes: {
+    type: String
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+}, {
+  timestamps: true
+});
 
-  return Sale;
-};
+saleSchema.index({ businessId: 1, createdAt: -1 });
+saleSchema.index({ customerId: 1 });
+
+module.exports = mongoose.model('Sale', saleSchema);
