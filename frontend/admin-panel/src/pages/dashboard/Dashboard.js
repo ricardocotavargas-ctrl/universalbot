@@ -14,7 +14,16 @@ import {
   useMediaQuery,
   Alert,
   Snackbar,
-  Divider
+  Divider,
+  Menu,
+  MenuItem,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   TrendingUp,
@@ -29,12 +38,24 @@ import {
   ArrowUpward,
   ArrowDownward,
   MoreVert,
-  PlayArrow
+  PlayArrow,
+  Inventory,
+  ShoppingCart,
+  Notifications,
+  Email,
+  WhatsApp,
+  Instagram,
+  Facebook,
+  CalendarToday,
+  Schedule,
+  CheckCircle,
+  Warning,
+  Error
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBusiness } from '../../contexts/BusinessContext';
 
-// Servicio de API
+// Servicio de API mejorado
 const useAPIService = () => {
   const { user } = useAuth();
   const { currentBusiness } = useBusiness();
@@ -59,54 +80,85 @@ const useAPIService = () => {
   };
 
   return {
+    // Métricas
     getDashboardMetrics: () => makeRequest(`/business/${currentBusiness?.id}/metrics`),
-    startCampaign: (data) => makeRequest('/marketing/campaigns', { 
-      method: 'POST', 
-      body: JSON.stringify(data) 
+    
+    // Acciones
+    startAutomation: (type) => makeRequest('/automation/start', {
+      method: 'POST',
+      body: JSON.stringify({ type })
     }),
-    generateReport: () => makeRequest('/reports/generate'),
-    exportData: () => makeRequest('/data/export')
+    
+    generateReport: (format) => makeRequest(`/reports/generate?format=${format}`),
+    
+    exportData: (type) => makeRequest(`/data/export?type=${type}`),
+    
+    // Notificaciones
+    getNotifications: () => makeRequest('/notifications'),
+    
+    markNotificationRead: (id) => makeRequest(`/notifications/${id}/read`, {
+      method: 'PUT'
+    }),
+    
+    // Análisis
+    getPerformanceData: (period) => makeRequest(`/analytics/performance?period=${period}`)
   };
 };
 
-// Hook de datos
+// Hook de datos mejorado
 const useDashboardData = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
   const api = useAPIService();
 
   const staticData = {
     metrics: {
-      revenue: { current: 52340, previous: 45680, growth: 14.6 },
-      customers: { current: 1245, previous: 1120, growth: 11.2 },
-      conversion: { current: 3.4, previous: 2.9, growth: 17.2 },
-      messages: { current: 2847, previous: 2542, growth: 12.0 }
+      revenue: { current: 52340, previous: 45680, growth: 14.6, target: 60000 },
+      customers: { current: 1245, previous: 1120, growth: 11.2, target: 1500 },
+      conversion: { current: 3.4, previous: 2.9, growth: 17.2, target: 4.0 },
+      messages: { current: 2847, previous: 2542, growth: 12.0, target: 3000 }
     },
-    channels: [
-      { name: 'WhatsApp', value: 45, growth: 12 },
-      { name: 'Instagram', value: 32, growth: 8 },
-      { name: 'Web', value: 15, growth: 5 },
-      { name: 'Email', value: 8, growth: 2 }
-    ],
-    insights: [
+    performance: {
+      channels: [
+        { name: 'WhatsApp', value: 45, growth: 12, revenue: 23500 },
+        { name: 'Instagram', value: 32, growth: 8, revenue: 16800 },
+        { name: 'Web', value: 15, growth: 5, revenue: 7800 },
+        { name: 'Email', value: 8, growth: 2, revenue: 4200 }
+      ],
+      trends: [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000]
+    },
+    alerts: [
       {
         id: 1,
-        title: 'Optimización de Inventario',
-        description: '3 productos con stock bajo requieren atención inmediata',
-        priority: 'high'
+        type: 'warning',
+        title: 'Stock Bajo',
+        message: 'Producto "X" tiene solo 5 unidades en inventario',
+        time: 'Hace 2 horas',
+        action: 'restock'
       },
       {
         id: 2,
-        title: 'Oportunidad de Crecimiento',
-        description: 'Segmento de clientes premium muestra alta receptividad',
-        priority: 'medium'
+        type: 'success',
+        title: 'Meta Alcanzada',
+        message: 'Ventas del mes superaron el objetivo en 15%',
+        time: 'Hace 1 día',
+        action: 'celebrate'
       },
       {
         id: 3,
-        title: 'Eficiencia Operativa',
-        description: 'Tiempo de respuesta mejorado en 15% este mes',
-        priority: 'low'
+        type: 'info',
+        title: 'Nuevo Lead',
+        message: 'Cliente potencial interesado en servicio premium',
+        time: 'Hace 3 horas',
+        action: 'followup'
       }
+    ],
+    quickActions: [
+      { id: 1, title: 'Nueva Venta', icon: ShoppingCart, action: 'newSale' },
+      { id: 2, title: 'Gestión Stock', icon: Inventory, action: 'manageInventory' },
+      { id: 3, title: 'Enviar Campaña', icon: Email, action: 'sendCampaign' },
+      { id: 4, title: 'Reporte Diario', icon: Analytics, action: 'dailyReport' }
     ]
   };
 
@@ -114,10 +166,12 @@ const useDashboardData = () => {
     try {
       setLoading(true);
       // Simular carga de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       setData(staticData);
+      setLastUpdate(new Date());
     } catch (error) {
       setData(staticData);
+      setLastUpdate(new Date());
     } finally {
       setLoading(false);
     }
@@ -127,11 +181,11 @@ const useDashboardData = () => {
     loadData();
   }, [loadData]);
 
-  return { data, loading, refetch: loadData };
+  return { data, loading, lastUpdate, refetch: loadData };
 };
 
-// Componente de Métrica Minimalista
-const MetricCard = ({ title, value, change, icon: Icon, loading }) => {
+// Componente de Métrica Mejorado
+const MetricCard = ({ title, value, change, target, icon: Icon, loading, onAction }) => {
   const formatValue = (val) => {
     if (typeof val === 'number') {
       if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
@@ -141,15 +195,17 @@ const MetricCard = ({ title, value, change, icon: Icon, loading }) => {
     return val;
   };
 
+  const progress = target ? (value / target) * 100 : 0;
+
   if (loading) {
     return (
-      <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 120 }}>
+      <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 140 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ width: 48, height: 48, bgcolor: 'grey.100', borderRadius: 2 }} />
           <Box sx={{ flex: 1 }}>
             <Box sx={{ height: 16, bgcolor: 'grey.100', borderRadius: 1, mb: 1, width: '60%' }} />
             <Box sx={{ height: 24, bgcolor: 'grey.100', borderRadius: 1, mb: 1 }} />
-            <Box sx={{ height: 12, bgcolor: 'grey.100', borderRadius: 1, width: '40%' }} />
+            <Box sx={{ height: 8, bgcolor: 'grey.100', borderRadius: 2, width: '100%' }} />
           </Box>
         </Box>
       </Card>
@@ -157,80 +213,124 @@ const MetricCard = ({ title, value, change, icon: Icon, loading }) => {
   }
 
   return (
-    <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 120 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Box sx={{ 
-          p: 1.5, 
-          bgcolor: 'grey.50', 
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'grey.200'
-        }}>
-          <Icon sx={{ fontSize: 24, color: 'text.primary' }} />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" fontWeight={700} sx={{ mb: 0.5 }}>
-            {formatValue(value)}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-            {title}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {change > 0 ? 
-              <ArrowUpward sx={{ fontSize: 16, color: 'success.main' }} /> : 
-              <ArrowDownward sx={{ fontSize: 16, color: 'error.main' }} />
-            }
-            <Typography 
-              variant="caption" 
-              fontWeight={600}
-              sx={{ color: change > 0 ? 'success.main' : 'error.main' }}
-            >
-              {change > 0 ? '+' : ''}{change}%
+    <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 140 }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+          <Box sx={{ 
+            p: 1.5, 
+            bgcolor: 'grey.50', 
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'grey.200'
+          }}>
+            <Icon sx={{ fontSize: 24, color: 'text.primary' }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h4" fontWeight={700} sx={{ mb: 0.5 }}>
+              {formatValue(value)}
             </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+              {title}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              {change > 0 ? 
+                <ArrowUpward sx={{ fontSize: 16, color: 'success.main' }} /> : 
+                <ArrowDownward sx={{ fontSize: 16, color: 'error.main' }} />
+              }
+              <Typography 
+                variant="caption" 
+                fontWeight={600}
+                sx={{ color: change > 0 ? 'success.main' : 'error.main' }}
+              >
+                {change > 0 ? '+' : ''}{change}%
+              </Typography>
+            </Box>
           </Box>
         </Box>
+        <IconButton size="small" onClick={onAction}>
+          <MoreVert />
+        </IconButton>
       </Box>
+      
+      {target && (
+        <LinearProgress 
+          variant="determinate" 
+          value={Math.min(progress, 100)} 
+          sx={{ 
+            mt: 1,
+            height: 4,
+            borderRadius: 2,
+            bgcolor: 'grey.100',
+            '& .MuiLinearProgress-bar': {
+              bgcolor: progress >= 100 ? 'success.main' : 'primary.main',
+              borderRadius: 2
+            }
+          }}
+        />
+      )}
     </Card>
   );
 };
 
-// Gráfico de Barras Minimalista
-const AnalyticsChart = ({ data, loading }) => {
+// Gráfico de Rendimiento Mejorado
+const PerformanceChart = ({ data, loading, onTimeRangeChange }) => {
+  const [timeRange, setTimeRange] = useState('month');
+
   if (loading) {
     return (
-      <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 320 }}>
+      <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 400 }}>
         <Box sx={{ height: '100%', bgcolor: 'grey.50', borderRadius: 1 }} />
       </Card>
     );
   }
 
-  const chartData = [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
+  const chartData = data?.trends || [];
   const maxValue = Math.max(...chartData);
   const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+  const handleTimeRangeChange = (newRange) => {
+    setTimeRange(newRange);
+    onTimeRangeChange?.(newRange);
+  };
+
   return (
-    <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 320 }}>
+    <Card sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', height: 400 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6" fontWeight={600}>
-          Rendimiento Anual
+          Rendimiento de Ventas
         </Typography>
-        <Button variant="outlined" size="small" startIcon={<Download />}>
-          Exportar
-        </Button>
+        
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {['week', 'month', 'quarter', 'year'].map((range) => (
+            <Chip
+              key={range}
+              label={
+                range === 'week' ? 'Semana' :
+                range === 'month' ? 'Mes' :
+                range === 'quarter' ? 'Trimestre' : 'Año'
+              }
+              variant={timeRange === range ? 'filled' : 'outlined'}
+              onClick={() => handleTimeRangeChange(range)}
+              size="small"
+            />
+          ))}
+        </Box>
       </Box>
 
-      <Box sx={{ height: 200, display: 'flex', alignItems: 'end', gap: 1, mb: 3, px: 1 }}>
+      <Box sx={{ height: 250, display: 'flex', alignItems: 'end', gap: 0.5, mb: 3, px: 1 }}>
         {chartData.map((value, index) => (
           <Box key={index} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Box
               sx={{
-                width: '60%',
+                width: '70%',
                 height: `${(value / maxValue) * 100}%`,
                 bgcolor: 'primary.main',
                 borderRadius: '2px 2px 0 0',
                 transition: 'all 0.2s ease',
+                cursor: 'pointer',
                 '&:hover': {
                   bgcolor: 'primary.dark',
+                  transform: 'scale(1.05)'
                 }
               }}
             />
@@ -242,13 +342,16 @@ const AnalyticsChart = ({ data, loading }) => {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Evolución de ingresos mensuales
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 12, height: 12, bgcolor: 'primary.main', borderRadius: 1 }} />
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Ingresos Mensuales
+          </Typography>
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
           <Typography variant="body2" fontWeight={600} sx={{ color: 'success.main' }}>
-            +24.8%
+            +{((chartData[chartData.length - 1] - chartData[0]) / chartData[0] * 100).toFixed(1)}%
           </Typography>
         </Box>
       </Box>
@@ -256,11 +359,11 @@ const AnalyticsChart = ({ data, loading }) => {
   );
 };
 
-// Componente de Canal Simple
-const ChannelItem = ({ channel, loading }) => {
+// Componente de Canal de Ventas
+const SalesChannel = ({ channel, loading, onAnalyze }) => {
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <Box sx={{ width: 40, height: 40, bgcolor: 'grey.100', borderRadius: 1 }} />
           <Box sx={{ flex: 1 }}>
@@ -272,12 +375,47 @@ const ChannelItem = ({ channel, loading }) => {
     );
   }
 
+  const getChannelIcon = (name) => {
+    switch (name.toLowerCase()) {
+      case 'whatsapp': return WhatsApp;
+      case 'instagram': return Instagram;
+      case 'facebook': return Facebook;
+      case 'email': return Email;
+      default: return Analytics;
+    }
+  };
+
+  const ChannelIcon = getChannelIcon(channel.name);
+
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'space-between', 
+      py: 2,
+      borderBottom: '1px solid',
+      borderColor: 'grey.100',
+      '&:last-child': { borderBottom: 'none' }
+    }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-        <Typography variant="body1" fontWeight={500}>
-          {channel.name}
-        </Typography>
+        <Box sx={{ 
+          p: 1, 
+          bgcolor: 'grey.50', 
+          borderRadius: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <ChannelIcon sx={{ fontSize: 20, color: 'text.primary' }} />
+        </Box>
+        <Box>
+          <Typography variant="body1" fontWeight={500}>
+            {channel.name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            ${channel.revenue.toLocaleString()}
+          </Typography>
+        </Box>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Typography variant="body1" fontWeight={600}>
@@ -289,96 +427,208 @@ const ChannelItem = ({ channel, loading }) => {
           color={channel.growth > 0 ? 'success' : 'error'}
           variant="outlined"
         />
+        <IconButton size="small" onClick={() => onAnalyze(channel)}>
+          <Analytics />
+        </IconButton>
       </Box>
     </Box>
   );
 };
 
-// Insight Card Minimalista
-const InsightCard = ({ insight, loading }) => {
+// Componente de Alerta Mejorado
+const AlertItem = ({ alert, loading, onAction }) => {
   if (loading) {
     return (
-      <Card sx={{ p: 2.5, borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-          <Box sx={{ width: 40, height: 40, bgcolor: 'grey.100', borderRadius: 1 }} />
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ height: 16, bgcolor: 'grey.100', borderRadius: 1, mb: 1, width: '70%' }} />
-            <Box sx={{ height: 14, bgcolor: 'grey.100', borderRadius: 1, width: '90%' }} />
-          </Box>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, py: 2 }}>
+        <Box sx={{ width: 8, height: 8, bgcolor: 'grey.300', borderRadius: '50%', mt: 1 }} />
+        <Box sx={{ flex: 1 }}>
+          <Box sx={{ height: 16, bgcolor: 'grey.100', borderRadius: 1, mb: 1, width: '70%' }} />
+          <Box sx={{ height: 14, bgcolor: 'grey.100', borderRadius: 1, width: '90%' }} />
+          <Box sx={{ height: 12, bgcolor: 'grey.100', borderRadius: 1, width: '40%', mt: 1 }} />
         </Box>
-      </Card>
+      </Box>
     );
   }
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'error.main';
-      case 'medium': return 'warning.main';
-      case 'low': return 'success.main';
-      default: return 'text.secondary';
+  const getAlertIcon = (type) => {
+    switch (type) {
+      case 'success': return CheckCircle;
+      case 'warning': return Warning;
+      case 'error': return Error;
+      default: return Notifications;
     }
   };
 
+  const getAlertColor = (type) => {
+    switch (type) {
+      case 'success': return 'success.main';
+      case 'warning': return 'warning.main';
+      case 'error': return 'error.main';
+      default: return 'info.main';
+    }
+  };
+
+  const AlertIcon = getAlertIcon(alert.type);
+  const alertColor = getAlertColor(alert.type);
+
   return (
-    <Card sx={{ p: 2.5, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-        <Box sx={{ 
-          width: 8, 
-          height: 8, 
-          bgcolor: getPriorityColor(insight.priority),
-          borderRadius: '50%',
-          mt: 1
-        }} />
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
-            {insight.title}
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'flex-start', 
+      gap: 2, 
+      py: 2,
+      borderBottom: '1px solid',
+      borderColor: 'grey.100',
+      '&:last-child': { borderBottom: 'none' }
+    }}>
+      <AlertIcon sx={{ fontSize: 20, color: alertColor, mt: 0.5 }} />
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
+          {alert.title}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, lineHeight: 1.4 }}>
+          {alert.message}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {alert.time}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.4 }}>
-            {insight.description}
-          </Typography>
+          <Button 
+            size="small" 
+            variant="text"
+            onClick={() => onAction(alert.action, alert)}
+          >
+            Acción
+          </Button>
         </Box>
       </Box>
-    </Card>
+    </Box>
   );
 };
 
-// Dashboard Principal
+// Acciones Rápidas
+const QuickActions = ({ actions, loading, onAction }) => {
+  if (loading) {
+    return (
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+        {[1, 2, 3, 4].map((item) => (
+          <Box key={item} sx={{ 
+            p: 2, 
+            bgcolor: 'grey.50', 
+            borderRadius: 2,
+            textAlign: 'center'
+          }}>
+            <Box sx={{ width: 40, height: 40, bgcolor: 'grey.200', borderRadius: 1, mx: 'auto', mb: 1 }} />
+            <Box sx={{ height: 16, bgcolor: 'grey.200', borderRadius: 1, width: '80%', mx: 'auto' }} />
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+      {actions.map((action) => {
+        const ActionIcon = action.icon;
+        return (
+          <Card 
+            key={action.id}
+            sx={{ 
+              p: 2, 
+              borderRadius: 2,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: 'primary.50',
+                borderColor: 'primary.main',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            onClick={() => onAction(action.action)}
+          >
+            <Box sx={{ textAlign: 'center' }}>
+              <ActionIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
+              <Typography variant="body2" fontWeight={600}>
+                {action.title}
+              </Typography>
+            </Box>
+          </Card>
+        );
+      })}
+    </Box>
+  );
+};
+
+// Dashboard Principal Mejorado
 const Dashboard = () => {
   const { currentBusiness } = useBusiness();
   const isMobile = useMediaQuery('(max-width:768px)');
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
-  const { data, loading, refetch } = useDashboardData();
+  const [activeTab, setActiveTab] = useState(0);
+  const { data, loading, lastUpdate, refetch } = useDashboardData();
   const api = useAPIService();
 
   const showNotification = (message, severity = 'info') => {
     setNotification({ open: true, message, severity });
   };
 
-  const handleAction = async (action) => {
+  const handleAction = async (action, data = null) => {
     try {
       switch (action) {
         case 'refresh':
           await refetch();
-          showNotification('Datos actualizados', 'success');
+          showNotification('Datos actualizados correctamente', 'success');
           break;
-        case 'startCampaign':
-          await api.startCampaign({ name: 'Campaña Automatizada' });
-          showNotification('Campaña iniciada exitosamente', 'success');
+          
+        case 'newSale':
+          showNotification('Iniciando nueva venta...', 'info');
           break;
-        case 'generateReport':
-          await api.generateReport();
-          showNotification('Reporte generado exitosamente', 'success');
+          
+        case 'manageInventory':
+          showNotification('Abriendo gestión de inventario', 'info');
           break;
+          
+        case 'sendCampaign':
+          await api.startAutomation('campaign');
+          showNotification('Campaña enviada exitosamente', 'success');
+          break;
+          
+        case 'dailyReport':
+          await api.generateReport('daily');
+          showNotification('Reporte diario generado', 'success');
+          break;
+          
+        case 'restock':
+          showNotification('Solicitando reposición de stock...', 'warning');
+          break;
+          
+        case 'celebrate':
+          showNotification('¡Felicidades por alcanzar la meta!', 'success');
+          break;
+          
+        case 'followup':
+          showNotification('Programando seguimiento con lead...', 'info');
+          break;
+          
+        case 'analyzeChannel':
+          showNotification(`Analizando canal: ${data?.name}`, 'info');
+          break;
+          
         case 'exportData':
-          await api.exportData();
-          showNotification('Datos exportados', 'success');
+          await api.exportData('full');
+          showNotification('Datos exportados exitosamente', 'success');
           break;
+
         default:
           showNotification('Acción ejecutada', 'info');
       }
     } catch (error) {
-      showNotification('Error en la acción', 'error');
+      showNotification('Error al ejecutar la acción', 'error');
     }
+  };
+
+  const handleTimeRangeChange = (range) => {
+    showNotification(`Período cambiado a: ${range}`, 'info');
   };
 
   const metrics = [
@@ -386,31 +636,39 @@ const Dashboard = () => {
       title: 'Ingresos Totales',
       value: data?.metrics?.revenue.current,
       change: data?.metrics?.revenue.growth,
-      icon: AttachMoney
+      target: data?.metrics?.revenue.target,
+      icon: AttachMoney,
+      action: 'viewRevenue'
     },
     {
       title: 'Clientes Activos',
       value: data?.metrics?.customers.current,
       change: data?.metrics?.customers.growth,
-      icon: People
+      target: data?.metrics?.customers.target,
+      icon: People,
+      action: 'viewCustomers'
     },
     {
       title: 'Tasa Conversión',
       value: data?.metrics?.conversion.current,
       change: data?.metrics?.conversion.growth,
-      icon: TrendingUp
+      target: data?.metrics?.conversion.target,
+      icon: TrendingUp,
+      action: 'viewConversion'
     },
     {
       title: 'Interacciones',
       value: data?.metrics?.messages.current,
       change: data?.metrics?.messages.growth,
-      icon: Chat
+      target: data?.metrics?.messages.target,
+      icon: Chat,
+      action: 'viewMessages'
     }
   ];
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
+      {/* Header Mejorado */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
           <Box>
@@ -418,7 +676,8 @@ const Dashboard = () => {
               Panel de Control
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              {currentBusiness?.name || 'Mi Negocio'} • Resumen ejecutivo
+              {currentBusiness?.name || 'Mi Negocio'} • 
+              {lastUpdate && ` Actualizado: ${lastUpdate.toLocaleTimeString()}`}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -426,25 +685,54 @@ const Dashboard = () => {
               variant="outlined" 
               startIcon={<Refresh />}
               onClick={() => handleAction('refresh')}
+              disabled={loading}
             >
               Actualizar
             </Button>
             <Button 
               variant="contained" 
               startIcon={<RocketLaunch />}
-              onClick={() => handleAction('startCampaign')}
+              onClick={() => handleAction('sendCampaign')}
             >
-              Nueva Acción
+              Automatizar
             </Button>
           </Box>
         </Box>
+
+        {/* Pestañas */}
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          sx={{ mb: 3 }}
+        >
+          <Tab label="Resumen" />
+          <Tab label="Rendimiento" />
+          <Tab label="Análisis" />
+          <Tab label="Reportes" />
+        </Tabs>
+      </Box>
+
+      {/* Acciones Rápidas */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+          Acciones Rápidas
+        </Typography>
+        <QuickActions 
+          actions={data?.quickActions || []} 
+          loading={loading}
+          onAction={handleAction}
+        />
       </Box>
 
       {/* Métricas Principales */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {metrics.map((metric, index) => (
           <Grid item xs={12} sm={6} lg={3} key={index}>
-            <MetricCard {...metric} loading={loading} />
+            <MetricCard 
+              {...metric} 
+              loading={loading}
+              onAction={() => handleAction(metric.action)}
+            />
           </Grid>
         ))}
       </Grid>
@@ -452,32 +740,55 @@ const Dashboard = () => {
       <Grid container spacing={3}>
         {/* Gráfico Principal */}
         <Grid item xs={12} lg={8}>
-          <AnalyticsChart data={data} loading={loading} />
+          <PerformanceChart 
+            data={data?.performance} 
+            loading={loading}
+            onTimeRangeChange={handleTimeRangeChange}
+          />
         </Grid>
 
-        {/* Sidebar - Canales e Insights */}
+        {/* Sidebar - Canales y Alertas */}
         <Grid item xs={12} lg={4}>
+          {/* Canales de Venta */}
           <Card sx={{ borderRadius: 2, bgcolor: 'background.paper', mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
                 Canales de Venta
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {data?.channels?.map((channel, index) => (
-                  <ChannelItem key={index} channel={channel} loading={loading} />
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {data?.performance?.channels?.map((channel, index) => (
+                  <SalesChannel 
+                    key={index} 
+                    channel={channel} 
+                    loading={loading}
+                    onAnalyze={() => handleAction('analyzeChannel', channel)}
+                  />
                 ))}
               </Box>
             </CardContent>
           </Card>
 
+          {/* Alertas del Sistema */}
           <Card sx={{ borderRadius: 2, bgcolor: 'background.paper' }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                Alertas del Sistema
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {data?.insights?.map((insight) => (
-                  <InsightCard key={insight.id} insight={insight} loading={loading} />
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" fontWeight={600}>
+                  Alertas del Sistema
+                </Typography>
+                <Chip 
+                  label={data?.alerts?.length || 0} 
+                  size="small" 
+                  color="primary" 
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {data?.alerts?.map((alert) => (
+                  <AlertItem 
+                    key={alert.id}
+                    alert={alert} 
+                    loading={loading}
+                    onAction={handleAction}
+                  />
                 ))}
               </Box>
             </CardContent>
