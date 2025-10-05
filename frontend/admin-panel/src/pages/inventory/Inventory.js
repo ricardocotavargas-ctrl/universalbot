@@ -1,202 +1,487 @@
-// frontend/admin-panel/src/pages/inventory/Inventory.js
 import React, { useState, useEffect } from 'react';
 import {
-  Container, Grid, Typography, Box, Card, CardContent,
-  Button, Chip, LinearProgress, Alert
+  Container, Typography, Box, Grid, Card, CardContent,
+  Button, TextField, Chip, IconButton, Dialog, DialogTitle,
+  DialogContent, DialogActions, Alert, Snackbar,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, InputAdornment, MenuItem, FormControl, InputLabel, Select
 } from '@mui/material';
 import {
-  Inventory, TrendingUp, Warning, Add,
-  Scanner, SwapHoriz, History
+  Add, Search, Edit, Delete, Inventory as InventoryIcon,
+  Warning, TrendingUp, Assessment, LocalShipping
 } from '@mui/icons-material';
-import UBCard from '../../components/ui/UBCard';
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 
 const Inventory = () => {
-  const [inventoryData, setInventoryData] = useState({
-    totalProducts: 0,
-    totalValue: 0,
-    lowStockItems: 0,
-    outOfStockItems: 0,
-    categories: []
+  const { user } = useAuth();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [lowStockFilter, setLowStockFilter] = useState(false);
+
+  // Dialog states
+  const [productDialog, setProductDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    code: '',
+    price: 0,
+    cost: 0,
+    stock: 0,
+    minStock: 5,
+    category: '',
+    supplier: '',
+    barcode: ''
   });
 
-  const [products] = useState([
-    {
-      id: 1, name: 'Producto Premium', sku: 'PRD-001', category: 'Electrónicos',
-      stock: 15, minStock: 5, cost: 150.00, price: 299.99, status: 'active'
-    },
-    {
-      id: 2, name: 'Kit Herramientas', sku: 'PRD-002', category: 'Herramientas',
-      stock: 3, minStock: 5, cost: 45.00, price: 89.99, status: 'low-stock'
-    },
-    {
-      id: 3, name: 'Accesorio Oficina', sku: 'PRD-003', category: 'Oficina',
-      stock: 0, minStock: 10, cost: 25.00, price: 49.99, status: 'out-of-stock'
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/inventory');
+      
+      if (response.data.success) {
+        setProducts(response.data.products);
+      } else {
+        setError('Error al cargar productos');
+      }
+    } catch (err) {
+      setError('No se pudo conectar con el servidor');
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  useEffect(() => {
-    const totalProducts = products.length;
-    const totalValue = products.reduce((sum, p) => sum + (p.stock * p.cost), 0);
-    const lowStockItems = products.filter(p => p.stock > 0 && p.stock <= p.minStock).length;
-    const outOfStockItems = products.filter(p => p.stock === 0).length;
-
-    setInventoryData({
-      totalProducts,
-      totalValue,
-      lowStockItems,
-      outOfStockItems,
-      categories: [...new Set(products.map(p => p.category))]
-    });
-  }, [products]);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-VE', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
   };
 
-  const StatCard = ({ icon, title, value, subtitle, color = 'primary' }) => (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography color="text.secondary" gutterBottom>
-              {title}
-            </Typography>
-            <Typography variant="h4" component="div" color={`${color}.main`}>
-              {value}
-            </Typography>
-            {subtitle && (
-              <Typography variant="body2" color="text.secondary">
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ color: `${color}.main` }}>
-            {icon}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const handleCreateProduct = async () => {
+    try {
+      const response = await api.post('/api/inventory', productForm);
+      
+      if (response.data.success) {
+        setSnackbar({ open: true, message: 'Producto creado exitosamente', severity: 'success' });
+        setProductDialog(false);
+        resetProductForm();
+        loadProducts();
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: `Error: ${error.response?.data?.error || error.message}`, severity: 'error' });
+    }
+  };
+
+  const handleUpdateProduct = async () => {
+    try {
+      const response = await api.put(`/api/inventory/${editingProduct._id}`, productForm);
+      
+      if (response.data.success) {
+        setSnackbar({ open: true, message: 'Producto actualizado exitosamente', severity: 'success' });
+        setProductDialog(false);
+        resetProductForm();
+        loadProducts();
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: `Error: ${error.response?.data?.error || error.message}`, severity: 'error' });
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
+    
+    try {
+      const response = await api.delete(`/api/inventory/${productId}`);
+      
+      if (response.data.success) {
+        setSnackbar({ open: true, message: 'Producto eliminado exitosamente', severity: 'success' });
+        loadProducts();
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: `Error: ${error.response?.data?.error || error.message}`, severity: 'error' });
+    }
+  };
+
+  const resetProductForm = () => {
+    setProductForm({
+      name: '',
+      code: '',
+      price: 0,
+      cost: 0,
+      stock: 0,
+      minStock: 5,
+      category: '',
+      supplier: '',
+      barcode: ''
+    });
+    setEditingProduct(null);
+  };
+
+  const openEditDialog = (product) => {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name,
+      code: product.code,
+      price: product.price,
+      cost: product.cost || 0,
+      stock: product.stock,
+      minStock: product.minStock || 5,
+      category: product.category || '',
+      supplier: product.supplier || '',
+      barcode: product.barcode || ''
+    });
+    setProductDialog(true);
+  };
+
+  // Filtros
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !categoryFilter || product.category === categoryFilter;
+    const matchesLowStock = !lowStockFilter || product.stock <= product.minStock;
+    
+    return matchesSearch && matchesCategory && matchesLowStock;
+  });
+
+  const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+  const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="xl" sx={{ py: 3 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h4" fontWeight={800} gutterBottom>
+          <InventoryIcon sx={{ mr: 2, color: 'primary.main' }} />
           Gestión de Inventario
         </Typography>
         <Typography color="text.secondary">
-          Control completo de stock y productos
+          Administra tus productos y stock • {user?.businessName || 'Tu Negocio'}
         </Typography>
       </Box>
 
-      {/* Alertas */}
-      {(inventoryData.lowStockItems > 0 || inventoryData.outOfStockItems > 0) && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <Typography fontWeight="bold">
-            Atención requerida: {inventoryData.lowStockItems} productos con stock bajo y {inventoryData.outOfStockItems} agotados
-          </Typography>
-        </Alert>
-      )}
-
-      {/* KPIs */}
+      {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <StatCard
-            icon={<Inventory sx={{ fontSize: 40 }} />}
-            title="Total Productos"
-            value={inventoryData.totalProducts}
-            subtitle="En inventario"
-            color="primary"
-          />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Total Productos
+              </Typography>
+              <Typography variant="h4" fontWeight={700}>
+                {products.length}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <StatCard
-            icon={<TrendingUp sx={{ fontSize: 40 }} />}
-            title="Valor Total"
-            value={formatCurrency(inventoryData.totalValue)}
-            subtitle="Valor en stock"
-            color="success"
-          />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Stock Total
+              </Typography>
+              <Typography variant="h4" fontWeight={700}>
+                {products.reduce((sum, p) => sum + p.stock, 0)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <StatCard
-            icon={<Warning sx={{ fontSize: 40 }} />}
-            title="Stock Bajo"
-            value={inventoryData.lowStockItems}
-            subtitle="Necesitan reabastecimiento"
-            color="warning"
-          />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Alertas Stock
+                  </Typography>
+                  <Typography variant="h4" fontWeight={700} color={lowStockCount > 0 ? 'error' : 'text.primary'}>
+                    {lowStockCount}
+                  </Typography>
+                </Box>
+                {lowStockCount > 0 && <Warning color="error" />}
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <StatCard
-            icon={<Warning sx={{ fontSize: 40 }} />}
-            title="Sin Stock"
-            value={inventoryData.outOfStockItems}
-            subtitle="Productos agotados"
-            color="error"
-          />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Categorías
+              </Typography>
+              <Typography variant="h4" fontWeight={700}>
+                {categories.length}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
-      {/* Acciones Rápidas */}
-      <UBCard title="Acciones Rápidas" sx={{ mb: 3 }}>
-        <Grid container spacing={2}>
-          {[
-            { icon: <Add />, label: 'Nuevo Producto', path: '/inventory/products' },
-            { icon: <Scanner />, label: 'Escáner', path: '/inventory/scanner' },
-            { icon: <SwapHoriz />, label: 'Ajustes', path: '/inventory/adjustments' },
-            { icon: <SwapHoriz />, label: 'Traslados', path: '/inventory/transfers' },
-            { icon: <History />, label: 'Movimientos', path: '/inventory/movements' },
-            { icon: <Warning />, label: 'Alertas', path: '/inventory/alerts' }
-          ].map((action, index) => (
-            <Grid item xs={6} md={2} key={index}>
-              <Button
+      {/* Filtros y Acciones */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <TextField
                 fullWidth
-                variant="outlined"
-                startIcon={action.icon}
-                onClick={() => window.location.href = action.path}
+                label="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth>
+                <InputLabel>Categoría</InputLabel>
+                <Select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  label="Categoría"
+                >
+                  <MenuItem value="">Todas</MenuItem>
+                  {categories.map(category => (
+                    <MenuItem key={category} value={category}>{category}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Button
+                variant={lowStockFilter ? "contained" : "outlined"}
+                color={lowStockFilter ? "error" : "primary"}
+                startIcon={<Warning />}
+                onClick={() => setLowStockFilter(!lowStockFilter)}
+                fullWidth
               >
-                {action.label}
+                Stock Bajo ({lowStockCount})
               </Button>
             </Grid>
-          ))}
-        </Grid>
-      </UBCard>
+            <Grid item xs={12} md={2}>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setProductDialog(true)}
+                fullWidth
+              >
+                Nuevo Producto
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-      {/* Productos que necesitan atención */}
-      <UBCard title="Productos que Necesitan Atención">
-        {products.filter(p => p.stock <= p.minStock).map((product) => (
-          <Box key={product.id} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box>
-                <Typography fontWeight="medium">{product.name}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  SKU: {product.sku} | Categoría: {product.category}
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Chip
-                  label={product.stock === 0 ? 'AGOTADO' : `Stock bajo: ${product.stock}`}
-                  color={product.stock === 0 ? 'error' : 'warning'}
-                />
-                <Typography variant="body2" color="text.secondary">
-                  Mínimo: {product.minStock} unidades
-                </Typography>
-              </Box>
+      {/* Tabla de Productos */}
+      <Card>
+        <CardContent>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Producto</TableCell>
+                  <TableCell>Código</TableCell>
+                  <TableCell>Categoría</TableCell>
+                  <TableCell align="right">Precio</TableCell>
+                  <TableCell align="right">Stock</TableCell>
+                  <TableCell align="right">Mínimo</TableCell>
+                  <TableCell align="center">Estado</TableCell>
+                  <TableCell align="center">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredProducts.map((product) => (
+                  <TableRow key={product._id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography fontWeight={600}>{product.name}</Typography>
+                        {product.supplier && (
+                          <Typography variant="caption" color="text.secondary">
+                            Prov: {product.supplier}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={product.code} size="small" variant="outlined" />
+                    </TableCell>
+                    <TableCell>
+                      {product.category && (
+                        <Chip label={product.category} size="small" />
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography fontWeight={600}>
+                        ${product.price.toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography 
+                        fontWeight={600}
+                        color={product.stock <= product.minStock ? 'error' : 'success.main'}
+                      >
+                        {product.stock}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2">
+                        {product.minStock}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      {product.stock === 0 ? (
+                        <Chip label="Agotado" color="error" size="small" />
+                      ) : product.stock <= product.minStock ? (
+                        <Chip label="Stock Bajo" color="warning" size="small" />
+                      ) : (
+                        <Chip label="Disponible" color="success" size="small" />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={() => openEditDialog(product)} color="primary">
+                        <Edit />
+                      </IconButton>
+                      <IconButton onClick={() => handleDeleteProduct(product._id)} color="error">
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {filteredProducts.length === 0 && !loading && (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <InventoryIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+              <Typography color="text.secondary">
+                {searchTerm || categoryFilter || lowStockFilter 
+                  ? 'No se encontraron productos con los filtros aplicados' 
+                  : 'No hay productos registrados'
+                }
+              </Typography>
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min((product.stock / product.minStock) * 100, 100)}
-              color={product.stock === 0 ? 'error' : 'warning'}
-              sx={{ mt: 1, height: 6 }}
-            />
-          </Box>
-        ))}
-      </UBCard>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Dialog de Producto */}
+      <Dialog 
+        open={productDialog} 
+        onClose={() => setProductDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {editingProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Nombre del Producto *"
+                value={productForm.name}
+                onChange={(e) => setProductForm(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Código *"
+                value={productForm.code}
+                onChange={(e) => setProductForm(prev => ({ ...prev, code: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Precio *"
+                type="number"
+                value={productForm.price}
+                onChange={(e) => setProductForm(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Costo"
+                type="number"
+                value={productForm.cost}
+                onChange={(e) => setProductForm(prev => ({ ...prev, cost: parseFloat(e.target.value) }))}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Stock Actual *"
+                type="number"
+                value={productForm.stock}
+                onChange={(e) => setProductForm(prev => ({ ...prev, stock: parseInt(e.target.value) }))}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Stock Mínimo *"
+                type="number"
+                value={productForm.minStock}
+                onChange={(e) => setProductForm(prev => ({ ...prev, minStock: parseInt(e.target.value) }))}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Categoría"
+                value={productForm.category}
+                onChange={(e) => setProductForm(prev => ({ ...prev, category: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Proveedor"
+                value={productForm.supplier}
+                onChange={(e) => setProductForm(prev => ({ ...prev, supplier: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Código de Barras"
+                value={productForm.barcode}
+                onChange={(e) => setProductForm(prev => ({ ...prev, barcode: e.target.value }))}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setProductDialog(false)}>Cancelar</Button>
+          <Button 
+            onClick={editingProduct ? handleUpdateProduct : handleCreateProduct}
+            variant="contained"
+            disabled={!productForm.name || !productForm.code || !productForm.price}
+          >
+            {editingProduct ? 'Actualizar' : 'Crear'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
