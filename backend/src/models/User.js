@@ -1,3 +1,4 @@
+// backend/src/models/User.js - VERSIÓN CORREGIDA
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -19,9 +20,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  businessName: {
-    type: String,
-    default: 'Mi Empresa'
+  // ✅ CORREGIDO: businessId para relación REAL con Business
+  businessId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Business',
+    required: true  // ✅ OBLIGATORIO - cada usuario pertenece a un negocio
   },
   role: {
     type: String,
