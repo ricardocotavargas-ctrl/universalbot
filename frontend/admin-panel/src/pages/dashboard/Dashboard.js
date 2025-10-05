@@ -776,7 +776,7 @@ const RecentActivity = React.memo(({ activities, loading = false }) => {
       case 'inventory':
         return <Inventory sx={{ color: '#f59e0b', fontSize: 18 }} />;
       case 'message':
-        return <Message sx{{ color: '#8b5cf6', fontSize: 18 }} />;
+        return <Message sx={{ color: '#8b5cf6', fontSize: 18 }} />;
       default:
         return <Notifications sx={{ color: '#6b7280', fontSize: 18 }} />;
     }
