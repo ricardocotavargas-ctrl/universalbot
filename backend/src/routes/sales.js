@@ -1,4 +1,4 @@
-// backend/src/routes/sales.js - ARCHIVO NUEVO
+// backend/src/routes/sales.js - ARCHIVO NUEVO COMPLETO
 const express = require('express');
 const router = express.Router();
 
