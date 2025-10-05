@@ -83,12 +83,6 @@ export const navigationConfig = {
         },
         {
           type: 'item',
-          label: 'Gestión de Mesas',
-          icon: TableRestaurant,
-          path: '/sales/tables'
-        },
-        {
-          type: 'item',
           label: 'Canales de Venta',
           icon: Store,
           path: '/sales/channels'
@@ -130,12 +124,6 @@ export const navigationConfig = {
           label: 'Gestión de Productos',
           icon: Inventory,
           path: '/inventory/products'
-        },
-        {
-          type: 'item',
-          label: 'Recetas y Combos',
-          icon: Restaurant,
-          path: '/inventory/recipes'
         },
         {
           type: 'subgroup',
