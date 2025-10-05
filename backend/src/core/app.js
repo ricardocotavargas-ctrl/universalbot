@@ -1,4 +1,4 @@
-// src/core/app.js - VERSIÓN CORREGIDA
+// backend/src/core/app.js - VERSIÓN COMPLETA Y CORREGIDA
 require('dotenv').config();
 const express = require('express');
 const { createServer } = require('http');
@@ -7,7 +7,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-const app = express(); // ← Crear UNA SOLA app Express
+const app = express();
 
 // ✅ MIDDLEWARES DIRECTAMENTE AQUÍ
 app.use(helmet());
@@ -48,7 +48,36 @@ app.get('/', (req, res) => {
   res.json({
     message: '🤖 Universal Bot Platform API',
     version: '1.0.0',
-    status: 'active'
+    status: 'active',
+    endpoints: {
+      api: '/api',
+      auth: '/auth',
+      admin: '/admin', 
+      webhook: '/webhook',
+      health: '/health'
+    }
+  });
+});
+
+// ✅ 404 HANDLER MEJORADO
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'Ruta no encontrada',
+    path: req.originalUrl,
+    method: req.method,
+    available_routes: [
+      'GET /',
+      'GET /health', 
+      'GET /api',
+      'GET /api/debug',
+      'GET /api/sales/sale-data',
+      'POST /api/sales/quick-client',
+      'POST /api/sales/new-sale',
+      'POST /auth/login',
+      'POST /auth/register',
+      'GET /auth/protected'
+    ],
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -56,7 +85,7 @@ app.get('/', (req, res) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3001",
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -81,20 +110,17 @@ app.io = io;
 async function startServer() {
   try {
     console.log('🔄 Iniciando Universal Bot Platform...');
-    
-    // 1. Probar conexión a la base de datos
-    console.log('🔄 Conectando a la base de datos...');
-    const dbConnected = true; // Temporal para pruebas
-    
-    if (!dbConnected) {
-      throw new Error('❌ No se pudo conectar a la base de datos');
-    }
-    console.log('✅ Base de datos conectada');
+    console.log('✅ Rutas cargadas:');
+    console.log('   - GET  /api/sales/sale-data');
+    console.log('   - POST /api/sales/quick-client');
+    console.log('   - POST /api/sales/new-sale');
+    console.log('   - GET  /api/debug');
 
-    // 3. Iniciar servidor HTTP (con WebSockets)
+    // Iniciar servidor HTTP (con WebSockets)
     httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Servidor backend ejecutándose en: http://localhost:${PORT}`);
       console.log(`✅ Health check: http://localhost:${PORT}/health`);
+      console.log(`✅ Debug: http://localhost:${PORT}/api/debug`);
       console.log(`✅ Ventas: http://localhost:${PORT}/api/sales/sale-data`);
       console.log(`✅ WebSockets habilitados en: ws://localhost:${PORT}`);
     });
@@ -104,6 +130,15 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// Manejar cierre graceful
+process.on('SIGINT', () => {
+  console.log('\n🛑 Apagando servidor...');
+  httpServer.close(() => {
+    console.log('✅ Servidor HTTP cerrado');
+    process.exit(0);
+  });
+});
 
 // Iniciar la aplicación
 startServer();
