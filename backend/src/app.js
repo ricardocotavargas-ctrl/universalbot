@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const salesRoutes = require('./routes/sales');
 const inventoryRoutes = require('./routes/inventory');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
@@ -94,6 +95,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/api', salesRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // ✅ RUTA PROTEGIDA MEJORADA
 app.get('/auth/protected', (req, res) => {
