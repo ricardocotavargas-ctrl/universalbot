@@ -21,9 +21,22 @@ router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
 router.use('/auth', authRoutes);
 
+// ✅ DEBUG TEMPORAL - VERIFICAR QUE LAS RUTAS ESTÁN FUNCIONANDO
+router.get('/debug', (req, res) => {
+  res.json({ 
+    message: '✅ API ROUTES FUNCIONANDO',
+    timestamp: new Date().toISOString(),
+    routes: [
+      '/api/sales/sale-data',
+      '/api/sales/quick-client', 
+      '/api/sales/new-sale'
+    ]
+  });
+});
+
 // ✅ RUTAS TEMPORALES DE VENTAS - SIMPLES Y FUNCIONALES
 router.get('/sales/sale-data', (req, res) => {
-  console.log('✅ Ruta /sales/sale-data llamada');
+  console.log('✅ Ruta /api/sales/sale-data llamada');
   res.json({
     success: true,
     clients: [
@@ -36,7 +49,7 @@ router.get('/sales/sale-data', (req, res) => {
 });
 
 router.post('/sales/quick-client', (req, res) => {
-  console.log('✅ Ruta /sales/quick-client llamada:', req.body);
+  console.log('✅ Ruta /api/sales/quick-client llamada:', req.body);
   res.json({
     success: true,
     client: { 
@@ -50,7 +63,7 @@ router.post('/sales/quick-client', (req, res) => {
 });
 
 router.post('/sales/new-sale', (req, res) => {
-  console.log('✅ Ruta /sales/new-sale llamada:', req.body);
+  console.log('✅ Ruta /api/sales/new-sale llamada:', req.body);
   res.json({
     success: true,
     sale: { id: Date.now(), totalAmount: 100 },
@@ -263,6 +276,7 @@ router.get('/', (req, res) => {
         'POST /api/sales/quick-client', 
         'POST /api/sales/new-sale'
       ],
+      debug: 'GET /api/debug',
       businesses: ['GET /api/businesses', 'POST /api/businesses', 'PUT /api/businesses/:id', 'DELETE /api/businesses/:id'],
       users: ['GET /api/users', 'POST /api/users'],
       products: ['GET /api/products', 'POST /api/products'],
