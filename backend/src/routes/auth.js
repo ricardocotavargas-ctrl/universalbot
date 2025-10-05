@@ -1,105 +1,69 @@
+// backend/src/routes/auth.js - VERSIÓN CORREGIDA
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Business = require('../models/Business');
 
 const router = express.Router();
 
-// ✅ LOGIN MEJORADO
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    // Validaciones mejoradas
-    if (!email || !email.trim() || !password) {
-      return res.status(400).json({ 
-        error: 'Email y password requeridos',
-        code: 'MISSING_CREDENTIALS'
-      });
-    }
-
-    const user = await User.findOne({ email: email.trim().toLowerCase() });
-    if (!user) {
-      return res.status(400).json({ 
-        error: 'Credenciales inválidas',
-        code: 'INVALID_CREDENTIALS'
-      });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ 
-        error: 'Credenciales inválidas',
-        code: 'INVALID_CREDENTIALS'
-      });
-    }
-
-    // JWT seguro
-    const token = jwt.sign(
-      { 
-        userId: user._id,
-        email: user.email 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    res.json({
-      message: 'Login exitoso',
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      },
-      code: 'LOGIN_SUCCESS'
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ 
-      error: 'Error en el servidor',
-      code: 'SERVER_ERROR'
-    });
-  }
-});
-
-// ✅ REGISTRO MEJORADO
+// ✅ REGISTRO CORREGIDO - CREA BUSINESS AUTOMÁTICAMENTE
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, businessName, rif, phone, industry } = req.body;
     
+    // Validaciones mejoradas
     if (!email || !email.trim() || !password || !name || !name.trim()) {
       return res.status(400).json({ 
-        error: 'Todos los campos son requeridos',
-        code: 'MISSING_FIELDS'
+        success: false,
+        error: 'Email, password y nombre son requeridos',
+        code: 'MISSING_REQUIRED_FIELDS'
       });
     }
 
-    // Validar email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      return res.status(400).json({ 
-        error: 'Formato de email inválido',
-        code: 'INVALID_EMAIL'
+    if (!businessName || !businessName.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nombre del negocio es requerido',
+        code: 'MISSING_BUSINESS_NAME'
       });
     }
 
+    // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ 
+        success: false,
         error: 'El usuario ya existe',
-        code: 'USER_EXISTS'
+        code: 'USER_ALREADY_EXISTS'
       });
     }
 
+    // ✅ CREAR BUSINESS PRIMERO
+    const business = new Business({
+      name: businessName.trim(),
+      rif: rif?.trim() || `J-${Date.now()}`,
+      phone: phone?.trim() || '',
+      email: email.trim().toLowerCase(),
+      industry: industry?.trim() || 'general',
+      status: 'active'
+    });
+
+    await business.save();
+    console.log('✅ Negocio creado:', business._id);
+
+    // ✅ CREAR USER CON BUSINESS ID REAL
     const user = new User({ 
       email: email.trim().toLowerCase(), 
       password, 
-      name: name.trim() 
+      name: name.trim(),
+      businessId: business._id,  // ✅ ASIGNAR BUSINESS ID REAL
+      role: 'admin'  // Primer usuario es admin
     });
-    await user.save();
 
+    await user.save();
+    console.log('✅ Usuario creado con businessId:', user.businessId);
+
+    // Generar token
     const token = jwt.sign(
       { 
         userId: user._id,
@@ -110,63 +74,109 @@ router.post('/register', async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'Usuario registrado exitosamente',
+      success: true,
+      message: 'Usuario y negocio registrados exitosamente',
       token,
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        businessId: user.businessId
+      },
+      business: {
+        id: business._id,
+        name: business.name,
+        rif: business.rif
       },
       code: 'REGISTER_SUCCESS'
     });
 
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('❌ Error en registro:', error);
+    
+    // Limpiar business creado si falla el usuario
+    if (business && business._id) {
+      await Business.findByIdAndDelete(business._id);
+    }
+    
     res.status(500).json({ 
-      error: 'Error en el servidor',
-      code: 'SERVER_ERROR'
+      success: false,
+      error: 'Error en el servidor al registrar usuario',
+      code: 'REGISTRATION_ERROR'
     });
   }
 });
 
-// ✅ RUTA DE VERIFICACIÓN DE TOKEN
-router.get('/verify', async (req, res) => {
+// ✅ LOGIN CORREGIDO
+router.post('/login', async (req, res) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const { email, password } = req.body;
     
-    if (!token) {
-      return res.status(401).json({ 
-        error: 'Token requerido',
-        code: 'TOKEN_REQUIRED'
+    if (!email || !email.trim() || !password) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email y password requeridos',
+        code: 'MISSING_CREDENTIALS'
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
-    
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) {
-      return res.status(401).json({ 
-        error: 'Usuario no encontrado',
-        code: 'USER_NOT_FOUND'
+      return res.status(400).json({ 
+        success: false,
+        error: 'Credenciales inválidas',
+        code: 'INVALID_CREDENTIALS'
       });
     }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Credenciales inválidas',
+        code: 'INVALID_CREDENTIALS'
+      });
+    }
+
+    // ✅ VERIFICAR QUE TENGA BUSINESS ID
+    if (!user.businessId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Usuario no asociado a un negocio',
+        code: 'NO_BUSINESS_ASSOCIATED'
+      });
+    }
+
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        email: user.email 
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
 
     res.json({
-      valid: true,
+      success: true,
+      message: 'Login exitoso',
+      token,
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        businessId: user.businessId
       },
-      code: 'TOKEN_VALID'
+      code: 'LOGIN_SUCCESS'
     });
 
   } catch (error) {
-    res.status(401).json({ 
-      error: 'Token inválido',
-      code: 'INVALID_TOKEN'
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error en el servidor',
+      code: 'SERVER_ERROR'
     });
   }
 });
