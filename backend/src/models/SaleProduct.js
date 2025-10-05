@@ -26,6 +26,4 @@ const saleProductSchema = new mongoose.Schema({
   }
 });
 
-saleProductSchema.index({ saleId: 1, productId: 1 });
-
 module.exports = mongoose.model('SaleProduct', saleProductSchema);
