@@ -47,15 +47,16 @@ const AdminDashboard = lazy(() => import('./pages/admin/components/AdminDashboar
 const Users = lazy(() => import('./pages/admin/Users'));
 const PlanManagement = lazy(() => import('./pages/PlanManagement'));
 
-// Páginas de Ventas
+// Páginas de Ventas - ✅ SOLO LAS QUE QUEDAN
 const Sales = lazy(() => import('./pages/sales/Sales'));
 const NewSale = lazy(() => import('./pages/sales/NewSale'));
-const SalesChannels = lazy(() => import('./pages/sales/SalesChannels'));
-const SalesBySeller = lazy(() => import('./pages/sales/SalesBySeller'));
-const SalesByProduct = lazy(() => import('./pages/sales/SalesByProduct'));
+const CustomerDatabase = lazy(() => import('./pages/sales/CustomerDatabase'));
+const SalesHistory = lazy(() => import('./pages/sales/SalesHistory'));
+
+// 🗑️ ELIMINADAS: SalesChannels y SalesBySeller
 
 // Páginas de Inventario
-const Products = lazy(() => import('./pages/inventory/Products')); // ✅ CAMBIADO: Products en lugar de InventoryProducts
+const Products = lazy(() => import('./pages/inventory/Products'));
 const InventoryMovements = lazy(() => import('./pages/inventory/InventoryMovements'));
 const Adjustments = lazy(() => import('./pages/inventory/Adjustments'));
 const Transfers = lazy(() => import('./pages/inventory/Transfers'));
@@ -172,40 +173,32 @@ const PrivateRoutes = () => (
           </RequireAuth>
         } />
         
-        <Route path="/sales/channels" element={
+        <Route path="/sales/customers" element={
           <RequireAuth>
             <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
-              <SalesChannels />
+              <CustomerDatabase />
             </RoleRoute>
           </RequireAuth>
         } />
         
-        <Route path="/sales/by-seller" element={
+        <Route path="/sales/history" element={
           <RequireAuth>
             <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-              <SalesBySeller />
+              <SalesHistory />
             </RoleRoute>
           </RequireAuth>
         } />
         
-        <Route path="/sales/by-product" element={
-          <RequireAuth>
-            <RoleRoute requiredPermission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-              <SalesByProduct />
-            </RoleRoute>
-          </RequireAuth>
-        } />
+        {/* 🗑️ ELIMINADAS: Rutas de SalesChannels y SalesBySeller */}
         
         {/* ==================== INVENTARIO ==================== */}
         <Route path="/inventory/products" element={
           <RequireAuth>
             <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-              <Products /> {/* ✅ CAMBIADO: Products en lugar de InventoryProducts */}
+              <Products />
             </RoleRoute>
           </RequireAuth>
         } />
-        
-        {/* 🗑️ ELIMINADA: Ruta de RecipesCombos */}
         
         <Route path="/inventory/movements" element={
           <RequireAuth>
