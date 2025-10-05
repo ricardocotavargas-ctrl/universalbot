@@ -152,6 +152,50 @@ app.get('/', (req, res) => {
 // ✅ RUTAS DE AUTENTICACIÓN
 app.use('/auth', authRoutes);
 
+// ✅ RUTAS DE VENTAS - AGREGAR DESPUÉS DE app.use('/auth', authRoutes);
+app.get('/api/debug', (req, res) => {
+  res.json({ 
+    message: '✅ RUTAS DE VENTAS FUNCIONANDO',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/sales/sale-data', (req, res) => {
+  console.log('✅ Ruta /api/sales/sale-data llamada');
+  res.json({
+    success: true,
+    clients: [
+      { id: 1, name: 'Cliente General', rif: 'V-00000000', phone: '0000000000', type: 'regular' }
+    ],
+    products: [
+      { id: 1, name: 'Producto Ejemplo', code: 'PROD-001', price: 10.00, stock: 100, category: 'General', tax: 16 }
+    ]
+  });
+});
+
+app.post('/api/sales/quick-client', (req, res) => {
+  console.log('✅ Ruta /api/sales/quick-client llamada:', req.body);
+  res.json({
+    success: true,
+    client: { 
+      id: Date.now(), 
+      name: req.body.name, 
+      phone: req.body.phone || '0000000000', 
+      rif: req.body.rif || 'V-00000000',
+      type: 'regular'
+    }
+  });
+});
+
+app.post('/api/sales/new-sale', (req, res) => {
+  console.log('✅ Ruta /api/sales/new-sale llamada:', req.body);
+  res.json({
+    success: true,
+    sale: { id: Date.now(), totalAmount: 100 },
+    message: 'Venta completada exitosamente'
+  });
+});
+
 // ✅ RUTA DE PRUEBA PROTEGIDA
 app.get('/auth/protected', (req, res) => {
   // Simulación de ruta protegida para testing
