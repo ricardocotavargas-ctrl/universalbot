@@ -3,43 +3,67 @@ import React, { useState, useEffect } from 'react';
 import {
   Container, Typography, Box, Paper, Card, CardContent,
   Grid, Chip, Button, TextField, InputAdornment,
-  FormControl, InputLabel, Select, MenuItem
+  FormControl, InputLabel, Select, MenuItem, Alert,
+  CircularProgress
 } from '@mui/material';
 import {
-  Search, FilterList, Download, TrendingUp,
+  Search, Download, TrendingUp,
   Receipt, CalendarToday, AttachMoney
 } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 import UBCard from '../../components/ui/UBCard';
 import StatisticsCharts from './components/StatisticsCharts';
 
 const SalesHistory = () => {
+  const { user } = useAuth();
   const [salesData, setSalesData] = useState([]);
   const [timeRange, setTimeRange] = useState('month');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Datos de ejemplo para estadísticas
-  const mockSalesData = [
-    { date: '2024-01-01', sales: 12500, transactions: 45 },
-    { date: '2024-01-02', sales: 14300, transactions: 52 },
-    { date: '2024-01-03', sales: 9800, transactions: 38 },
-    // ... más datos
-  ];
+  // ✅ CARGAR DATOS DE VENTAS REALES
+  const loadSalesData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get('/api/sales/all-sales');
+      
+      if (response.data.success) {
+        setSalesData(response.data.sales);
+      } else {
+        throw new Error(response.data.message || 'Error al cargar historial');
+      }
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+      setError('Error al cargar historial: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setSalesData(mockSalesData);
+    loadSalesData();
   }, []);
 
+  // ✅ CÁLCULO DE ESTADÍSTICAS
+  const stats = {
+    totalSales: salesData.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0),
+    totalTransactions: salesData.length,
+    completedSales: salesData.filter(sale => sale.status === 'completed').length,
+    averageSale: salesData.length > 0 ? 
+      salesData.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0) / salesData.length : 0
+  };
+
+  // ✅ FORMATEO DE MONEDA
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-VE', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 0
-    }).format(amount);
+      minimumFractionDigits: 2
+    }).format(amount || 0);
   };
-
-  const totalSales = salesData.reduce((sum, day) => sum + day.sales, 0);
-  const totalTransactions = salesData.reduce((sum, day) => sum + day.transactions, 0);
-  const averageSale = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
   return (
     <Container maxWidth="xl">
@@ -48,11 +72,11 @@ const SalesHistory = () => {
           Historial y Estadísticas de Ventas
         </Typography>
         <Typography color="text.secondary">
-          Análisis completo del desempeño de ventas
+          Análisis completo del desempeño de ventas - DATOS REALES
         </Typography>
       </Box>
 
-      {/* Filtros */}
+      {/* FILTROS */}
       <UBCard sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
@@ -89,12 +113,28 @@ const SalesHistory = () => {
           >
             Exportar Reporte
           </Button>
+
+          <Button
+            variant="outlined"
+            startIcon={<CalendarToday />}
+            onClick={loadSalesData}
+            disabled={loading}
+          >
+            {loading ? 'Actualizando...' : 'Actualizar Datos'}
+          </Button>
         </Box>
       </UBCard>
 
-      {/* Estadísticas Rápidas */}
+      {/* MENSAJES DE ERROR */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* ESTADÍSTICAS RÁPIDAS */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -102,7 +142,7 @@ const SalesHistory = () => {
                 <Box>
                   <Typography color="text.secondary">Ventas Totales</Typography>
                   <Typography variant="h4" fontWeight="bold">
-                    {formatCurrency(totalSales)}
+                    {formatCurrency(stats.totalSales)}
                   </Typography>
                 </Box>
               </Box>
@@ -110,7 +150,7 @@ const SalesHistory = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -118,7 +158,7 @@ const SalesHistory = () => {
                 <Box>
                   <Typography color="text.secondary">Total Transacciones</Typography>
                   <Typography variant="h4" fontWeight="bold">
-                    {totalTransactions}
+                    {stats.totalTransactions}
                   </Typography>
                 </Box>
               </Box>
@@ -126,7 +166,7 @@ const SalesHistory = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -134,7 +174,23 @@ const SalesHistory = () => {
                 <Box>
                   <Typography color="text.secondary">Ticket Promedio</Typography>
                   <Typography variant="h4" fontWeight="bold">
-                    {formatCurrency(averageSale)}
+                    {formatCurrency(stats.averageSale)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Receipt sx={{ fontSize: 40, color: 'info.main' }} />
+                <Box>
+                  <Typography color="text.secondary">Ventas Completadas</Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {stats.completedSales}
                   </Typography>
                 </Box>
               </Box>
@@ -143,51 +199,71 @@ const SalesHistory = () => {
         </Grid>
       </Grid>
 
-      {/* Gráficos Estadísticos */}
-      <StatisticsCharts salesData={salesData} timeRange={timeRange} />
+      {/* GRÁFICOS ESTADÍSTICOS */}
+      {!loading && salesData.length > 0 && (
+        <StatisticsCharts salesData={salesData} timeRange={timeRange} />
+      )}
 
-      {/* Resumen Diario */}
-      <UBCard title="Resumen Diario" sx={{ mt: 3 }}>
-        <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-          {salesData.map((day, index) => (
-            <Box
-              key={index}
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 2,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                '&:last-child': { borderBottom: 'none' }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <CalendarToday sx={{ color: 'text.secondary' }} />
-                <Box>
-                  <Typography fontWeight="medium">
-                    {new Date(day.date).toLocaleDateString('es-VE', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'short'
-                    })}
+      {/* RESUMEN DE VENTAS RECIENTES */}
+      <UBCard title="Ventas Recientes" sx={{ mt: 3 }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : salesData.length > 0 ? (
+          <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+            {salesData.slice(0, 10).map((sale, index) => (
+              <Box
+                key={sale.id}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  p: 2,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  '&:last-child': { borderBottom: 'none' }
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <CalendarToday sx={{ color: 'text.secondary' }} />
+                  <Box>
+                    <Typography fontWeight="medium">
+                      Venta {sale.id?.substring(0, 8)}...
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {sale.customer?.name || 'Cliente General'} • {new Date(sale.createdAt).toLocaleDateString('es-VE')}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="h6" color="primary">
+                    {formatCurrency(sale.totalAmount)}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {day.transactions} transacciones
-                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                    <Chip
+                      label={sale.paymentMethod}
+                      size="small"
+                      variant="outlined"
+                    />
+                    <Chip
+                      label={sale.status === 'completed' ? 'COMPLETADA' : sale.status}
+                      color={sale.status === 'completed' ? 'success' : 'warning'}
+                      size="small"
+                    />
+                  </Box>
                 </Box>
               </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="h6" color="primary">
-                  {formatCurrency(day.sales)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formatCurrency(day.sales / day.transactions)} promedio
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
+            ))}
+          </Box>
+        ) : (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Receipt sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography color="text.secondary">
+              No hay datos de ventas disponibles
+            </Typography>
+          </Box>
+        )}
       </UBCard>
     </Container>
   );
