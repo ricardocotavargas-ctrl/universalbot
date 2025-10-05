@@ -9,28 +9,20 @@ const morgan = require('morgan');
 
 const app = express();
 
-// ✅ MIDDLEWARES DIRECTAMENTE AQUÍ
+// ✅ MIDDLEWARES
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ IMPORTAR Y MONTAR RUTAS DIRECTAMENTE
-const apiRoutes = require('../routes/api');
+// ✅ IMPORTAR RUTAS
 const authRoutes = require('../routes/auth');
-const adminRoutes = require('../routes/admin');
-const webhookRoutes = require('../routes/webhook');
-const businessRoutes = require('../routes/business');
-const uploadRoutes = require('../routes/upload');
+const salesRoutes = require('../routes/sales'); // ← NUEVA RUTA DE VENTAS
 
-app.use('/api', apiRoutes);
+// ✅ MONTAR RUTAS
 app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/webhook', webhookRoutes);
-app.use('/api/business', businessRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/uploads', express.static('uploads'));
+app.use('/api', salesRoutes); // ← ESTA LÍNEA ES CLAVE
 
 // ✅ HEALTH CHECK
 app.get('/health', (req, res) => {
@@ -50,10 +42,8 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     status: 'active',
     endpoints: {
-      api: '/api',
       auth: '/auth',
-      admin: '/admin', 
-      webhook: '/webhook',
+      sales: '/api/sales',
       health: '/health'
     }
   });
@@ -68,20 +58,18 @@ app.use('*', (req, res) => {
     available_routes: [
       'GET /',
       'GET /health', 
-      'GET /api',
       'GET /api/debug',
       'GET /api/sales/sale-data',
       'POST /api/sales/quick-client',
       'POST /api/sales/new-sale',
       'POST /auth/login',
-      'POST /auth/register',
-      'GET /auth/protected'
+      'POST /auth/register'
     ],
     timestamp: new Date().toISOString()
   });
 });
 
-// ✅ CREAR SERVIDOR HTTP CON LA APP EXPRESS
+// ✅ CREAR SERVIDOR HTTP
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -104,25 +92,24 @@ io.on('connection', (socket) => {
   });
 });
 
-// Exporta io para usarlo en otras partes
 app.io = io;
 
 async function startServer() {
   try {
     console.log('🔄 Iniciando Universal Bot Platform...');
     console.log('✅ Rutas cargadas:');
+    console.log('   - GET  /api/debug');
     console.log('   - GET  /api/sales/sale-data');
     console.log('   - POST /api/sales/quick-client');
     console.log('   - POST /api/sales/new-sale');
-    console.log('   - GET  /api/debug');
+    console.log('   - POST /auth/login');
+    console.log('   - POST /auth/register');
 
-    // Iniciar servidor HTTP (con WebSockets)
+    // Iniciar servidor HTTP
     httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`✅ Servidor backend ejecutándose en: http://localhost:${PORT}`);
-      console.log(`✅ Health check: http://localhost:${PORT}/health`);
-      console.log(`✅ Debug: http://localhost:${PORT}/api/debug`);
-      console.log(`✅ Ventas: http://localhost:${PORT}/api/sales/sale-data`);
-      console.log(`✅ WebSockets habilitados en: ws://localhost:${PORT}`);
+      console.log(`✅ Servidor backend ejecutándose en puerto: ${PORT}`);
+      console.log(`✅ Health check: https://universalbot-dsko.onrender.com/health`);
+      console.log(`✅ Ventas: https://universalbot-dsko.onrender.com/api/sales/sale-data`);
     });
 
   } catch (error) {
