@@ -6,6 +6,8 @@ require('dotenv').config();
 // Importar rutas
 const authRoutes = require('./routes/auth');
 const salesRoutes = require('./routes/sales');
+const inventoryRoutes = require('./routes/inventory');
+app.use('/api/inventory', inventoryRoutes);
 
 const app = express();
 
