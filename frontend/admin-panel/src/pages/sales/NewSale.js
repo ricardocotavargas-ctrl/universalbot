@@ -1,3 +1,4 @@
+// frontend/admin-panel/src/pages/sales/NewSale.js
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Container, Typography, Box, Paper, Grid, Card, CardContent,
@@ -12,7 +13,8 @@ import {
   Add, Remove, Search, Delete, Payment, Receipt,
   PersonAdd, Inventory, WhatsApp, CreditCard, Money, AccountBalance,
   PointOfSale, Smartphone, ShoppingCart, Group,
-  ArrowForward, CheckCircle, CurrencyExchange, Print, Send, Close
+  ArrowForward, CheckCircle, CurrencyExchange, Print, Send, Close,
+  Email, LocationOn
 } from '@mui/icons-material';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -36,7 +38,18 @@ const useSaleData = () => {
       
       if (response.data.success) {
         setClients(response.data.clients || []);
-        setProducts(response.data.products || []);
+        
+        // ✅ MEJORADO: Asegurar que productos tengan tax
+        const productsWithTax = (response.data.products || []).map(product => ({
+          ...product,
+          tax: product.tax || 16 // Valor por defecto si no viene
+        }));
+        
+        setProducts(productsWithTax);
+        console.log('✅ Datos cargados:', {
+          clients: response.data.clients?.length,
+          products: productsWithTax.length
+        });
       } else {
         setError(response.data.message || 'Error al cargar datos');
       }
@@ -54,6 +67,7 @@ const useSaleData = () => {
 
   const createClient = async (clientData) => {
     try {
+      console.log('👤 Creando cliente:', clientData);
       const response = await api.post('/api/sales/quick-client', clientData);
       
       if (response.data.success) {
@@ -69,7 +83,7 @@ const useSaleData = () => {
   return { clients, products, loading, error, loadData, createClient };
 };
 
-// Componente principal - AGREGAR DEBUG DEL USER
+// Componente principal
 const NewSale = () => {
   const theme = useTheme();
   const { user } = useAuth();
@@ -93,7 +107,16 @@ const NewSale = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [processingSale, setProcessingSale] = useState(false);
   const [newClientDialog, setNewClientDialog] = useState(false);
-  const [newClientData, setNewClientData] = useState({ name: '', phone: '', rif: '' });
+  
+  // ✅ CORREGIDO: Agregar campos email y address
+  const [newClientData, setNewClientData] = useState({ 
+    name: '', 
+    phone: '', 
+    rif: '',
+    email: '',        // ✅ NUEVO CAMPO
+    address: ''       // ✅ NUEVO CAMPO
+  });
+  
   const [creatingClient, setCreatingClient] = useState(false);
 
   const { clients, products, loading, error, loadData, createClient } = useSaleData();
@@ -109,7 +132,8 @@ const NewSale = () => {
     { value: 'efectivo', label: 'Efectivo', icon: <Money /> },
     { value: 'transferencia', label: 'Transferencia', icon: <AccountBalance /> },
     { value: 'pago_movil', label: 'Pago Móvil', icon: <Smartphone /> },
-    { value: 'tarjeta', label: 'Tarjeta', icon: <CreditCard /> },
+    { value: 'tarjeta_debito', label: 'Tarjeta Débito', icon: <CreditCard /> },
+    { value: 'tarjeta_credito', label: 'Tarjeta Crédito', icon: <CreditCard /> },
     { value: 'divisas', label: 'Divisas', icon: <CurrencyExchange /> }
   ];
 
@@ -163,12 +187,17 @@ const NewSale = () => {
       return;
     }
 
+    if (!newClientData.phone.trim()) {
+      setSnackbar({ open: true, message: '❌ El teléfono es obligatorio', severity: 'error' });
+      return;
+    }
+
     setCreatingClient(true);
     try {
       const client = await createClient(newClientData);
       setSaleData(prev => ({ ...prev, client }));
       setNewClientDialog(false);
-      setNewClientData({ name: '', phone: '', rif: '' });
+      setNewClientData({ name: '', phone: '', rif: '', email: '', address: '' });
       setSnackbar({ open: true, message: '✅ Cliente creado exitosamente', severity: 'success' });
     } catch (error) {
       setSnackbar({ open: true, message: `❌ ${error.message}`, severity: 'error' });
@@ -177,14 +206,43 @@ const NewSale = () => {
     }
   };
 
+  // ✅ CORREGIDO: Handler de venta completo
   const handleCompleteSale = async () => {
     try {
       setProcessingSale(true);
-      const response = await api.post('/api/sales/new-sale', saleData);
+      
+      // ✅ PREPARAR DATOS CORRECTAMENTE para el backend
+      const salePayload = {
+        client: saleData.client ? {
+          id: saleData.client.id  // ✅ Solo enviar el ID del cliente
+        } : null,
+        products: saleData.products.map(product => ({
+          id: product.id,         // ✅ ID de MongoDB como string
+          name: product.name,
+          price: product.price,
+          quantity: product.quantity,
+          tax: product.tax || 16  // ✅ Asegurar que tenga impuesto
+        })),
+        paymentMethod: saleData.paymentMethod,
+        currency: saleData.currency,
+        exchangeRate: saleData.exchangeRate,
+        discounts: saleData.discounts,
+        notes: saleData.notes,
+        shipping: saleData.shipping
+      };
+
+      console.log('📤 Enviando venta al backend:', salePayload);
+      
+      const response = await api.post('/api/sales/new-sale', salePayload);
       
       if (response.data.success) {
-        setSnackbar({ open: true, message: '🎉 Venta completada exitosamente', severity: 'success' });
+        setSnackbar({ 
+          open: true, 
+          message: '🎉 Venta completada exitosamente', 
+          severity: 'success' 
+        });
         
+        // ✅ RESET CORRECTO
         setTimeout(() => {
           setSaleData({
             client: null,
@@ -197,13 +255,18 @@ const NewSale = () => {
             shipping: 0
           });
           setActiveStep(0);
-          loadData();
+          loadData(); // Recargar productos (stock actualizado)
         }, 2000);
       } else {
         throw new Error(response.data.message || 'Error al procesar la venta');
       }
     } catch (error) {
-      setSnackbar({ open: true, message: `❌ ${error.response?.data?.message || error.message}`, severity: 'error' });
+      console.error('❌ Error en venta:', error);
+      setSnackbar({ 
+        open: true, 
+        message: `❌ ${error.response?.data?.message || error.message}`, 
+        severity: 'error' 
+      });
     } finally {
       setProcessingSale(false);
     }
@@ -222,7 +285,8 @@ const NewSale = () => {
     if (!searchTerm) return clients;
     return clients.filter(client => 
       client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.rif?.toLowerCase().includes(searchTerm.toLowerCase())
+      client.rif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.phone?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [clients, searchTerm]);
 
@@ -273,7 +337,12 @@ const NewSale = () => {
               sx={{
                 border: `2px solid ${saleData.client?.id === client.id ? theme.palette.primary.main : '#e5e7eb'}`,
                 borderRadius: '12px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                  transform: 'translateY(-2px)'
+                }
               }}
               onClick={() => setSaleData(prev => ({ ...prev, client }))}
             >
@@ -284,9 +353,14 @@ const NewSale = () => {
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
                     <Typography fontWeight={700}>{client.name}</Typography>
-                    <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                      {client.rif} • {client.phone}
+                    <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
+                      {client.rif && `RIF: ${client.rif} • `}{client.phone}
                     </Typography>
+                    {client.email && (
+                      <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
+                        {client.email}
+                      </Typography>
+                    )}
                   </Box>
                   {saleData.client?.id === client.id && (
                     <CheckCircle sx={{ color: theme.palette.primary.main }} />
@@ -298,6 +372,7 @@ const NewSale = () => {
         ))}
       </Grid>
 
+      {/* ✅ CORREGIDO: Dialog de nuevo cliente con campos completos */}
       <Dialog open={newClientDialog} onClose={() => setNewClientDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -314,18 +389,42 @@ const NewSale = () => {
               value={newClientData.name}
               onChange={(e) => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
               fullWidth
+              required
             />
             <TextField
-              label="Teléfono"
+              label="Teléfono *"
               value={newClientData.phone}
               onChange={(e) => setNewClientData(prev => ({ ...prev, phone: e.target.value }))}
               fullWidth
+              required
             />
             <TextField
               label="RIF"
               value={newClientData.rif}
               onChange={(e) => setNewClientData(prev => ({ ...prev, rif: e.target.value }))}
               fullWidth
+              placeholder="Ej: J-123456789"
+            />
+            <TextField
+              label="Email"
+              type="email"
+              value={newClientData.email}
+              onChange={(e) => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
+              fullWidth
+              InputProps={{
+                startAdornment: <Email sx={{ color: '#6b7280', mr: 1, fontSize: 20 }} />
+              }}
+            />
+            <TextField
+              label="Dirección"
+              value={newClientData.address}
+              onChange={(e) => setNewClientData(prev => ({ ...prev, address: e.target.value }))}
+              fullWidth
+              multiline
+              rows={2}
+              InputProps={{
+                startAdornment: <LocationOn sx={{ color: '#6b7280', mr: 1, fontSize: 20 }} />
+              }}
             />
           </Stack>
         </DialogContent>
@@ -334,7 +433,7 @@ const NewSale = () => {
           <Button 
             onClick={handleCreateClient} 
             variant="contained" 
-            disabled={creatingClient || !newClientData.name.trim()}
+            disabled={creatingClient || !newClientData.name.trim() || !newClientData.phone.trim()}
           >
             {creatingClient ? 'Creando...' : 'Crear Cliente'}
           </Button>
@@ -368,54 +467,73 @@ const NewSale = () => {
             Productos Disponibles ({filteredProducts.length})
           </Typography>
           
-          <Grid container spacing={2}>
-            {filteredProducts.map((product) => (
-              <Grid item xs={12} sm={6} md={4} key={product.id}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => handleAddProduct(product)}
-                >
-                  <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" fontWeight={700} sx={{ fontSize: '0.9rem' }}>
-                          {product.name}
+          {loading ? (
+            <Grid container spacing={2}>
+              {[1, 2, 3].map((item) => (
+                <Grid item xs={12} sm={6} md={4} key={item}>
+                  <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Grid container spacing={2}>
+              {filteredProducts.map((product) => (
+                <Grid item xs={12} sm={6} md={4} key={product.id}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: theme.shadows[4]
+                      }
+                    }}
+                    onClick={() => handleAddProduct(product)}
+                  >
+                    <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="h6" fontWeight={700} sx={{ fontSize: '0.9rem' }}>
+                            {product.name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+                            {product.code}
+                          </Typography>
+                        </Box>
+                        <Chip 
+                          label={`${product.stock} disp.`} 
+                          size="small"
+                          color={product.stock === 0 ? 'error' : product.stock <= (product.minStock || 5) ? 'warning' : 'primary'}
+                        />
+                      </Box>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="h5" fontWeight={800} sx={{ color: theme.palette.primary.main }}>
+                          ${product.price.toFixed(2)}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-                          {product.code}
+                        <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                          IVA {product.tax || 16}%
                         </Typography>
                       </Box>
-                      <Chip 
-                        label={`${product.stock} disp.`} 
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        startIcon={<Add />}
+                        disabled={product.stock === 0}
                         size="small"
-                        color={product.stock === 0 ? 'error' : 'primary'}
-                      />
-                    </Box>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="h5" fontWeight={800} sx={{ color: theme.palette.primary.main }}>
-                        ${product.price.toFixed(2)}
-                      </Typography>
-                    </Box>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      startIcon={<Add />}
-                      disabled={product.stock === 0}
-                    >
-                      Agregar al Carrito
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                      >
+                        Agregar al Carrito
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card>
+          <Card sx={{ position: 'sticky', top: 20 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
                 <Receipt sx={{ mr: 1, color: theme.palette.primary.main }} />
@@ -440,18 +558,30 @@ const NewSale = () => {
                               {product.name}
                             </Typography>
                             <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                              ${product.price.toFixed(2)} c/u
+                              ${product.price.toFixed(2)} c/u • IVA {product.tax || 16}%
                             </Typography>
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <IconButton size="small" onClick={() => handleQuantityChange(product.id, product.quantity - 1)}>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleQuantityChange(product.id, product.quantity - 1)}
+                              disabled={product.quantity <= 1}
+                            >
                               <Remove />
                             </IconButton>
                             <TextField
                               size="small"
                               value={product.quantity}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 1;
+                                handleQuantityChange(product.id, Math.max(1, value));
+                              }}
                               sx={{ width: 60 }}
-                              inputProps={{ style: { textAlign: 'center' } }}
+                              inputProps={{ 
+                                style: { textAlign: 'center' },
+                                min: 1,
+                                type: 'number'
+                              }}
                             />
                             <IconButton size="small" onClick={() => handleQuantityChange(product.id, product.quantity + 1)}>
                               <Add />
@@ -469,10 +599,20 @@ const NewSale = () => {
                   ))}
 
                   <Box sx={{ mt: 2, p: 2, background: alpha(theme.palette.primary.main, 0.05), borderRadius: '8px' }}>
-                    <Typography variant="subtitle2" fontWeight={600}>
-                      Total: ${totals.total.toFixed(2)}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="subtitle2">Subtotal:</Typography>
+                      <Typography variant="subtitle2">${totals.subtotal.toFixed(2)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="subtitle2">IVA:</Typography>
+                      <Typography variant="subtitle2">${totals.taxes.toFixed(2)}</Typography>
+                    </Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="subtitle1" fontWeight={700}>Total:</Typography>
+                      <Typography variant="subtitle1" fontWeight={700}>${totals.total.toFixed(2)}</Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', textAlign: 'center', mt: 1 }}>
                       {saleData.products.reduce((sum, item) => sum + item.quantity, 0)} productos
                     </Typography>
                   </Box>
@@ -521,7 +661,7 @@ const NewSale = () => {
             value={saleData.discounts}
             onChange={(e) => setSaleData(prev => ({ ...prev, discounts: parseFloat(e.target.value) || 0 }))}
             InputProps={{
-              endAdornment: <InputAdornment position="end">$</InputAdornment>
+              startAdornment: <InputAdornment position="start">$</InputAdornment>
             }}
           />
         </Grid>
@@ -534,6 +674,7 @@ const NewSale = () => {
             rows={3}
             value={saleData.notes}
             onChange={(e) => setSaleData(prev => ({ ...prev, notes: e.target.value }))}
+            placeholder="Observaciones adicionales sobre la venta..."
           />
         </Grid>
       </Grid>
@@ -557,10 +698,12 @@ const NewSale = () => {
               <Typography fontWeight={600}>${totals.taxes.toFixed(2)}</Typography>
             </Box>
             
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography>Descuentos:</Typography>
-              <Typography fontWeight={600} color="error">-${saleData.discounts.toFixed(2)}</Typography>
-            </Box>
+            {saleData.discounts > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography>Descuentos:</Typography>
+                <Typography fontWeight={600} color="error">-${saleData.discounts.toFixed(2)}</Typography>
+              </Box>
+            )}
             
             <Divider />
             
@@ -597,6 +740,9 @@ const NewSale = () => {
                   <Typography fontWeight="600">{saleData.client.name}</Typography>
                   <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.rif}</Typography>
                   <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.phone}</Typography>
+                  {saleData.client.email && (
+                    <Typography variant="body2" sx={{ color: '#6b7280' }}>{saleData.client.email}</Typography>
+                  )}
                 </Box>
               ) : (
                 <Typography variant="body2" sx={{ color: '#6b7280' }}>
@@ -613,9 +759,22 @@ const NewSale = () => {
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Detalles de Pago
               </Typography>
-              <Typography variant="body2">
+              <Typography variant="body2" gutterBottom>
                 Método: {paymentMethods.find(m => m.value === saleData.paymentMethod)?.label}
               </Typography>
+              {saleData.discounts > 0 && (
+                <Typography variant="body2">
+                  Descuento: ${saleData.discounts.toFixed(2)}
+                </Typography>
+              )}
+              {saleData.notes && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="body2" fontWeight={600}>Notas:</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280', fontStyle: 'italic' }}>
+                    {saleData.notes}
+                  </Typography>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -633,6 +792,7 @@ const NewSale = () => {
                       <TableCell>Producto</TableCell>
                       <TableCell align="right">Cantidad</TableCell>
                       <TableCell align="right">Precio Unit.</TableCell>
+                      <TableCell align="right">IVA</TableCell>
                       <TableCell align="right">Total</TableCell>
                     </TableRow>
                   </TableHead>
@@ -650,6 +810,7 @@ const NewSale = () => {
                         </TableCell>
                         <TableCell align="right">{product.quantity}</TableCell>
                         <TableCell align="right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell align="right">{product.tax || 16}%</TableCell>
                         <TableCell align="right">${(product.price * product.quantity).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
@@ -680,10 +841,17 @@ const NewSale = () => {
                 size="large"
                 startIcon={<PointOfSale />}
                 onClick={handleCompleteSale}
-                disabled={processingSale}
+                disabled={processingSale || saleData.products.length === 0}
                 sx={{ px: 4 }}
               >
-                {processingSale ? 'Procesando...' : 'Completar Venta'}
+                {processingSale ? (
+                  <>
+                    <LinearProgress sx={{ width: 20, height: 2, mr: 1 }} />
+                    Procesando...
+                  </>
+                ) : (
+                  'Completar Venta'
+                )}
               </Button>
             </Stack>
           </Box>
