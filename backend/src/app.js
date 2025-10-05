@@ -140,6 +140,11 @@ app.get('/', (req, res) => {
         register: 'POST /auth/register',
         verify: 'GET /auth/verify'
       },
+      sales: {
+        sale_data: 'GET /api/sales/sale-data',
+        quick_client: 'POST /api/sales/quick-client',
+        new_sale: 'POST /api/sales/new-sale'
+      },
       protected: 'GET /auth/protected'
     },
     cors: {
@@ -152,7 +157,7 @@ app.get('/', (req, res) => {
 // ✅ RUTAS DE AUTENTICACIÓN
 app.use('/auth', authRoutes);
 
-// ✅ RUTAS DE VENTAS - AGREGAR DESPUÉS DE app.use('/auth', authRoutes);
+// ✅ RUTAS DE VENTAS - AGREGADAS DIRECTAMENTE
 app.get('/api/debug', (req, res) => {
   res.json({ 
     message: '✅ RUTAS DE VENTAS FUNCIONANDO',
@@ -214,7 +219,7 @@ app.get('/auth/protected', (req, res) => {
   });
 });
 
-// ✅ RUTA DE INFORMACIÓN DE API
+// ✅ RUTA DE INFORMACIÓN DE API (ACTUALIZADA)
 app.get('/api', (req, res) => {
   res.json({
     name: 'UniversalBot API',
@@ -231,6 +236,23 @@ app.get('/api', (req, res) => {
         method: 'GET',
         path: '/health',
         description: 'Estado del servidor y base de datos'
+      },
+      sales: {
+        sale_data: {
+          method: 'GET',
+          path: '/api/sales/sale-data',
+          description: 'Obtener datos para nueva venta'
+        },
+        quick_client: {
+          method: 'POST', 
+          path: '/api/sales/quick-client',
+          description: 'Crear cliente rápido'
+        },
+        new_sale: {
+          method: 'POST',
+          path: '/api/sales/new-sale',
+          description: 'Procesar nueva venta'
+        }
       },
       auth_login: {
         method: 'POST',
@@ -290,7 +312,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ MANEJO DE RUTAS NO ENCONTRADAS
+// ✅ MANEJO DE RUTAS NO ENCONTRADAS (ACTUALIZADO)
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Ruta no encontrada',
@@ -300,6 +322,10 @@ app.use('*', (req, res) => {
       'GET /',
       'GET /health',
       'GET /api',
+      'GET /api/debug',
+      'GET /api/sales/sale-data',
+      'POST /api/sales/quick-client',
+      'POST /api/sales/new-sale',
       'POST /auth/login',
       'POST /auth/register',
       'GET /auth/protected'
@@ -318,18 +344,23 @@ app.listen(PORT, HOST, () => {
   console.log('='.repeat(60));
   console.log(`📍 Servidor: http://${HOST}:${PORT}`);
   console.log(`🌐 Health:   http://${HOST}:${PORT}/health`);
+  console.log(`🛒 Ventas:   http://${HOST}:${PORT}/api/sales/sale-data`);
   console.log(`🔐 Login:    POST http://${HOST}:${PORT}/auth/login`);
   console.log(`📊 MongoDB:  ${mongoose.connection.readyState === 1 ? '✅ Conectado' : '❌ Desconectado'}`);
   console.log(`🌍 Entorno:  ${process.env.NODE_ENV || 'development'}`);
   console.log(`🎯 CORS:     ✅ Habilitado para Vercel, Render y Localhost`);
   console.log('='.repeat(60));
   console.log('📋 Endpoints disponibles:');
-  console.log('   GET  /              - Información general');
-  console.log('   GET  /health        - Estado del sistema');
-  console.log('   GET  /api           - Documentación API');
-  console.log('   POST /auth/login    - Iniciar sesión');
-  console.log('   POST /auth/register - Registrar usuario');
-  console.log('   GET  /auth/protected - Ruta protegida');
+  console.log('   GET  /                    - Información general');
+  console.log('   GET  /health              - Estado del sistema');
+  console.log('   GET  /api                 - Documentación API');
+  console.log('   GET  /api/debug           - Debug ventas');
+  console.log('   GET  /api/sales/sale-data - Datos de venta');
+  console.log('   POST /api/sales/quick-client - Crear cliente');
+  console.log('   POST /api/sales/new-sale  - Nueva venta');
+  console.log('   POST /auth/login          - Iniciar sesión');
+  console.log('   POST /auth/register       - Registrar usuario');
+  console.log('   GET  /auth/protected      - Ruta protegida');
   console.log('='.repeat(60));
 });
 
