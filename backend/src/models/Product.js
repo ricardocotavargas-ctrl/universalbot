@@ -14,8 +14,7 @@ const productSchema = new mongoose.Schema({
   code: {
     type: String,
     required: true,
-    trim: true,
-    unique: true
+    trim: true
   },
   price: {
     type: Number,
@@ -58,8 +57,5 @@ const productSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-productSchema.index({ businessId: 1, code: 1 });
-productSchema.index({ businessId: 1, name: 1 });
 
 module.exports = mongoose.model('Product', productSchema);
