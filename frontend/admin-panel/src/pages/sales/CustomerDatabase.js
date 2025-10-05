@@ -1,99 +1,81 @@
 // frontend/admin-panel/src/pages/sales/CustomerDatabase.js
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Container, Typography, Box, TextField, Button,
   Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, IconButton, Dialog,
   DialogTitle, DialogContent, DialogActions, Grid,
-  InputAdornment, Avatar
+  InputAdornment, Avatar, Alert, Snackbar
 } from '@mui/material';
 import {
   Search, Edit, Delete, Person, Business,
-  Add, Refresh
+  Add, Refresh, Email, Phone, LocationOn
 } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 import UBCard from '../../components/ui/UBCard';
 
 const CustomerDatabase = () => {
+  const { user } = useAuth();
+  const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Datos de ejemplo - En producción vendría de la base de datos
-  const [customers, setCustomers] = useState([
-    {
-      id: 1,
-      tipoDocumento: 'J',
-      documento: 'J-123456789',
-      nombre: 'TechSolutions C.A.',
-      telefono: '+58 412-555-1234',
-      email: 'info@techsolutions.com',
-      direccion: 'Av. Principal, Caracas',
-      esEmpresa: true,
-      fechaRegistro: '2024-01-15',
-      comprasTotales: 12500.00
-    },
-    {
-      id: 2,
-      tipoDocumento: 'V',
-      documento: 'V-12345678',
-      nombre: 'Juan Pérez',
-      telefono: '+58 414-555-5678',
-      email: 'juan@email.com',
-      direccion: 'Calle Secundaria, Valencia',
-      esEmpresa: false,
-      fechaRegistro: '2024-02-20',
-      comprasTotales: 3450.00
-    },
-    {
-      id: 3,
-      tipoDocumento: 'G',
-      documento: 'G-987654321',
-      nombre: 'Ministerio de Tecnología',
-      telefono: '+58 416-555-9012',
-      email: 'contacto@mintel.gob.ve',
-      direccion: 'Av. Bolívar, Caracas',
-      esEmpresa: true,
-      fechaRegistro: '2024-03-10',
-      comprasTotales: 28700.00
+  // ✅ CARGAR CLIENTES REALES DESDE MONGODB
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/sales/all-clients');
+      
+      if (response.data.success) {
+        setCustomers(response.data.clients);
+      } else {
+        throw new Error(response.data.message || 'Error al cargar clientes');
+      }
+    } catch (error) {
+      console.error('Error cargando clientes:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Error al cargar clientes: ' + error.message, 
+        severity: 'error' 
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  // ✅ FILTRADO DE CLIENTES
   const filteredCustomers = useMemo(() => {
     if (!searchTerm) return customers;
     const term = searchTerm.toLowerCase();
     return customers.filter(customer =>
-      customer.documento.toLowerCase().includes(term) ||
-      customer.nombre.toLowerCase().includes(term) ||
-      customer.telefono.toLowerCase().includes(term) ||
-      customer.email.toLowerCase().includes(term)
+      customer.name?.toLowerCase().includes(term) ||
+      customer.rif?.toLowerCase().includes(term) ||
+      customer.phone?.toLowerCase().includes(term) ||
+      customer.email?.toLowerCase().includes(term)
     );
   }, [customers, searchTerm]);
 
-  const handleEdit = (customer) => {
-    setSelectedCustomer(customer);
-    setEditDialogOpen(true);
-  };
-
-  const handleSave = (updatedCustomer) => {
-    setCustomers(prev => prev.map(c => 
-      c.id === updatedCustomer.id ? updatedCustomer : c
-    ));
-    setEditDialogOpen(false);
-    setSelectedCustomer(null);
-  };
-
-  const handleDelete = (customerId) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este cliente?')) {
-      setCustomers(prev => prev.filter(c => c.id !== customerId));
-    }
-  };
-
+  // ✅ FORMATEO DE MONEDA
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-VE', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2
-    }).format(amount);
+    }).format(amount || 0);
+  };
+
+  // ✅ FORMATEO DE FECHA
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('es-VE');
   };
 
   return (
@@ -103,15 +85,16 @@ const CustomerDatabase = () => {
           Base de Datos de Clientes
         </Typography>
         <Typography color="text.secondary">
-          Gestión completa de clientes registrados en el sistema
+          Gestión completa de clientes registrados en el sistema - DATOS REALES
         </Typography>
       </Box>
 
       <UBCard>
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        {/* BARRA DE BÚSQUEDA Y ACCIONES */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
           <TextField
             fullWidth
-            placeholder="Buscar clientes por documento, nombre, teléfono o email..."
+            placeholder="Buscar clientes por nombre, RIF, teléfono o email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -121,186 +104,122 @@ const CustomerDatabase = () => {
                 </InputAdornment>
               ),
             }}
+            sx={{ minWidth: 300 }}
           />
-          <Button variant="outlined" startIcon={<Refresh />}>
-            Actualizar
+          <Button 
+            variant="outlined" 
+            startIcon={<Refresh />}
+            onClick={loadCustomers}
+            disabled={loading}
+          >
+            {loading ? 'Cargando...' : 'Actualizar'}
           </Button>
-          <Button variant="contained" startIcon={<Add />}>
-            Nuevo Cliente
-          </Button>
+          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+            {filteredCustomers.length} clientes encontrados
+          </Typography>
         </Box>
 
+        {/* TABLA DE CLIENTES */}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>Cliente</TableCell>
-                <TableCell>Documento</TableCell>
                 <TableCell>Contacto</TableCell>
-                <TableCell>Registro</TableCell>
-                <TableCell>Compras Totales</TableCell>
-                <TableCell>Acciones</TableCell>
+                <TableCell>RIF/Identificación</TableCell>
+                <TableCell>Tipo</TableCell>
+                <TableCell>Fecha Registro</TableCell>
+                <TableCell>Estado</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
+                <TableRow key={customer.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar>
-                        {customer.esEmpresa ? <Business /> : <Person />}
+                      <Avatar sx={{ bgcolor: 'primary.main' }}>
+                        {customer.name?.charAt(0) || 'C'}
                       </Avatar>
                       <Box>
                         <Typography fontWeight="medium">
-                          {customer.nombre}
+                          {customer.name || 'Nombre no disponible'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {customer.email}
+                          {customer.email || 'Sin email'}
                         </Typography>
                       </Box>
                     </Box>
                   </TableCell>
                   <TableCell>
+                    <Box>
+                      <Typography variant="body2">
+                        <Phone sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                        {customer.phone || 'Sin teléfono'}
+                      </Typography>
+                      {customer.address && (
+                        <Typography variant="body2" color="text.secondary">
+                          <LocationOn sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                          {customer.address}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
                     <Chip 
-                      label={customer.documento} 
-                      color={customer.esEmpresa ? "primary" : "default"}
+                      label={customer.rif || 'N/A'} 
+                      variant="outlined"
+                      size="small"
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography>{customer.telefono}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {customer.direccion}
-                    </Typography>
+                    <Chip 
+                      label={customer.type || 'regular'} 
+                      color={customer.type === 'premium' ? 'warning' : 'default'}
+                      size="small"
+                    />
                   </TableCell>
                   <TableCell>
-                    {new Date(customer.fechaRegistro).toLocaleDateString()}
+                    {formatDate(customer.createdAt)}
                   </TableCell>
                   <TableCell>
-                    <Typography fontWeight="bold">
-                      {formatCurrency(customer.comprasTotales)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleEdit(customer)}
-                        color="primary"
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(customer.id)}
-                        color="error"
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Box>
+                    <Chip 
+                      label={customer.status === 'active' ? 'ACTIVO' : 'INACTIVO'} 
+                      color={customer.status === 'active' ? 'success' : 'default'}
+                      size="small"
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
+
+        {filteredCustomers.length === 0 && !loading && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Person sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography color="text.secondary">
+              {searchTerm ? 'No se encontraron clientes con los criterios de búsqueda' : 'No hay clientes registrados'}
+            </Typography>
+          </Box>
+        )}
+
+        {loading && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography>Cargando clientes...</Typography>
+          </Box>
+        )}
       </UBCard>
 
-      {/* Diálogo de Edición */}
-      <EditCustomerDialog
-        open={editDialogOpen}
-        customer={selectedCustomer}
-        onClose={() => setEditDialogOpen(false)}
-        onSave={handleSave}
-      />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
-  );
-};
-
-const EditCustomerDialog = ({ open, customer, onClose, onSave }) => {
-  const [editedCustomer, setEditedCustomer] = useState(customer);
-
-  React.useEffect(() => {
-    setEditedCustomer(customer);
-  }, [customer]);
-
-  const handleSave = () => {
-    onSave(editedCustomer);
-  };
-
-  if (!customer) return null;
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Editar Cliente</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Nombre/Razón Social"
-              value={editedCustomer?.nombre || ''}
-              onChange={(e) => setEditedCustomer({
-                ...editedCustomer,
-                nombre: e.target.value
-              })}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Documento"
-              value={editedCustomer?.documento || ''}
-              onChange={(e) => setEditedCustomer({
-                ...editedCustomer,
-                documento: e.target.value
-              })}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Teléfono"
-              value={editedCustomer?.telefono || ''}
-              onChange={(e) => setEditedCustomer({
-                ...editedCustomer,
-                telefono: e.target.value
-              })}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={editedCustomer?.email || ''}
-              onChange={(e) => setEditedCustomer({
-                ...editedCustomer,
-                email: e.target.value
-              })}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Dirección"
-              multiline
-              rows={3}
-              value={editedCustomer?.direccion || ''}
-              onChange={(e) => setEditedCustomer({
-                ...editedCustomer,
-                direccion: e.target.value
-              })}
-            />
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSave} variant="contained">
-          Guardar Cambios
-        </Button>
-      </DialogActions>
-    </Dialog>
   );
 };
 
