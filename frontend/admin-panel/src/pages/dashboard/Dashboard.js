@@ -368,7 +368,7 @@ const useDashboardData = (timeRange = 'week') => {
   return { data, loading, error, refetch: fetchRealData };
 };
 
-// 🔥 COMPONENTES DEL DASHBOARD - MANTENIENDO EXACTAMENTE EL DISEÑO ORIGINAL
+// 🔥 COMPONENTES DEL DASHBOARD - TODOS LOS COMPONENTES ORIGINALES
 
 const ChangeIndicator = ({ value }) => {
   if (value > 0) {
@@ -535,9 +535,667 @@ const StatCard = React.memo(({
   );
 });
 
-// ... (MANTENER TODOS LOS COMPONENTES AUXILIARES EXACTAMENTE IGUAL: ChannelPerformance, AIInsightCard, RecentActivity, PerformanceChart, QuickActionsPanel, SystemPerformance)
+const ChannelPerformance = React.memo(({ channel, loading = false }) => {
+  const IconComponent = channel?.icon;
+  
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 2, 
+        height: 100,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '12px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
 
-// 🔥 COMPONENTE PRINCIPAL DEL DASHBOARD - MANTENIENDO DISEÑO ORIGINAL
+  return (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${alpha(channel.color, 0.1)} 0%, ${alpha('#ffffff', 0.8)} 100%)`,
+        border: `1px solid ${alpha(channel.color, 0.2)}`,
+        borderRadius: '12px',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: alpha(channel.color, 0.4),
+          boxShadow: `0 8px 32px ${alpha(channel.color, 0.15)}`
+        },
+        height: '100%'
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              p: 1,
+              background: alpha(channel.color, 0.1),
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <IconComponent sx={{ fontSize: 20, color: channel.color }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937', fontSize: '0.9rem' }}>
+              {channel.name}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h4" fontWeight={800} sx={{ color: channel.color, fontSize: '1.25rem' }}>
+                {channel.value}%
+              </Typography>
+              <Chip 
+                label={`${channel.growth > 0 ? '+' : ''}${channel.growth}%`} 
+                size="small"
+                sx={{ 
+                  background: channel.growth > 0 ? 
+                    'rgba(16, 185, 129, 0.1)' : 
+                    'rgba(239, 68, 68, 0.1)',
+                  color: channel.growth > 0 ? '#10b981' : '#ef4444',
+                  fontWeight: 600,
+                  fontSize: '0.7rem'
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        <ProgressBar value={channel.value} color={channel.color} height={6} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+            Participación
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem', fontWeight: 600 }}>
+            {channel.volume} interacciones
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+});
+
+const AIInsightCard = React.memo(({ insight, loading = false }) => {
+  const getColors = (type) => {
+    switch (type) {
+      case 'success':
+        return {
+          bg: 'rgba(16, 185, 129, 0.08)',
+          border: 'rgba(16, 185, 129, 0.2)',
+          icon: '#10b981',
+          accent: '#10b981'
+        };
+      case 'opportunity':
+        return {
+          bg: 'rgba(245, 158, 11, 0.08)',
+          border: 'rgba(245, 158, 11, 0.2)',
+          icon: '#f59e0b',
+          accent: '#f59e0b'
+        };
+      case 'warning':
+        return {
+          bg: 'rgba(239, 68, 68, 0.08)',
+          border: 'rgba(239, 68, 68, 0.2)',
+          icon: '#ef4444',
+          accent: '#ef4444'
+        };
+      default:
+        return {
+          bg: 'rgba(37, 99, 235, 0.08)',
+          border: 'rgba(37, 99, 235, 0.2)',
+          icon: '#2563eb',
+          accent: '#2563eb'
+        };
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 2, 
+        height: 140,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '12px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  const colors = getColors(insight.type);
+  const timeAgo = new Date(insight.timestamp).toLocaleTimeString('es-ES', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+
+  return (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${colors.bg} 0%, rgba(255, 255, 255, 0.9) 100%)`,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '12px',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateX(4px)'
+        },
+        height: '100%'
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+          <Box
+            sx={{
+              p: 1,
+              background: alpha(colors.icon, 0.1),
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <SmartToy sx={{ fontSize: 18, color: colors.icon }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937', fontSize: '0.9rem' }}>
+                {insight.title}
+              </Typography>
+              <Chip 
+                label={insight.priority === 'high' ? 'Alta' : 'Media'} 
+                size="small"
+                sx={{ 
+                  height: 20,
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  background: insight.priority === 'high' ? 
+                    'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                  color: insight.priority === 'high' ? '#ef4444' : '#f59e0b'
+                }}
+              />
+            </Box>
+            
+            <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.4, color: '#6b7280', fontSize: '0.8rem' }}>
+              {insight.message}
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: colors.accent
+                    }}
+                  />
+                  <Typography variant="caption" fontWeight={600} sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+                    {(insight.confidence * 100).toFixed(0)}% confianza
+                  </Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+                  {timeAgo}
+                </Typography>
+              </Box>
+              <Button 
+                variant="outlined" 
+                size="small"
+                endIcon={<ArrowForward sx={{ fontSize: 14 }} />}
+                sx={{ 
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  borderColor: colors.border,
+                  color: colors.icon,
+                  fontSize: '0.75rem',
+                  py: 0.5,
+                  minWidth: 'auto'
+                }}
+              >
+                {insight.action}
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+});
+
+const RecentActivity = React.memo(({ activities, loading = false }) => {
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case 'sale':
+        return <Receipt sx={{ color: '#10b981', fontSize: 18 }} />;
+      case 'customer':
+        return <Group sx={{ color: '#3b82f6', fontSize: 18 }} />;
+      case 'inventory':
+        return <Inventory sx={{ color: '#f59e0b', fontSize: 18 }} />;
+      case 'message':
+        return <Message sx{{ color: '#8b5cf6', fontSize: 18 }} />;
+      default:
+        return <Notifications sx={{ color: '#6b7280', fontSize: 18 }} />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+      case 'success':
+        return '#10b981';
+      case 'warning':
+        return '#f59e0b';
+      case 'error':
+        return '#ef4444';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 400,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Schedule sx={{ fontSize: 20, color: '#2563eb' }} />
+          Actividad Reciente
+        </Typography>
+        
+        <List sx={{ p: 0 }}>
+          {activities.map((activity, index) => (
+            <React.Fragment key={activity.id}>
+              <ListItem sx={{ px: 0, py: 1.5 }}>
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      background: alpha(getStatusColor(activity.status), 0.1),
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {getActivityIcon(activity.type)}
+                  </Box>
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Typography variant="body2" fontWeight={600} sx={{ color: '#1f2937', fontSize: '0.85rem' }}>
+                      {activity.title}
+                    </Typography>
+                  }
+                  secondary={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
+                        {activity.description}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+                        {new Date(activity.timestamp).toLocaleTimeString('es-ES', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
+              {index < activities.length - 1 && (
+                <Divider variant="inset" component="li" sx={{ mx: 0 }} />
+              )}
+            </React.Fragment>
+          ))}
+        </List>
+        
+        <Button 
+          fullWidth 
+          variant="text" 
+          size="small"
+          sx={{ 
+            mt: 2,
+            color: '#2563eb',
+            fontWeight: 600,
+            fontSize: '0.8rem'
+          }}
+        >
+          Ver toda la actividad
+        </Button>
+      </CardContent>
+    </Card>
+  );
+});
+
+const PerformanceChart = ({ data, timeRange, onTimeRangeChange, loading = false }) => {
+  const revenueData = data?.revenueData || [12000, 19000, 15000, 22000, 18000, 23450, 28000, 32000, 29000, 35000, 38000, 42000];
+  const maxValue = Math.max(...revenueData);
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 400,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Typography variant="h6" fontWeight={700} sx={{ color: '#1f2937' }}>
+            📈 Rendimiento de Ingresos
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {['week', 'month', 'quarter', 'year'].map((range) => (
+              <Chip
+                key={range}
+                label={
+                  range === 'week' ? 'Semana' :
+                  range === 'month' ? 'Mes' : 
+                  range === 'quarter' ? 'Trimestre' : 'Año'
+                }
+                variant={timeRange === range ? 'filled' : 'outlined'}
+                onClick={() => onTimeRangeChange(range)}
+                size="small"
+                sx={{
+                  background: timeRange === range ? 
+                    'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'transparent',
+                  color: timeRange === range ? 'white' : '#6b7280',
+                  borderColor: timeRange === range ? 'transparent' : '#e5e7eb',
+                  fontSize: '0.75rem'
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        <Box sx={{ height: 250, display: 'flex', alignItems: 'end', gap: 1, mb: 3, px: 1 }}>
+          {revenueData.map((value, index) => (
+            <Tooltip key={index} title={`$${value.toLocaleString()}`} arrow>
+              <Box sx={{ 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                height: '100%'
+              }}>
+                <Box
+                  sx={{
+                    width: '70%',
+                    minWidth: '12px',
+                    height: `${(value / maxValue) * 100}%`,
+                    background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 0.8) 100%)',
+                    borderRadius: '4px 4px 0 0',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      background: 'linear-gradient(180deg, #2563eb 0%, rgba(37, 99, 235, 1) 100%)'
+                    }
+                  }}
+                />
+                <Typography variant="caption" sx={{ 
+                  mt: 1, 
+                  fontWeight: 600, 
+                  color: '#6b7280',
+                  fontSize: '0.7rem'
+                }}>
+                  {index + 1}
+                </Typography>
+              </Box>
+            </Tooltip>
+          ))}
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1 }}>
+          <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.8rem' }}>
+            Evolución de ingresos - Últimos {revenueData.length} períodos
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
+            <Typography variant="body2" fontWeight={600} sx={{ color: '#10b981', fontSize: '0.8rem' }}>
+              +{((revenueData[revenueData.length - 1] - revenueData[0]) / revenueData[0] * 100).toFixed(1)}% crecimiento
+            </Typography>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const QuickActionsPanel = ({ onAction }) => (
+  <Card sx={{ 
+    background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+    border: '1px solid #f1f5f9',
+    borderRadius: '16px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+    mb: 3
+  }}>
+    <CardContent sx={{ p: 3 }}>
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1f2937' }}>
+        ⚡ Acciones Rápidas
+      </Typography>
+      <Grid container spacing={2}>
+        {[
+          { 
+            icon: <RocketLaunch />, 
+            label: 'Nueva Venta', 
+            color: '#10b981',
+            description: 'Registrar venta rápida'
+          },
+          { 
+            icon: <Inventory />, 
+            label: 'Gestionar Stock', 
+            color: '#f59e0b',
+            description: 'Revisar inventario'
+          },
+          { 
+            icon: <Campaign />, 
+            label: 'Campaña Marketing', 
+            color: '#8b5cf6',
+            description: 'Crear campaña IA'
+          },
+          { 
+            icon: <Analytics />, 
+            label: 'Reporte Avanzado', 
+            color: '#2563eb',
+            description: 'Generar análisis'
+          },
+          { 
+            icon: <Group />, 
+            label: 'Clientes', 
+            color: '#ec4899',
+            description: 'Gestionar clientes'
+          },
+          { 
+            icon: <SmartToy />, 
+            label: 'Asistente IA', 
+            color: '#06b6d4',
+            description: 'Consultar recomendaciones'
+          }
+        ].map((action, index) => (
+          <Grid item xs={6} sm={4} md={2} key={index}>
+            <Button
+              fullWidth
+              onClick={() => onAction?.(action.label)}
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(action.color, 0.1)} 0%, ${alpha(action.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(action.color, 0.2)}`,
+                color: action.color,
+                fontWeight: 600,
+                borderRadius: '12px',
+                py: 2,
+                flexDirection: 'column',
+                gap: 1,
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${alpha(action.color, 0.2)} 0%, ${alpha(action.color, 0.1)} 100%)`,
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <Box sx={{ fontSize: 24 }}>{action.icon}</Box>
+              <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.75rem' }}>
+                {action.label}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.65rem' }}>
+                {action.description}
+              </Typography>
+            </Button>
+          </Grid>
+        ))}
+      </Grid>
+    </CardContent>
+  </Card>
+);
+
+const SystemPerformance = ({ performance, loading = false }) => {
+  const metrics = [
+    { 
+      label: 'Tiempo Respuesta', 
+      value: `${performance?.responseTime || 0} min`, 
+      target: '2.0 min', 
+      progress: performance ? (performance.responseTime / 2.0) * 100 : 0,
+      color: performance?.responseTime <= 2.0 ? '#10b981' : '#f59e0b',
+      icon: <AccessTime />
+    },
+    { 
+      label: 'Disponibilidad', 
+      value: `${performance?.uptime || 0}%`, 
+      target: '99.9%', 
+      progress: performance?.uptime || 0,
+      color: performance?.uptime >= 99.9 ? '#10b981' : '#f59e0b',
+      icon: <GppGood />
+    },
+    { 
+      label: 'Precisión IA', 
+      value: `${performance?.accuracy || 0}%`, 
+      target: '95%', 
+      progress: performance?.accuracy || 0,
+      color: performance?.accuracy >= 95 ? '#10b981' : '#f59e0b',
+      icon: <SmartToy />
+    },
+    { 
+      label: 'Automatización', 
+      value: `${performance?.automation || 0}%`, 
+      target: '90%', 
+      progress: performance?.automation || 0,
+      color: performance?.automation >= 90 ? '#10b981' : '#f59e0b',
+      icon: <AutoGraph />
+    }
+  ];
+
+  if (loading) {
+    return (
+      <Card sx={{ 
+        p: 3, 
+        height: 300,
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+        border: '1px solid #f1f5f9',
+        borderRadius: '16px'
+      }}>
+        <Skeleton variant="rectangular" height="100%" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      background: 'linear-gradient(135deg, #ffffff 0%, #fafbff 100%)',
+      border: '1px solid #f1f5f9',
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <BarChart sx={{ fontSize: 20, color: '#2563eb' }} />
+          Rendimiento del Sistema
+        </Typography>
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {metrics.map((metric, index) => (
+            <Box key={index}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ color: metric.color }}>
+                    {metric.icon}
+                  </Box>
+                  <Typography variant="body2" fontWeight={600} sx={{ color: '#374151', fontSize: '0.8rem' }}>
+                    {metric.label}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" fontWeight={700} sx={{ color: '#1f2937', fontSize: '0.8rem' }}>
+                  {metric.value}
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={Math.min(metric.progress, 100)} 
+                sx={{ 
+                  height: 6, 
+                  borderRadius: 3,
+                  backgroundColor: '#f1f5f9',
+                  '& .MuiLinearProgress-bar': {
+                    background: `linear-gradient(135deg, ${metric.color} 0%, ${alpha(metric.color, 0.8)} 100%)`,
+                    borderRadius: 3
+                  }
+                }}
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
+                  Objetivo: {metric.target}
+                </Typography>
+                <Typography variant="caption" fontWeight={600} sx={{ 
+                  color: metric.progress >= 100 ? '#10b981' : metric.progress >= 80 ? '#f59e0b' : '#ef4444',
+                  fontSize: '0.7rem'
+                }}>
+                  {metric.progress >= 100 ? '✅ Cumplido' : `${metric.progress.toFixed(1)}%`}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+// 🔥 COMPONENTE PRINCIPAL DEL DASHBOARD
 
 const Dashboard = () => {
   const { user } = useAuth();
