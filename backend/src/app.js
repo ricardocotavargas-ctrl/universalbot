@@ -143,7 +143,8 @@ app.get('/', (req, res) => {
       sales: {
         sale_data: 'GET /api/sales/sale-data',
         quick_client: 'POST /api/sales/quick-client',
-        new_sale: 'POST /api/sales/new-sale'
+        new_sale: 'POST /api/sales/new-sale',
+        all_clients: 'GET /api/sales/all-clients'
       },
       protected: 'GET /auth/protected'
     },
@@ -156,50 +157,6 @@ app.get('/', (req, res) => {
 
 // ✅ RUTAS DE AUTENTICACIÓN
 app.use('/auth', authRoutes);
-
-// ✅ RUTAS DE VENTAS - AGREGADAS DIRECTAMENTE
-app.get('/api/debug', (req, res) => {
-  res.json({ 
-    message: '✅ RUTAS DE VENTAS FUNCIONANDO',
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get('/api/sales/sale-data', (req, res) => {
-  console.log('✅ Ruta /api/sales/sale-data llamada');
-  res.json({
-    success: true,
-    clients: [
-      { id: 1, name: 'Cliente General', rif: 'V-00000000', phone: '0000000000', type: 'regular' }
-    ],
-    products: [
-      { id: 1, name: 'Producto Ejemplo', code: 'PROD-001', price: 10.00, stock: 100, category: 'General', tax: 16 }
-    ]
-  });
-});
-
-app.post('/api/sales/quick-client', (req, res) => {
-  console.log('✅ Ruta /api/sales/quick-client llamada:', req.body);
-  res.json({
-    success: true,
-    client: { 
-      id: Date.now(), 
-      name: req.body.name, 
-      phone: req.body.phone || '0000000000', 
-      rif: req.body.rif || 'V-00000000',
-      type: 'regular'
-    }
-  });
-});
-
-app.post('/api/sales/new-sale', (req, res) => {
-  console.log('✅ Ruta /api/sales/new-sale llamada:', req.body);
-  res.json({
-    success: true,
-    sale: { id: Date.now(), totalAmount: 100 },
-    message: 'Venta completada exitosamente'
-  });
-});
 
 // ✅ RUTA DE PRUEBA PROTEGIDA
 app.get('/auth/protected', (req, res) => {
@@ -219,12 +176,343 @@ app.get('/auth/protected', (req, res) => {
   });
 });
 
+// =============================================
+// ✅ RUTAS REALES DE VENTAS - OPERATIVAS
+// =============================================
+
+// ✅ RUTA REAL PARA CREAR CLIENTE EN MONGODB
+app.post('/api/sales/quick-client', async (req, res) => {
+  try {
+    const { name, phone, rif, email, address } = req.body;
+
+    console.log('👤 Creando cliente REAL en MongoDB:', { name, phone, rif });
+
+    // Validaciones
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El nombre del cliente es obligatorio'
+      });
+    }
+
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El teléfono es obligatorio'
+      });
+    }
+
+    // Business ID temporal (luego vendrá del usuario autenticado)
+    const businessId = '000000000000000000000001';
+
+    // Verificar si ya existe un cliente con el mismo teléfono
+    const existingClient = await mongoose.model('Customer').findOne({
+      businessId,
+      phone: phone.trim()
+    });
+
+    if (existingClient) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ya existe un cliente con este número de teléfono',
+        existingClient: {
+          id: existingClient._id,
+          name: existingClient.name,
+          phone: existingClient.phone
+        }
+      });
+    }
+
+    // Crear el cliente en la base de datos
+    const Customer = mongoose.model('Customer');
+    const client = new Customer({
+      businessId,
+      name: name.trim(),
+      phone: phone.trim(),
+      rif: rif?.trim() || null,
+      email: email?.trim() || null,
+      address: address?.trim() || null,
+      customerType: 'regular',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await client.save();
+
+    console.log('✅ Cliente guardado en MongoDB:', client._id);
+
+    res.json({
+      success: true,
+      client: {
+        id: client._id,
+        name: client.name,
+        phone: client.phone,
+        rif: client.rif,
+        email: client.email,
+        address: client.address,
+        type: 'regular'
+      },
+      message: 'Cliente creado exitosamente'
+    });
+
+  } catch (error) {
+    console.error('❌ Error al crear cliente:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al crear cliente: ' + error.message 
+    });
+  }
+});
+
+// ✅ RUTA REAL PARA OBTENER DATOS DE VENTA DESDE MONGODB
+app.get('/api/sales/sale-data', async (req, res) => {
+  try {
+    console.log('📋 Cargando datos REALES desde MongoDB...');
+    
+    const businessId = '000000000000000000000001';
+
+    const Customer = mongoose.model('Customer');
+    const Product = mongoose.model('Product');
+
+    const [clients, products] = await Promise.all([
+      Customer.find({ businessId, status: 'active' }).lean(),
+      Product.find({ businessId, active: true }).lean()
+    ]);
+
+    console.log(`✅ Datos cargados: ${clients.length} clientes, ${products.length} productos`);
+
+    res.json({
+      success: true,
+      clients: clients.map(client => ({
+        id: client._id,
+        name: client.name,
+        rif: client.rif,
+        phone: client.phone,
+        email: client.email,
+        address: client.address,
+        type: client.customerType || 'regular'
+      })),
+      products: products.map(product => ({
+        id: product._id,
+        name: product.name,
+        code: product.code,
+        price: product.price,
+        cost: product.cost,
+        stock: product.stock,
+        category: product.category,
+        tax: product.tax,
+        barcode: product.barcode,
+        supplier: product.supplier,
+        minStock: product.minStock
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Error en /sales/sale-data:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al cargar datos: ' + error.message 
+    });
+  }
+});
+
+// ✅ RUTA REAL PARA PROCESAR VENTA EN MONGODB
+app.post('/api/sales/new-sale', async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    const { client, products, paymentMethod, currency, exchangeRate, discounts, notes, shipping } = req.body;
+
+    console.log('💰 Procesando venta REAL en MongoDB...');
+
+    const businessId = '000000000000000000000001';
+    const userId = '000000000000000000000001'; // Temporal
+
+    // Validaciones
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'La venta debe contener al menos un producto'
+      });
+    }
+
+    // Verificar stock antes de procesar
+    const Product = mongoose.model('Product');
+    for (const item of products) {
+      const product = await Product.findById(item.id).session(session);
+      if (!product) {
+        await session.abortTransaction();
+        return res.status(400).json({
+          success: false,
+          message: `Producto no encontrado: ${item.name}`
+        });
+      }
+      if (product.stock < item.quantity) {
+        await session.abortTransaction();
+        return res.status(400).json({
+          success: false,
+          message: `Stock insuficiente para: ${product.name}. Stock actual: ${product.stock}, solicitado: ${item.quantity}`
+        });
+      }
+    }
+
+    // Calcular totales
+    const subtotal = products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const taxes = products.reduce((sum, item) => sum + (item.price * item.quantity * ((item.tax || 16) / 100)), 0);
+    const total = subtotal + taxes - (discounts || 0) + (shipping || 0);
+
+    // Crear venta en la base de datos
+    const Sale = mongoose.model('Sale');
+    const sale = new Sale({
+      businessId,
+      customerId: client?.id || null,
+      totalAmount: total,
+      subtotalAmount: subtotal,
+      taxAmount: taxes,
+      discountAmount: discounts || 0,
+      shippingAmount: shipping || 0,
+      paymentMethod,
+      currency,
+      exchangeRate: currency === 'VES' ? exchangeRate : null,
+      status: 'completed',
+      notes: notes || '',
+      createdBy: userId,
+      createdAt: new Date()
+    });
+
+    await sale.save({ session });
+
+    // Crear productos de la venta
+    const SaleProduct = mongoose.model('SaleProduct');
+    for (const item of products) {
+      const saleProduct = new SaleProduct({
+        saleId: sale._id,
+        productId: item.id,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        totalPrice: item.price * item.quantity
+      });
+
+      await saleProduct.save({ session });
+
+      // Actualizar stock
+      await Product.findByIdAndUpdate(
+        item.id,
+        { $inc: { stock: -item.quantity } },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    console.log('✅ Venta completada en MongoDB:', sale._id);
+
+    res.json({ 
+      success: true, 
+      sale: {
+        id: sale._id,
+        totalAmount: sale.totalAmount,
+        subtotalAmount: sale.subtotalAmount,
+        taxAmount: sale.taxAmount,
+        discountAmount: sale.discountAmount,
+        shippingAmount: sale.shippingAmount,
+        paymentMethod: sale.paymentMethod,
+        currency: sale.currency,
+        status: sale.status,
+        notes: sale.notes,
+        createdAt: sale.createdAt
+      },
+      message: 'Venta completada exitosamente' 
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('❌ Error en /sales/new-sale:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al procesar la venta: ' + error.message 
+    });
+  } finally {
+    session.endSession();
+  }
+});
+
+// ✅ RUTA PARA VER TODOS LOS CLIENTES (TESTING)
+app.get('/api/sales/all-clients', async (req, res) => {
+  try {
+    const businessId = '000000000000000000000001';
+    const Customer = mongoose.model('Customer');
+    
+    const clients = await Customer.find({ businessId }).sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      clients: clients.map(client => ({
+        id: client._id,
+        name: client.name,
+        phone: client.phone,
+        rif: client.rif,
+        email: client.email,
+        address: client.address,
+        createdAt: client.createdAt,
+        status: client.status
+      })),
+      total: clients.length
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener clientes:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al obtener clientes' 
+    });
+  }
+});
+
+// ✅ RUTA PARA VER TODAS LAS VENTAS (TESTING)
+app.get('/api/sales/all-sales', async (req, res) => {
+  try {
+    const businessId = '000000000000000000000001';
+    const Sale = mongoose.model('Sale');
+    const Customer = mongoose.model('Customer');
+    
+    const sales = await Sale.find({ businessId })
+      .populate('customerId', 'name phone rif')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    res.json({
+      success: true,
+      sales: sales.map(sale => ({
+        id: sale._id,
+        customer: sale.customerId ? {
+          name: sale.customerId.name,
+          phone: sale.customerId.phone,
+          rif: sale.customerId.rif
+        } : null,
+        totalAmount: sale.totalAmount,
+        paymentMethod: sale.paymentMethod,
+        status: sale.status,
+        createdAt: sale.createdAt
+      })),
+      total: sales.length
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener ventas:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al obtener ventas' 
+    });
+  }
+});
+
 // ✅ RUTA DE INFORMACIÓN DE API (ACTUALIZADA)
 app.get('/api', (req, res) => {
   res.json({
     name: 'UniversalBot API',
     version: '1.0.0',
-    description: 'Sistema de gestión empresarial completo',
+    description: 'Sistema de gestión empresarial completo - OPERATIVO',
     base_url: req.protocol + '://' + req.get('host'),
     endpoints: {
       root: {
@@ -241,17 +529,27 @@ app.get('/api', (req, res) => {
         sale_data: {
           method: 'GET',
           path: '/api/sales/sale-data',
-          description: 'Obtener datos para nueva venta'
+          description: 'Obtener datos REALES para nueva venta'
         },
         quick_client: {
           method: 'POST', 
           path: '/api/sales/quick-client',
-          description: 'Crear cliente rápido'
+          description: 'Crear cliente REAL en base de datos'
         },
         new_sale: {
           method: 'POST',
           path: '/api/sales/new-sale',
-          description: 'Procesar nueva venta'
+          description: 'Procesar venta REAL con transacción'
+        },
+        all_clients: {
+          method: 'GET',
+          path: '/api/sales/all-clients',
+          description: 'Ver todos los clientes guardados'
+        },
+        all_sales: {
+          method: 'GET',
+          path: '/api/sales/all-sales',
+          description: 'Ver historial de ventas'
         }
       },
       auth_login: {
@@ -273,16 +571,14 @@ app.get('/api', (req, res) => {
         headers: { Authorization: 'Bearer <token>' }
       }
     },
-    cors: {
-      enabled: true,
-      allowed_origins: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://universalbot-frontend.vercel.app',
-        'https://*.vercel.app',
-        'https://*.onrender.com'
-      ]
-    }
+    status: 'OPERATIVO',
+    database: 'MongoDB',
+    features: [
+      'Clientes persistentes en base de datos',
+      'Ventas con transacciones atómicas',
+      'Control de stock en tiempo real',
+      'Datos reales sin información falsa'
+    ]
   });
 });
 
@@ -322,10 +618,11 @@ app.use('*', (req, res) => {
       'GET /',
       'GET /health',
       'GET /api',
-      'GET /api/debug',
       'GET /api/sales/sale-data',
       'POST /api/sales/quick-client',
       'POST /api/sales/new-sale',
+      'GET /api/sales/all-clients',
+      'GET /api/sales/all-sales',
       'POST /auth/login',
       'POST /auth/register',
       'GET /auth/protected'
@@ -339,29 +636,32 @@ const PORT = process.env.PORT || 10000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
-  console.log('='.repeat(60));
-  console.log('🚀 UNIVERSALBOT BACKEND INICIADO CORRECTAMENTE');
-  console.log('='.repeat(60));
+  console.log('='.repeat(70));
+  console.log('🚀 UNIVERSALBOT BACKEND - SISTEMA OPERATIVO COMPLETO');
+  console.log('='.repeat(70));
   console.log(`📍 Servidor: http://${HOST}:${PORT}`);
   console.log(`🌐 Health:   http://${HOST}:${PORT}/health`);
   console.log(`🛒 Ventas:   http://${HOST}:${PORT}/api/sales/sale-data`);
+  console.log(`👥 Clientes: http://${HOST}:${PORT}/api/sales/all-clients`);
+  console.log(`💰 Historial: http://${HOST}:${PORT}/api/sales/all-sales`);
   console.log(`🔐 Login:    POST http://${HOST}:${PORT}/auth/login`);
   console.log(`📊 MongoDB:  ${mongoose.connection.readyState === 1 ? '✅ Conectado' : '❌ Desconectado'}`);
   console.log(`🌍 Entorno:  ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🎯 CORS:     ✅ Habilitado para Vercel, Render y Localhost`);
-  console.log('='.repeat(60));
-  console.log('📋 Endpoints disponibles:');
+  console.log('='.repeat(70));
+  console.log('📋 ENDPOINTS OPERATIVOS:');
   console.log('   GET  /                    - Información general');
   console.log('   GET  /health              - Estado del sistema');
   console.log('   GET  /api                 - Documentación API');
-  console.log('   GET  /api/debug           - Debug ventas');
-  console.log('   GET  /api/sales/sale-data - Datos de venta');
-  console.log('   POST /api/sales/quick-client - Crear cliente');
-  console.log('   POST /api/sales/new-sale  - Nueva venta');
+  console.log('   GET  /api/sales/sale-data - Datos REALES de venta');
+  console.log('   POST /api/sales/quick-client - Crear cliente REAL');
+  console.log('   POST /api/sales/new-sale  - Procesar venta REAL');
+  console.log('   GET  /api/sales/all-clients - Ver todos los clientes');
+  console.log('   GET  /api/sales/all-sales - Historial de ventas');
   console.log('   POST /auth/login          - Iniciar sesión');
   console.log('   POST /auth/register       - Registrar usuario');
-  console.log('   GET  /auth/protected      - Ruta protegida');
-  console.log('='.repeat(60));
+  console.log('='.repeat(70));
+  console.log('✅ SISTEMA 100% OPERATIVO - DATOS REALES EN MONGODB');
+  console.log('='.repeat(70));
 });
 
 // ✅ Manejo de cierre graceful
