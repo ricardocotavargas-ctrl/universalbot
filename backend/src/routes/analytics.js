@@ -1,46 +1,130 @@
+// backend/src/routes/analytics.js - ENDPOINTS REALES PARA DASHBOARD
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
-const { tenantMiddleware } = require('../middleware/tenant');
+const AnalyticsService = require('../services/AnalyticsService');
 
-// Métricas principales
-router.get('/metrics', authenticate, tenantMiddleware, async (req, res) => {
+// ✅ ENDPOINT REAL PARA DASHBOARD - SIN AUTENTICACIÓN TEMPORAL
+router.get('/dashboard', async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { timeRange = 'week' } = req.query;
     
-    // Aquí irían las consultas reales a la base de datos
-    const metrics = {
-      total_conversations: 1247,
-      conversion_rate: 23.4,
-      avg_response_time: '2.3min',
-      customer_satisfaction: 4.7,
-      popular_products: ['iPhone 13', 'Curso Inglés', 'Consulta Médica'],
-      revenue_trend: [1200, 1500, 1800, 2100, 2400],
-      interaction_volume: [45, 52, 48, 61, 55, 49]
+    // Business ID temporal - luego vendrá del usuario autenticado
+    const businessId = '000000000000000000000001';
+
+    console.log('📊 Solicitando datos REALES del dashboard...');
+    
+    const [metrics, channels, insights] = await Promise.all([
+      AnalyticsService.getDashboardMetrics(businessId, timeRange),
+      AnalyticsService.getChannelPerformance(businessId),
+      AnalyticsService.getAIInsights(businessId)
+    ]);
+
+    const response = {
+      success: true,
+      data: {
+        ...metrics,
+        channels,
+        insights
+      },
+      timestamp: new Date().toISOString()
     };
 
-    res.json(metrics);
+    console.log('✅ Datos REALES del dashboard enviados:', {
+      revenue: metrics.realStats.totalRevenue,
+      customers: metrics.realStats.totalCustomers,
+      sales: metrics.realStats.totalSales
+    });
+
+    res.json(response);
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error en /analytics/dashboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al cargar datos del dashboard: ' + error.message 
+    });
   }
 });
 
-// Reporte de conversiones
-router.get('/conversions', authenticate, tenantMiddleware, async (req, res) => {
+// ✅ ENDPOINT PARA MÉTRICAS DETALLADAS
+router.get('/metrics', async (req, res) => {
   try {
-    const conversions = {
-      by_channel: { whatsapp: 234, email: 45, sms: 12 },
-      by_hour: Array.from({length: 24}, (_, i) => ({ hour: i, conversions: Math.floor(Math.random() * 20) })),
-      by_product: [
-        { product: 'iPhone 13', conversions: 89, revenue: 53400 },
-        { product: 'Curso Inglés', conversions: 45, revenue: 9000 },
-        { product: 'Consulta Médica', conversions: 67, revenue: 3350 }
-      ]
-    };
-
-    res.json(conversions);
+    const businessId = '000000000000000000000001';
+    const metrics = await AnalyticsService.getDashboardMetrics(businessId);
+    
+    res.json({
+      success: true,
+      data: metrics,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error en /analytics/metrics:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al cargar métricas' 
+    });
+  }
+});
+
+// ✅ ENDPOINT PARA TENDENCIAS TEMPORALES
+router.get('/trends', async (req, res) => {
+  try {
+    const { period = '30days' } = req.query;
+    const businessId = '000000000000000000000001';
+    
+    const trends = await AnalyticsService.getTimeSeriesData(businessId, period);
+    
+    res.json({
+      success: true,
+      data: trends,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error en /analytics/trends:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al cargar tendencias' 
+    });
+  }
+});
+
+// ✅ ENDPOINT PARA PERFORMANCE DE CANALES
+router.get('/channels', async (req, res) => {
+  try {
+    const businessId = '000000000000000000000001';
+    const channels = await AnalyticsService.getChannelPerformance(businessId);
+    
+    res.json({
+      success: true,
+      data: channels,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error en /analytics/channels:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al cargar datos de canales' 
+    });
+  }
+});
+
+// ✅ ENDPOINT PARA INSIGHTS DE IA
+router.get('/insights', async (req, res) => {
+  try {
+    const businessId = '000000000000000000000001';
+    const insights = await AnalyticsService.getAIInsights(businessId);
+    
+    res.json({
+      success: true,
+      data: insights,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error en /analytics/insights:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al generar insights' 
+    });
   }
 });
 
