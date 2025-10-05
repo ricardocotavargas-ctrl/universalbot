@@ -1,19 +1,28 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
+
+// Models
 const Business = require('../models/Business');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Interaction = require('../models/Interaction');
+const Customer = require('../models/Customer');
+const Sale = require('../models/Sale');
+const SaleProduct = require('../models/SaleProduct');
+
+// Route modules
 const inventoryRoutes = require('./inventory');
 const accountsRoutes = require('./accounts'); 
 const financialRoutes = require('./financial');
 const authRoutes = require('./auth');
 
-// ✅ AGREGAR IMPORTACIONES MONGODB
-const mongoose = require('mongoose');
-const Customer = require('../models/Customer');
-const Sale = require('../models/Sale');
-const SaleProduct = require('../models/SaleProduct');
+// Middleware temporal - reemplazar con autenticación real
+router.use((req, res, next) => {
+  req.businessId = '000000000000000000000001';
+  req.userId = '000000000000000000000001';
+  next();
+});
 
 // Usar rutas existentes
 router.use('/inventory', inventoryRoutes);
@@ -21,19 +30,16 @@ router.use('/accounts', accountsRoutes);
 router.use('/financial', financialRoutes);
 router.use('/auth', authRoutes);
 
-// ✅ RUTAS MONGODB REALES PARA VENTAS
+// ✅ RUTAS MONGODB MEJORADAS CON VALIDACIONES
 
-// Obtener datos para nueva venta - MONGODB REAL
+// Obtener datos para nueva venta
 router.get('/sales/sale-data', async (req, res) => {
   try {
     console.log('📋 Cargando datos de venta desde MongoDB...');
     
-    // Usar businessId temporal para pruebas - reemplazar con req.user.businessId cuando el auth funcione
-    const businessId = '000000000000000000000001';
-
     const [clients, products] = await Promise.all([
-      Customer.find({ businessId }).lean(),
-      Product.find({ businessId, active: true }).lean()
+      Customer.find({ businessId: req.businessId }).lean(),
+      Product.find({ businessId: req.businessId, active: true }).lean()
     ]);
 
     console.log(`✅ Datos cargados: ${clients.length} clientes, ${products.length} productos`);
@@ -44,6 +50,8 @@ router.get('/sales/sale-data', async (req, res) => {
         id: client._id,
         name: client.name,
         rif: client.rif,
+        documentNumber: client.documentNumber,
+        documentType: client.documentType,
         phone: client.phone,
         email: client.email,
         address: client.address,
@@ -73,28 +81,88 @@ router.get('/sales/sale-data', async (req, res) => {
   }
 });
 
-// Crear nuevo cliente rápido - MONGODB REAL
+// Crear nuevo cliente rápido CON VALIDACIONES OBLIGATORIAS
 router.post('/sales/quick-client', async (req, res) => {
   try {
-    const { name, phone, rif } = req.body;
+    const { 
+      name, 
+      documentNumber, 
+      documentType = 'V', 
+      phone, 
+      rif, 
+      email, 
+      address 
+    } = req.body;
 
-    console.log('👤 Creando cliente en MongoDB:', { name, phone, rif });
+    console.log('👤 Creando cliente en MongoDB:', { 
+      name, 
+      documentNumber, 
+      documentType, 
+      phone 
+    });
+
+    // ✅ VALIDACIONES OBLIGATORIAS
+    const errors = [];
 
     if (!name || !name.trim()) {
+      errors.push('El nombre del cliente es obligatorio');
+    }
+
+    if (!documentNumber || !documentNumber.trim()) {
+      errors.push('El número de documento es obligatorio');
+    }
+
+    if (!phone || !phone.trim()) {
+      errors.push('El teléfono es obligatorio');
+    }
+
+    // Validar formato de teléfono (mínimo 10 caracteres)
+    if (phone && phone.trim().length < 10) {
+      errors.push('El teléfono debe tener al menos 10 caracteres');
+    }
+
+    // Validar tipo de documento
+    const validDocumentTypes = ['V', 'E', 'J', 'G', 'P'];
+    if (!validDocumentTypes.includes(documentType)) {
+      errors.push('Tipo de documento inválido. Use: V, E, J, G, P');
+    }
+
+    if (errors.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'El nombre del cliente es obligatorio'
+        message: 'Errores de validación',
+        errors: errors
       });
     }
 
-    // Usar businessId temporal para pruebas
-    const businessId = '000000000000000000000001';
+    // Verificar si ya existe un cliente con el mismo documento
+    const existingClient = await Customer.findOne({
+      businessId: req.businessId,
+      documentNumber: documentNumber.trim()
+    });
 
+    if (existingClient) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ya existe un cliente con este número de documento',
+        existingClient: {
+          id: existingClient._id,
+          name: existingClient.name,
+          documentNumber: existingClient.documentNumber
+        }
+      });
+    }
+
+    // Crear el cliente
     const client = new Customer({
-      businessId,
+      businessId: req.businessId,
       name: name.trim(),
-      phone: phone?.trim() || null,
+      documentNumber: documentNumber.trim(),
+      documentType: documentType,
+      phone: phone.trim(),
       rif: rif?.trim() || null,
+      email: email?.trim() || null,
+      address: address?.trim() || null,
       customerType: 'regular',
       status: 'active'
     });
@@ -108,12 +176,15 @@ router.post('/sales/quick-client', async (req, res) => {
       client: {
         id: client._id,
         name: client.name,
+        documentNumber: client.documentNumber,
+        documentType: client.documentType,
         rif: client.rif,
         phone: client.phone,
         email: client.email,
         address: client.address,
         type: 'regular'
-      }
+      },
+      message: 'Cliente creado exitosamente'
     });
 
   } catch (error) {
@@ -125,26 +196,84 @@ router.post('/sales/quick-client', async (req, res) => {
   }
 });
 
-// Nueva venta - MONGODB REAL
+// Nueva venta con transacción y validación de cliente
 router.post('/sales/new-sale', async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   
   try {
-    const { client, products, paymentMethod, currency, exchangeRate, discounts, notes, shipping } = req.body;
+    const { 
+      client, 
+      products, 
+      paymentMethod, 
+      currency, 
+      exchangeRate, 
+      discounts, 
+      notes, 
+      shipping 
+    } = req.body;
 
     console.log('💰 Procesando venta en MongoDB...');
 
-    // Usar businessId y userId temporales
-    const businessId = '000000000000000000000001';
-    const userId = '000000000000000000000001';
+    // ✅ VALIDACIONES OBLIGATORIAS PARA CLIENTE
+    if (!client || !client.id) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere un cliente para procesar la venta'
+      });
+    }
 
+    // Verificar que el cliente existe y tiene datos obligatorios
+    const customer = await Customer.findById(client.id).session(session);
+    if (!customer) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Cliente no encontrado'
+      });
+    }
+
+    // Validar datos obligatorios del cliente
+    if (!customer.name || !customer.documentNumber || !customer.phone) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'El cliente seleccionado no tiene todos los datos obligatorios (nombre, documento, teléfono)',
+        missingFields: {
+          name: !customer.name,
+          documentNumber: !customer.documentNumber,
+          phone: !customer.phone
+        }
+      });
+    }
+
+    // Validaciones de productos
     if (!products || !Array.isArray(products) || products.length === 0) {
       await session.abortTransaction();
       return res.status(400).json({
         success: false,
         message: 'La venta debe contener al menos un producto'
       });
+    }
+
+    // Verificar stock antes de procesar
+    for (const item of products) {
+      const product = await Product.findById(item.id).session(session);
+      if (!product) {
+        await session.abortTransaction();
+        return res.status(400).json({
+          success: false,
+          message: `Producto no encontrado: ${item.name}`
+        });
+      }
+      if (product.stock < item.quantity) {
+        await session.abortTransaction();
+        return res.status(400).json({
+          success: false,
+          message: `Stock insuficiente para: ${product.name}. Stock actual: ${product.stock}, solicitado: ${item.quantity}`
+        });
+      }
     }
 
     // Calcular totales
@@ -154,8 +283,8 @@ router.post('/sales/new-sale', async (req, res) => {
 
     // Crear venta
     const sale = new Sale({
-      businessId,
-      customerId: client?.id || null,
+      businessId: req.businessId,
+      customerId: client.id,
       totalAmount: total,
       subtotalAmount: subtotal,
       taxAmount: taxes,
@@ -166,12 +295,12 @@ router.post('/sales/new-sale', async (req, res) => {
       exchangeRate: currency === 'VES' ? exchangeRate : null,
       status: 'completed',
       notes: notes || '',
-      createdBy: userId
+      createdBy: req.userId
     });
 
     await sale.save({ session });
 
-    // Crear productos de la venta
+    // Crear productos de la venta y actualizar stock
     for (const item of products) {
       const saleProduct = new SaleProduct({
         saleId: sale._id,
@@ -208,6 +337,13 @@ router.post('/sales/new-sale', async (req, res) => {
         status: sale.status,
         notes: sale.notes,
         createdAt: sale.createdAt
+      },
+      client: {
+        id: customer._id,
+        name: customer.name,
+        documentNumber: customer.documentNumber,
+        documentType: customer.documentType,
+        phone: customer.phone
       },
       message: 'Venta completada exitosamente' 
     });
@@ -434,6 +570,13 @@ router.get('/', (req, res) => {
       products: ['GET /api/products', 'POST /api/products'],
       interactions: ['GET /api/interactions', 'POST /api/interactions'],
       system: ['GET /api/health', 'GET /api/stats', 'GET /api/test-db']
+    },
+    requirements: {
+      quick_client: {
+        obligatorios: ['name', 'documentNumber', 'phone'],
+        documentTypes: ['V (Venezolano)', 'E (Extranjero)', 'J (Jurídico)', 'G (Gobierno)', 'P (Pasaporte)'],
+        phone_min_length: 10
+      }
     }
   });
 });
