@@ -42,9 +42,4 @@ const customerSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Índices para búsquedas rápidas
-customerSchema.index({ businessId: 1, name: 1 });
-customerSchema.index({ businessId: 1, rif: 1 });
-customerSchema.index({ businessId: 1, phone: 1 });
-
 module.exports = mongoose.model('Customer', customerSchema);
