@@ -1,4 +1,4 @@
-// frontend/admin-panel/src/App.js
+// frontend/admin-panel/src/App.js - VERSIÓN CORREGIDA
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -50,14 +50,12 @@ const PlanManagement = lazy(() => import('./pages/PlanManagement'));
 // Páginas de Ventas
 const Sales = lazy(() => import('./pages/sales/Sales'));
 const NewSale = lazy(() => import('./pages/sales/NewSale'));
-const TablesManagement = lazy(() => import('./pages/sales/TablesManagement'));
 const SalesChannels = lazy(() => import('./pages/sales/SalesChannels'));
 const SalesBySeller = lazy(() => import('./pages/sales/SalesBySeller'));
 const SalesByProduct = lazy(() => import('./pages/sales/SalesByProduct'));
 
 // Páginas de Inventario
-const InventoryProducts = lazy(() => import('./pages/inventory/InventoryProducts'));
-const RecipesCombos = lazy(() => import('./pages/inventory/RecipesCombos'));
+const Products = lazy(() => import('./pages/inventory/Products')); // ✅ CAMBIADO: Products en lugar de InventoryProducts
 const InventoryMovements = lazy(() => import('./pages/inventory/InventoryMovements'));
 const Adjustments = lazy(() => import('./pages/inventory/Adjustments'));
 const Transfers = lazy(() => import('./pages/inventory/Transfers'));
@@ -174,14 +172,6 @@ const PrivateRoutes = () => (
           </RequireAuth>
         } />
         
-        <Route path="/sales/tables" element={
-          <RequireAuth>
-            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
-              <TablesManagement />
-            </RoleRoute>
-          </RequireAuth>
-        } />
-        
         <Route path="/sales/channels" element={
           <RequireAuth>
             <RoleRoute requiredPermission={PERMISSIONS.MANAGE_SALES}>
@@ -210,18 +200,12 @@ const PrivateRoutes = () => (
         <Route path="/inventory/products" element={
           <RequireAuth>
             <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-              <InventoryProducts />
+              <Products /> {/* ✅ CAMBIADO: Products en lugar de InventoryProducts */}
             </RoleRoute>
           </RequireAuth>
         } />
         
-        <Route path="/inventory/recipes" element={
-          <RequireAuth>
-            <RoleRoute requiredPermission={PERMISSIONS.MANAGE_INVENTORY}>
-              <RecipesCombos />
-            </RoleRoute>
-          </RequireAuth>
-        } />
+        {/* 🗑️ ELIMINADA: Ruta de RecipesCombos */}
         
         <Route path="/inventory/movements" element={
           <RequireAuth>
