@@ -1,6 +1,6 @@
-// src/services/InventoryService.js
-const { Product, InventoryMovement, Sale, SaleProduct } = require('../models');
-const { Op } = require('sequelize');
+const Product = require('../models/Product');
+const InventoryMovement = require('../models/InventoryMovement');
+const Sale = require('../models/Sale');
 
 class InventoryService {
   constructor(businessId) {
@@ -10,12 +10,9 @@ class InventoryService {
   async updateStockFromSale(saleId, userId) {
     try {
       const sale = await Sale.findOne({
-        where: { id: saleId, businessId: this.businessId },
-        include: [{
-          model: SaleProduct,
-          as: 'products'
-        }]
-      });
+        _id: saleId,
+        businessId: this.businessId
+      }).populate('products.productId');
 
       if (!sale) {
         throw new Error('Venta no encontrada');
@@ -23,37 +20,39 @@ class InventoryService {
 
       const movements = [];
 
-      for (const saleProduct of sale.products) {
+      for (const item of sale.products) {
         const product = await Product.findOne({
-          where: { id: saleProduct.productId, businessId: this.businessId }
+          _id: item.productId,
+          businessId: this.businessId
         });
 
         if (!product) {
-          throw new Error(`Producto ${saleProduct.productId} no encontrado`);
+          throw new Error(`Producto ${item.productId} no encontrado`);
         }
 
         const previousStock = product.stock;
-        const newStock = previousStock - saleProduct.quantity;
+        const newStock = previousStock - item.quantity;
 
         if (newStock < 0) {
           throw new Error(`Stock insuficiente para ${product.name}`);
         }
 
         // Actualizar stock del producto
-        await product.update({ stock: newStock });
+        await Product.findByIdAndUpdate(product._id, { stock: newStock });
 
         // Registrar movimiento
-        const movement = await InventoryMovement.create({
-          productId: product.id,
+        const movement = new InventoryMovement({
+          productId: product._id,
           businessId: this.businessId,
           userId,
           type: 'sale',
-          quantity: -saleProduct.quantity,
+          quantity: -item.quantity,
           previousStock,
           newStock,
           reference: `Venta #${saleId}`,
-          reason: `Venta realizada - ${saleProduct.quantity} unidades`
+          reason: `Venta realizada - ${item.quantity} unidades`
         });
+        await movement.save();
 
         movements.push(movement);
 
@@ -72,7 +71,8 @@ class InventoryService {
   async adjustStock(productId, adjustment, reason, userId) {
     try {
       const product = await Product.findOne({
-        where: { id: productId, businessId: this.businessId }
+        _id: productId,
+        businessId: this.businessId
       });
 
       if (!product) {
@@ -86,9 +86,9 @@ class InventoryService {
         throw new Error('Stock no puede ser negativo');
       }
 
-      await product.update({ stock: newStock });
+      await Product.findByIdAndUpdate(productId, { stock: newStock });
 
-      const movement = await InventoryMovement.create({
+      const movement = new InventoryMovement({
         productId,
         businessId: this.businessId,
         userId,
@@ -98,6 +98,7 @@ class InventoryService {
         newStock,
         reason: reason || 'Ajuste manual'
       });
+      await movement.save();
 
       // Verificar alerta de stock bajo
       if (newStock <= product.minStock) {
@@ -112,14 +113,11 @@ class InventoryService {
 
   async getLowStockAlerts() {
     try {
-      const lowStockProducts = await Product.findAll({
-        where: {
-          businessId: this.businessId,
-          stock: { [Op.lte]: { [Op.col]: 'minStock' } },
-          status: 'active'
-        },
-        order: [['stock', 'ASC']]
-      });
+      const lowStockProducts = await Product.find({
+        businessId: this.businessId,
+        active: true,
+        $expr: { $lte: ['$stock', '$minStock'] }
+      }).sort({ stock: 1 });
 
       return lowStockProducts;
     } catch (error) {
@@ -129,12 +127,9 @@ class InventoryService {
 
   async getInventoryValue() {
     try {
-      const products = await Product.findAll({
-        where: {
-          businessId: this.businessId,
-          status: 'active'
-        },
-        attributes: ['id', 'name', 'stock', 'cost', 'price']
+      const products = await Product.find({
+        businessId: this.businessId,
+        active: true
       });
 
       const totalCost = products.reduce((sum, product) => {
@@ -158,12 +153,8 @@ class InventoryService {
   }
 
   async triggerLowStockAlert(product, currentStock) {
-    // Aquí implementarías la lógica de notificación
-    // Email, WhatsApp, notificación en dashboard, etc.
-    console.log(`ALERTA: Stock bajo para ${product.name} - ${currentStock} unidades restantes`);
-    
-    // Ejemplo: Integración con servicio de notificaciones
-    // await NotificationService.sendLowStockAlert(product, currentStock);
+    console.log(`🔴 ALERTA: Stock bajo para ${product.name} - ${currentStock} unidades (Mínimo: ${product.minStock})`);
+    // Aquí integrarías con tu sistema de notificaciones
   }
 
   async getProductHistory(productId, days = 30) {
@@ -171,15 +162,13 @@ class InventoryService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const movements = await InventoryMovement.findAll({
-        where: {
-          productId,
-          businessId: this.businessId,
-          createdAt: { [Op.gte]: startDate }
-        },
-        include: ['User'],
-        order: [['createdAt', 'DESC']]
-      });
+      const movements = await InventoryMovement.find({
+        productId,
+        businessId: this.businessId,
+        createdAt: { $gte: startDate }
+      })
+        .populate('userId', 'name email')
+        .sort({ createdAt: -1 });
 
       return movements;
     } catch (error) {
