@@ -86,6 +86,25 @@ const useDashboardData = (timeRange = 'week') => {
       setError(null);
       
       console.log('📊 Cargando datos REALES del dashboard...');
+
+      // ✅ USAR EL ENDPOINT REAL DE ANALYTICS
+      const response = await api.get(`${API_ENDPOINTS.dashboard}?timeRange=${timeRange}`);
+      
+      if (response.data.success) {
+        console.log('✅ Datos REALES recibidos:', response.data.data.realStats);
+        setData(response.data.data);
+      } else {
+        throw new Error(response.data.message || 'Error en la respuesta del servidor');
+      }
+    } catch (err) {
+      console.error('❌ Error cargando datos reales:', err);
+      setError('Error conectando con el servidor. Verifica tu conexión.');
+      // En caso de error, usar datos de respaldo
+      setData(getFallbackData());
+    } finally {
+      setLoading(false);
+    }
+  }, [timeRange])
       
       // Obtener datos reales de las APIs existentes con manejo robusto de errores
       const [salesResponse, customersResponse, productsResponse] = await Promise.allSettled([
