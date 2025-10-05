@@ -60,7 +60,4 @@ const saleSchema = new mongoose.Schema({
   timestamps: true
 });
 
-saleSchema.index({ businessId: 1, createdAt: -1 });
-saleSchema.index({ customerId: 1 });
-
 module.exports = mongoose.model('Sale', saleSchema);
